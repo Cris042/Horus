@@ -1,0 +1,71 @@
+name: AI Code Review
+
+# Review automatizado por IA em cada PR (parte do fluxo task -> branch -> PR).
+# Usa as skills do skillfish para analisar boas práticas, segurança e desempenho
+# (N+1 e full table scan). Ver .github/code-review-guidelines.md.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: ai-review-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ai-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (histórico completo para o diff)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node (para o skillfish)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Instalar skills de review (skillfish)
+        run: |
+          set -e
+          for s in security-review backend-patterns postgres-patterns jpa-patterns database-migrations docker-patterns benchmark; do
+            npx -y skillfish@latest add affaan-m/everything-claude-code "$s" || echo "aviso: falha ao instalar $s"
+          done
+          # disponibiliza as skills no workspace para o Claude Code do CI
+          mkdir -p .claude/skills
+          cp -r ~/.claude/skills/* .claude/skills/ 2>/dev/null || true
+
+      - name: Review por IA
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Você é o revisor automatizado deste Pull Request. Revise APENAS o diff do PR
+            (use `git diff origin/${{ github.event.pull_request.base.ref }}...HEAD`).
+
+            SIGA a rubrica em .github/code-review-guidelines.md e USE as skills instaladas:
+            security-review, backend-patterns, postgres-patterns, jpa-patterns,
+            database-migrations, docker-patterns, benchmark.
+
+            Prioridades (nesta ordem):
+              1. Segurança (security-review): injeção, segredos, authz, vazamento de PII em logs/traces/queries.
+              2. Desempenho (benchmark + postgres-patterns + jpa-patterns): sinalize N+1 e full table scan
+                 (predicados não sargáveis, índices ausentes, SELECT * em caminho quente, lazy em laço).
+              3. Boas práticas (backend-patterns + docker-patterns + database-migrations).
+              4. Regras do projeto: isolamento de banco por serviço, propagação OTel (inclusive HTTP->RabbitMQ),
+                 sanitização de telemetria.
+
+            Publique os achados como comentários inline (arquivo:linha), agrupados por severidade
+            (Crítico/Alto/Médio/Baixo), e um comentário-resumo com a contagem e o veredito.
+            Seja concreto e cite o trecho. Se não houver achados, diga "Sem achados".
+          claude_args: |
+            --model claude-sonnet-4-6
+            --max-turns 25
+            --allowedTools "Read,Grep,Glob,Bash(git diff:*),Bash(git log:*),Bash(git show:*)"

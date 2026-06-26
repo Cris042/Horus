@@ -1,0 +1,76 @@
+name: Daily - Auditoria de Dependências (IA)
+
+# Rotina diária: mapeia TODAS as dependências do projeto (Maven, Cargo, PyPI, etc.),
+# verifica vulnerabilidades de segurança e, havendo CRÍTICA, abre um PR com a sugestão de correção.
+
+on:
+  schedule:
+    - cron: "0 6 * * *"   # 06:00 UTC diariamente
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.c.outputs.enabled }}
+    steps:
+      - id: c
+        env:
+          KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -n "$KEY" ]; then echo "enabled=true" >> "$GITHUB_OUTPUT";
+          else echo "enabled=false" >> "$GITHUB_OUTPUT"; echo "::notice::ANTHROPIC_API_KEY ausente — rotina pulada"; fi
+
+  audit:
+    needs: guard
+    if: needs.guard.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Scan de vulnerabilidades (Trivy)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: json
+          output: trivy-report.json
+          severity: CRITICAL,HIGH
+          ignore-unfixed: false
+        continue-on-error: true
+
+      - name: Setup Node (skillfish)
+        uses: actions/setup-node@v4
+        with: { node-version: 22 }
+
+      - name: Instalar skills
+        run: |
+          npx -y skillfish@latest add affaan-m/everything-claude-code security-review || true
+          npx -y skillfish@latest add affaan-m/everything-claude-code database-migrations || true
+          mkdir -p .claude/skills && cp -r ~/.claude/skills/* .claude/skills/ 2>/dev/null || true
+
+      - name: Analisar e abrir PR de correção (IA)
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Leia o arquivo trivy-report.json (scan de dependências). Use a skill security-review.
+
+            1. Liste todas as dependências afetadas, com severidade, versão atual e versão corrigida.
+            2. Se NÃO houver vulnerabilidade CRÍTICA: apenas registre um comentário/resumo e finalize (não abra PR).
+            3. Se houver ao menos uma CRÍTICA:
+               a. Antes de tudo, verifique com `gh pr list` se já existe um PR aberto para a mesma correção; se existir, não duplique.
+               b. Crie a branch `fix/security-deps-<data>`.
+               c. Aplique a correção mínima nos manifestos (pom.xml / Cargo.toml / requirements.txt / pyproject.toml), elevando apenas a versão necessária.
+               d. Abra um PR `security: corrige vulnerabilidade(s) crítica(s) em dependências` explicando cada CVE, o risco e a mudança de versão. NÃO altere código de aplicação.
+            Seja conservador: somente bumps de versão necessários para sanar as CRÍTICAS.
+          claude_args: |
+            --model claude-sonnet-4-6
+            --max-turns 30
+            --allowedTools "Read,Edit,Grep,Glob,Bash(git:*),Bash(gh:*)"

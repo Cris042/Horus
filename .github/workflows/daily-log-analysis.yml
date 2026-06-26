@@ -1,0 +1,78 @@
+name: Daily - Análise de Logs (IA)
+
+# Rotina diária: lê os logs das últimas 24h (Loki) e usa IA para identificar
+# possíveis problemas no código (erros recorrentes, exceções, causas prováveis).
+# Requer o secret LOKI_URL (ex.: https://loki.minha-infra:3100). Opcional: LOKI_TOKEN.
+# Sem LOKI_URL, a rotina registra um aviso e encerra sem falhar.
+
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.c.outputs.enabled }}
+    steps:
+      - id: c
+        env:
+          KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LOKI: ${{ secrets.LOKI_URL }}
+        run: |
+          if [ -n "$KEY" ] && [ -n "$LOKI" ]; then echo "enabled=true" >> "$GITHUB_OUTPUT";
+          else echo "enabled=false" >> "$GITHUB_OUTPUT"; echo "::notice::ANTHROPIC_API_KEY ou LOKI_URL ausente — rotina pulada"; fi
+
+  analyze:
+    needs: guard
+    if: needs.guard.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Coletar logs de erro (Loki, últimas 24h)
+        env:
+          LOKI_URL: ${{ secrets.LOKI_URL }}
+          LOKI_TOKEN: ${{ secrets.LOKI_TOKEN }}
+        run: |
+          set -e
+          END=$(date +%s)000000000
+          START=$(date -d '24 hours ago' +%s)000000000
+          AUTH=(); [ -n "$LOKI_TOKEN" ] && AUTH=(-H "Authorization: Bearer $LOKI_TOKEN")
+          curl -sG "${AUTH[@]}" "$LOKI_URL/loki/api/v1/query_range" \
+            --data-urlencode 'query={job=~".+"} |~ "(?i)(error|exception|panic|fatal)"' \
+            --data-urlencode "start=$START" --data-urlencode "end=$END" \
+            --data-urlencode "limit=2000" -o logs-24h.json || echo '{"data":{"result":[]}}' > logs-24h.json
+          echo "Tamanho coletado: $(wc -c < logs-24h.json) bytes"
+
+      - name: Setup Node (skillfish)
+        uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Instalar skills
+        run: |
+          npx -y skillfish@latest add affaan-m/everything-claude-code backend-patterns || true
+          npx -y skillfish@latest add affaan-m/everything-claude-code security-review || true
+          mkdir -p .claude/skills && cp -r ~/.claude/skills/* .claude/skills/ 2>/dev/null || true
+
+      - name: Analisar logs e abrir issue (IA)
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Leia logs-24h.json (logs de erro das últimas 24h, formato Loki). Use as skills backend-patterns e security-review.
+
+            Produza uma análise e ABRA UMA ISSUE (título: "Análise diária de logs — <data UTC>", label "monitoring"):
+            - Agrupe os erros por serviço e por tipo/assinatura (fingerprint), com contagem.
+            - Para cada grupo relevante, aponte a causa provável no código e uma sugestão de correção.
+            - Destaque qualquer indício de vazamento de PII em log (violação de RNF-H-002).
+            - Liste os 3 problemas mais urgentes no topo.
+            Se não houver erros relevantes, abra uma issue curta confirmando "sem problemas relevantes nas últimas 24h".
+          claude_args: |
+            --model claude-sonnet-4-6
+            --max-turns 20
+            --allowedTools "Read,Grep,Glob,Bash(gh:*)"

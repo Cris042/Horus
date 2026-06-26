@@ -1,0 +1,89 @@
+name: Daily - Análise de Banco/Queries (IA)
+
+# Rotina diária: analisa as queries e onde o banco está sendo mais exigido
+# (pg_stat_statements) e os full table scans (pg_stat_user_tables), usando IA
+# para sugerir índices e correções (inclui N+1).
+# Requer o secret DB_DSNS: uma ou mais URLs psql separadas por espaço, ex.:
+#   "postgresql://ro:***@host:5432/prontuario_db postgresql://ro:***@host:5432/payment_db"
+# Pré-requisito no banco: extensão pg_stat_statements habilitada.
+# Sem DB_DSNS, a rotina registra um aviso e encerra sem falhar.
+
+on:
+  schedule:
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.c.outputs.enabled }}
+    steps:
+      - id: c
+        env:
+          KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DSNS: ${{ secrets.DB_DSNS }}
+        run: |
+          if [ -n "$KEY" ] && [ -n "$DSNS" ]; then echo "enabled=true" >> "$GITHUB_OUTPUT";
+          else echo "enabled=false" >> "$GITHUB_OUTPUT"; echo "::notice::ANTHROPIC_API_KEY ou DB_DSNS ausente — rotina pulada"; fi
+
+  analyze:
+    needs: guard
+    if: needs.guard.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar cliente PostgreSQL
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Coletar estatísticas de queries e scans
+        env:
+          DB_DSNS: ${{ secrets.DB_DSNS }}
+        run: |
+          set +e
+          : > db-stats.txt
+          for DSN in $DB_DSNS; do
+            echo "===================================================" >> db-stats.txt
+            echo "BANCO: $(echo "$DSN" | sed -E 's#//[^@]*@#//***@#')" >> db-stats.txt
+            echo "--- TOP 20 queries por tempo total (pg_stat_statements) ---" >> db-stats.txt
+            psql "$DSN" -X -A -F '|' -P pager=off -c \
+              "SELECT calls, round(total_exec_time::numeric,1) AS total_ms, round(mean_exec_time::numeric,2) AS mean_ms, rows, left(query,300) AS query FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 20;" >> db-stats.txt 2>> db-stats.txt
+            echo "--- TOP 20 tabelas por full scan (pg_stat_user_tables) ---" >> db-stats.txt
+            psql "$DSN" -X -A -F '|' -P pager=off -c \
+              "SELECT relname, seq_scan, seq_tup_read, idx_scan, n_live_tup FROM pg_stat_user_tables WHERE seq_scan > 0 ORDER BY seq_tup_read DESC LIMIT 20;" >> db-stats.txt 2>> db-stats.txt
+          done
+          echo "Coletado: $(wc -l < db-stats.txt) linhas"
+
+      - name: Setup Node (skillfish)
+        uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Instalar skills
+        run: |
+          for s in postgres-patterns jpa-patterns benchmark database-migrations; do
+            npx -y skillfish@latest add affaan-m/everything-claude-code "$s" || true
+          done
+          mkdir -p .claude/skills && cp -r ~/.claude/skills/* .claude/skills/ 2>/dev/null || true
+
+      - name: Analisar banco e abrir issue (IA)
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Leia db-stats.txt (estatísticas de pg_stat_statements e pg_stat_user_tables por banco).
+            Use as skills postgres-patterns, jpa-patterns, benchmark e database-migrations.
+
+            Produza uma análise e ABRA UMA ISSUE (título: "Análise diária de banco — <data UTC>", label "monitoring"):
+            - Identifique onde o banco está sendo MAIS exigido (queries com maior tempo total e maior número de chamadas), por banco.
+            - Aponte FULL TABLE SCANS relevantes (seq_scan alto com idx_scan baixo) e proponha índices concretos.
+            - Detecte assinaturas de N+1 (mesma query repetida muitas vezes com alto `calls`) e proponha fetch join / batch / EntityGraph.
+            - Liste as 5 ações de maior impacto/menor risco no topo, com o SQL de índice sugerido quando aplicável.
+            Se as estatísticas estiverem vazias, abra uma issue curta indicando que não houve dados (verificar pg_stat_statements).
+          claude_args: |
+            --model claude-sonnet-4-6
+            --max-turns 20
+            --allowedTools "Read,Grep,Glob,Bash(gh:*)"
