@@ -29,7 +29,7 @@
 3. ✅ Escrever `docs/telemetry/CONTRACT.md`.
 4. ✅ Linkar em `README.md` e `CLAUDE.md`.
 5. ✅ Criar PRD e este PLAN.
-6. ⬜ Atualizar `state.md`; abrir o PR `T-005: …`; preencher o nº do PR aqui e no PRD.
+6. ✅ Atualizar `state.md`; abrir o PR [#5](https://github.com/mclovin137/Horus/pull/5); nº preenchido aqui e no PRD.
 
 ## Verificação / testes
 

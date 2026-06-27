@@ -6,7 +6,7 @@
 | **Fase do roadmap** | Fase 0 — Fundação |
 | **Status** | `Em progresso` |
 | **Branch** | `task/T-005-telemetry-conventions` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | [#5](https://github.com/mclovin137/Horus/pull/5) |
 | **Depende de** | `T-001` |
 | **Requisitos atendidos** | RF-029, RF-H-004 (+ guia RF-030, RF-H-001/002/003/016, RNF-008, RNF-H-002) |
 | **ADRs relacionados** | ADR-0007, ADR-0009, ADR-0010, ADR-0013 |
