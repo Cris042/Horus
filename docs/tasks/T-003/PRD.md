@@ -6,7 +6,7 @@
 | **Fase do roadmap** | Fase 0 — Fundação |
 | **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-003-docker-compose-dev` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | [#6](https://github.com/mclovin137/Horus/pull/6) |
 | **Depende de** | `T-001` |
 | **Requisitos atendidos** | RF-032 (+ guia RF-031, RF-H-003, ADR-0010) |
 | **ADRs relacionados** | ADR-0004, ADR-0010, ADR-0012 |

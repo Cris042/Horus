@@ -32,7 +32,7 @@
 4. ✅ Ligar `Makefile` (`up`/`down`/`ps`/`logs`/`restart`/`clean`) ao compose.
 5. ✅ Atualizar `deploy/README.md`.
 6. ✅ Validar `docker compose ... config -q` (sem erro).
-7. ⬜ Atualizar `state.md`; abrir o PR `T-003: …`; preencher o nº do PR aqui e no PRD.
+7. ✅ Atualizar `state.md`; abrir o PR [#6](https://github.com/mclovin137/Horus/pull/6); nº preenchido aqui e no PRD.
 
 ## Verificação / testes
 
