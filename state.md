@@ -7,21 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-27 |
-| **Branch atual** | `task/T-107-saga-orchestrator` |
-| **Fase do roadmap** | Fase 1 — Microsserviços de domínio |
-| **Task ativa** | `T-107` — SAGA (orquestração) (em revisão (PR)) |
+| **Branch atual** | `main` |
+| **Fase do roadmap** | Fase 1 (completa) → Fase 4 (telemetria) |
+| **Task ativa** | — (próxima: `T-404`/`T-405`) |
 
 ---
 
 ## 🟢 Última entrega (mergeada)
 
-**`T-105` — migrações Flyway independentes por banco (entregue via [PR #12](https://github.com/mclovin137/Horus/pull/12), mergeada em `main`).** Hardening Flyway (`validate-on-migrate` + `clean-disabled`) nos 3 serviços + doc `docs/architecture/db-migrations.md` (RF-028/RNF-015). **CI verde.**
-
-> 🔄 **Em revisão:** **`T-107`** — primeiro fluxo **SAGA** cross-service (`pagar → emitir NF`) por orquestração (ADR-0013), no novo módulo `services/saga-orchestrator`: estado persistido em `saga_db`, passos via REST client (aprovar pagamento → emitir NF), **compensação** (estorno) idempotente na falha, spans correlacionados. Escolha do usuário: **orquestrador próprio** (não LRA).
+**`T-107` — SAGA por orquestração, fluxo pagar→emitir NF (entregue via [PR #13](https://github.com/mclovin137/Horus/pull/13), mergeada em `main`).**
+- Novo módulo `services/saga-orchestrator`: estado persistido em `saga_db`, passos via REST client (aprovar pagamento → emitir NF), **compensação** (estorno) idempotente na falha, spans correlacionados. Orquestrador próprio (não LRA — escolha do usuário, alternativa do ADR-0013). **CI verde** (teste feliz + compensação).
+- ✅ **Fase 1 completa** (scaffold + 3 domínios + migrações + SAGA) e primeira camada de telemetria (T-401) entregues.
 
 ## ▶️ Próxima ação
 
-**`T-107`** **em revisão** (PR); build/test-compile verdes. Caminho crítico de telemetria segue em **`T-404`** (Collector/backends — config aprofundada) e **`T-405`** (correlação ponta a ponta por `trace_id`, agora com SAGA real para visualizar). Em paralelo restam **`T-106`** (isolamento de credenciais), **`T-402`/`T-403`** (FastAPI/LB e worker Rust) e **`T-507`** (visualização da SAGA no Horus).
+Caminho crítico de telemetria: **`T-404`** (OTel Collector + backends — config aprofundada de roteamento/retention) e **`T-405`** (validar **correlação ponta a ponta** por `trace_id`: request→query→log, agora com uma **SAGA real** para visualizar). Em paralelo restam **`T-106`** (isolamento de credenciais), **`T-402`/`T-403`** (FastAPI/LB e worker Rust) e **`T-507`** (visualização da SAGA no Horus — RF-H-016).
 
 > ⚠️ **Nota técnica (vale p/ T-103/104):** entidades Panache geram id via **sequência `<tabela>_seq`** (PooledLo, INCREMENT 50) — as migrações Flyway devem criar a sequência (não usar coluna IDENTITY), senão `INSERT` falha em `nextval`.
 
@@ -31,7 +31,9 @@
 
 ## 📒 Log de entregas (mais recente primeiro)
 
-| 2026-06-27 | `T-107` | SAGA (orquestração) — fluxo pagar→emitir NF: módulo `saga-orchestrator` (estado persistido em `saga_db`, clients REST, compensação por estorno, teste feliz+compensação) | `task/T-107-saga-orchestrator` | [#13](https://github.com/mclovin137/Horus/pull/13) | 🔄 Em revisão (PR) |
+| Data | Task | Entrega | Branch | PR | Status |
+|---|---|---|---|---|---|
+| 2026-06-27 | `T-107` | SAGA (orquestração) — fluxo pagar→emitir NF: módulo `saga-orchestrator` (estado persistido em `saga_db`, clients REST, compensação por estorno, teste feliz+compensação) | `task/T-107-saga-orchestrator` | [#13](https://github.com/mclovin137/Horus/pull/13) | ✅ Entregue |
 | 2026-06-27 | `T-105` | Migrações Flyway por banco (RF-028/RNF-015): hardening (`validate-on-migrate`, `clean-disabled`) nos 3 serviços + doc da estratégia | `task/T-105-flyway-migrations` | [#12](https://github.com/mclovin137/Horus/pull/12) | ✅ Entregue |
 | 2026-06-27 | `T-401` | Instrumentação OTel dos 3 serviços (HTTP + JDBC/Hibernate, logs JSON correlacionados, OTLP→Collector); contrato T-005 na camada de serviços | `task/T-401-otel-services` | [#11](https://github.com/mclovin137/Horus/pull/11) | ✅ Entregue |
 | 2026-06-27 | `T-104` | Invoice Service (domínio): receber emissão, gerar NF simulada, registrar resultado, listar, reprocessar (RF-016..020); entidade `NotaFiscal`, REST+validação, teste de fluxo | `task/T-104-invoice-domain` | [#10](https://github.com/mclovin137/Horus/pull/10) | ✅ Entregue |
