@@ -26,7 +26,7 @@
 2. ✅ Escrever `nginx.conf` (roteamento por prefixo, passthrough de `traceparent`, `resolver`+variável).
 3. ✅ Documentar (`deploy/lb/README.md`): roteamento, observabilidade, ativação em T-801.
 4. ✅ Validar sintaxe: `nginx -t` → **ok**.
-5. ⬜ Atualizar `state.md`; abrir o PR `T-201: …`; preencher o nº do PR aqui e no PRD.
+5. ✅ Atualizar `state.md`; abrir o PR [#17](https://github.com/mclovin137/Horus/pull/17); nº preenchido aqui e no PRD.
 
 ## Verificação / testes
 

@@ -6,7 +6,7 @@
 | **Fase do roadmap** | Fase 2 — Entrada e carga |
 | **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-201-load-balancer` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | [#17](https://github.com/mclovin137/Horus/pull/17) |
 | **Depende de** | `T-101` |
 | **Requisitos atendidos** | RF-005, RNF-006 |
 | **ADRs relacionados** | ADR-0007 (OTel) — LB repassa contexto |
