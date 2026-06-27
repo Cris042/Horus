@@ -7,21 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-27 |
-| **Branch atual** | `task/T-401-otel-services` |
+| **Branch atual** | `main` |
 | **Fase do roadmap** | Fase 4 — Telemetria |
-| **Task ativa** | `T-401` — instrumentação OTel dos 3 serviços (em revisão (PR)) |
+| **Task ativa** | — (próxima: `T-404`/`T-405`, ou `T-105`/`T-107` em paralelo) |
 
 ---
 
 ## 🟢 Última entrega (mergeada)
 
-**`T-104` — domínio do Invoice Service (entregue via [PR #10](https://github.com/mclovin137/Horus/pull/10), mergeada em `main`).** Com isso, **os 3 serviços de domínio da Fase 1 estão completos** (Prontuário T-102, Payment T-103, Invoice T-104).
-
-> 🔄 **Em revisão:** **`T-401`** — instrumentação OTel dos 3 serviços Quarkus: traces HTTP + **JDBC/Hibernate** (span por query, `db.query.text` parametrizado), logs JSON correlacionados por `trace_id`, exportação OTLP para o Collector. Operacionaliza o contrato T-005 na camada de serviços.
+**`T-401` — instrumentação OTel dos 3 serviços Quarkus (entregue via [PR #11](https://github.com/mclovin137/Horus/pull/11), mergeada em `main`).**
+- `quarkus-opentelemetry` + `quarkus-logging-json` nos 3 serviços; OTLP por perfil (`%dev` localhost / `%prod` collector), `service.name` canônico + `service.namespace=medrec`, **span por query JDBC** (`db.query.text` parametrizado — RF-H-002), **logs JSON** correlacionados, SDK OTel desligado em teste. **CI verde** (testes de fluxo intactos).
+- ✅ Fase 1 (domínio dos 3 serviços) + primeira camada de telemetria (T-401) entregues.
 
 ## ▶️ Próxima ação
 
-**`T-401`** **em revisão** (PR); build de produção dos 3 módulos verde (extensões OTel resolvem). Depois, no caminho crítico: **`T-404`** (Collector + backends — config aprofundada) e **`T-405`** (validar correlação ponta a ponta por `trace_id`). Em paralelo restam **`T-105`** (migrações consolidadas/`RF-028`), **`T-106`** (isolamento), **`T-107`** (SAGA) e **`T-402`/`T-403`** (instrumentação FastAPI/LB e worker Rust).
+Caminho crítico de telemetria: **`T-404`** (OTel Collector + backends — config aprofundada de roteamento/retention) e **`T-405`** (validar **correlação ponta a ponta** por `trace_id`: request→query→log). Em paralelo restam **`T-105`** (migrações consolidadas/`RF-028`), **`T-106`** (isolamento), **`T-107`** (SAGA cross-service) e **`T-402`/`T-403`** (instrumentação FastAPI/LB e worker Rust).
 
 > ⚠️ **Nota técnica (vale p/ T-103/104):** entidades Panache geram id via **sequência `<tabela>_seq`** (PooledLo, INCREMENT 50) — as migrações Flyway devem criar a sequência (não usar coluna IDENTITY), senão `INSERT` falha em `nextval`.
 
@@ -31,7 +31,7 @@
 
 ## 📒 Log de entregas (mais recente primeiro)
 
-| 2026-06-27 | `T-401` | Instrumentação OTel dos 3 serviços (HTTP + JDBC/Hibernate, logs JSON correlacionados, OTLP→Collector); contrato T-005 na camada de serviços | `task/T-401-otel-services` | [#11](https://github.com/mclovin137/Horus/pull/11) | 🔄 Em revisão (PR) |
+| 2026-06-27 | `T-401` | Instrumentação OTel dos 3 serviços (HTTP + JDBC/Hibernate, logs JSON correlacionados, OTLP→Collector); contrato T-005 na camada de serviços | `task/T-401-otel-services` | [#11](https://github.com/mclovin137/Horus/pull/11) | ✅ Entregue |
 | 2026-06-27 | `T-104` | Invoice Service (domínio): receber emissão, gerar NF simulada, registrar resultado, listar, reprocessar (RF-016..020); entidade `NotaFiscal`, REST+validação, teste de fluxo | `task/T-104-invoice-domain` | [#10](https://github.com/mclovin137/Horus/pull/10) | ✅ Entregue |
 | 2026-06-27 | `T-103` | Payment Service (domínio): carteira/saldo, movimentações, aprovar/rejeitar/estornar, histórico (RF-011..015); entidades `Movimentacao`/`Pagamento`, migração `V2`, REST+validação, teste de fluxo | `task/T-103-payment-domain` | [#9](https://github.com/mclovin137/Horus/pull/9) | ✅ Entregue |
 | 2026-06-27 | `T-102` | Prontuário Service (domínio): criar/consultar prontuário, registrar/atualizar/finalizar consulta (RF-006..010); entidade `Consulta`, migração `V2`, REST+validação, teste de fluxo | `task/T-102-prontuario-domain` | [#8](https://github.com/mclovin137/Horus/pull/8) | ✅ Entregue |
