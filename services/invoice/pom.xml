@@ -25,6 +25,11 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-rest-jackson</artifactId>
         </dependency>
+        <!-- Validação de entrada (Bean Validation) -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-hibernate-validator</artifactId>
+        </dependency>
         <!-- Persistência: Hibernate ORM Panache + PostgreSQL + Flyway -->
         <dependency>
             <groupId>io.quarkus</groupId>

@@ -7,21 +7,20 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-27 |
-| **Branch atual** | `task/T-103-payment-domain` |
+| **Branch atual** | `task/T-104-invoice-domain` |
 | **Fase do roadmap** | Fase 1 — Microsserviços de domínio |
-| **Task ativa** | `T-103` — Payment Service (domínio) (em revisão (PR)) |
+| **Task ativa** | `T-104` — Invoice Service (domínio) (em revisão (PR)) |
 
 ---
 
 ## 🟢 Última entrega (mergeada)
 
-**`T-102` — domínio do Prontuário Service (entregue via [PR #8](https://github.com/mclovin137/Horus/pull/8), mergeada em `main`).**
-- Criar/consultar prontuário (RF-006/007) + registrar/atualizar/finalizar consulta (RF-008..010), só em `prontuario_db` (RF-025). Entidade `Consulta`+enum, migração `V2`, serviços transacionais (imutabilidade pós-finalização), REST+DTOs+validação (404/409/400), teste de fluxo `@QuarkusTest`.
-- 2 correções durante o PR: migrações com **sequência** para o id do Panache (não IDENTITY) e `@Consumes` por método (corrige 415 no `finalizar`). **CI verde**.
+**`T-103` — domínio do Payment Service (entregue via [PR #9](https://github.com/mclovin137/Horus/pull/9), mergeada em `main`).**
+- Carteira/saldo (RF-011), movimentações entrada/saída (RF-012), aprovar/rejeitar (RF-013), estornar (RF-014), histórico (RF-015), só em `payment_db` (RF-026). Entidades `Movimentacao`/`Pagamento`+enums, migração `V2` (+ correção `V1` p/ sequência), serviços transacionais (saldo nunca negativo), REST+validação (404/409/400), teste de fluxo. **CI verde**.
 
 ## ▶️ Próxima ação
 
-**`T-103`** (Payment — carteira/saldo, movimentações, aprovar/rejeitar/estornar, histórico — RF-011..015, RF-026) **em revisão** (PR); build de produção verde. Depois **`T-104`** (Invoice — RF-016..020, RF-027), **`T-105`** (migrações consolidadas), **`T-107`** (SAGA) e **`T-401`** (OTel HTTP+JDBC).
+**`T-104`** (Invoice — receber emissão, gerar NF simulada, registrar resultado, listar, reprocessar — RF-016..020, RF-027) **em revisão** (PR). Conclui os 3 serviços de domínio (T-102/103/104). Depois **`T-105`** (migrações consolidadas), **`T-107`** (SAGA cross-service) e **`T-401`** (instrumentação OTel HTTP+JDBC).
 
 > ⚠️ **Nota técnica (vale p/ T-103/104):** entidades Panache geram id via **sequência `<tabela>_seq`** (PooledLo, INCREMENT 50) — as migrações Flyway devem criar a sequência (não usar coluna IDENTITY), senão `INSERT` falha em `nextval`.
 
@@ -31,9 +30,8 @@
 
 ## 📒 Log de entregas (mais recente primeiro)
 
-| Data | Task | Entrega | Branch | PR | Status |
-|---|---|---|---|---|---|
-| 2026-06-27 | `T-103` | Payment Service (domínio): carteira/saldo, movimentações, aprovar/rejeitar/estornar, histórico (RF-011..015); entidades `Movimentacao`/`Pagamento`, migração `V2`, REST+validação, teste de fluxo | `task/T-103-payment-domain` | [#9](https://github.com/mclovin137/Horus/pull/9) | 🔄 Em revisão (PR) |
+| 2026-06-27 | `T-104` | Invoice Service (domínio): receber emissão, gerar NF simulada, registrar resultado, listar, reprocessar (RF-016..020); entidade `NotaFiscal`, REST+validação, teste de fluxo | `task/T-104-invoice-domain` | `#<n>` | 🔄 Em revisão (PR) |
+| 2026-06-27 | `T-103` | Payment Service (domínio): carteira/saldo, movimentações, aprovar/rejeitar/estornar, histórico (RF-011..015); entidades `Movimentacao`/`Pagamento`, migração `V2`, REST+validação, teste de fluxo | `task/T-103-payment-domain` | [#9](https://github.com/mclovin137/Horus/pull/9) | ✅ Entregue |
 | 2026-06-27 | `T-102` | Prontuário Service (domínio): criar/consultar prontuário, registrar/atualizar/finalizar consulta (RF-006..010); entidade `Consulta`, migração `V2`, REST+validação, teste de fluxo | `task/T-102-prontuario-domain` | [#8](https://github.com/mclovin137/Horus/pull/8) | ✅ Entregue |
 | 2026-06-27 | `T-101` | Scaffold Quarkus dos 3 serviços (REST + Panache + Flyway, banco por serviço, smoke test); **Quarkus 3.20→3.37** (Panache sob JDK 25) | `task/T-101-scaffold-services` | [#7](https://github.com/mclovin137/Horus/pull/7) | ✅ Entregue |
 | 2026-06-27 | `T-003` | `docker-compose` de dev (Postgres ×3, RabbitMQ, OTel Collector, Jaeger, Loki, Prometheus) + `Makefile` (`make up`) + configs de telemetria | `task/T-003-docker-compose-dev` | [#6](https://github.com/mclovin137/Horus/pull/6) | ✅ Entregue |
