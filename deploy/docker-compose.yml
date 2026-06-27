@@ -17,11 +17,10 @@ name: horus-dev
 x-postgres-common: &postgres-common
   image: postgres:17.2-alpine
   restart: unless-stopped
-  environment:
-    POSTGRES_USER: horus
-    POSTGRES_PASSWORD: horus
+  # Credenciais SEGREGADAS por serviço (RNF-003): cada banco é uma instância isolada com seu
+  # próprio usuário/senha (definidos em cada serviço). Healthcheck usa o usuário do serviço.
   healthcheck:
-    test: ["CMD-SHELL", "pg_isready -U horus -d $${POSTGRES_DB}"]
+    test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
     interval: 10s
     timeout: 5s
     retries: 5
@@ -32,8 +31,8 @@ services:
   postgres-prontuario:
     <<: *postgres-common
     environment:
-      POSTGRES_USER: horus
-      POSTGRES_PASSWORD: horus
+      POSTGRES_USER: prontuario_svc
+      POSTGRES_PASSWORD: prontuario_pw
       POSTGRES_DB: prontuario_db
     ports: ["5432:5432"]
     volumes: ["pg-prontuario:/var/lib/postgresql/data"]
@@ -41,8 +40,8 @@ services:
   postgres-payment:
     <<: *postgres-common
     environment:
-      POSTGRES_USER: horus
-      POSTGRES_PASSWORD: horus
+      POSTGRES_USER: payment_svc
+      POSTGRES_PASSWORD: payment_pw
       POSTGRES_DB: payment_db
     ports: ["5433:5432"]
     volumes: ["pg-payment:/var/lib/postgresql/data"]
@@ -50,8 +49,8 @@ services:
   postgres-invoice:
     <<: *postgres-common
     environment:
-      POSTGRES_USER: horus
-      POSTGRES_PASSWORD: horus
+      POSTGRES_USER: invoice_svc
+      POSTGRES_PASSWORD: invoice_pw
       POSTGRES_DB: invoice_db
     ports: ["5434:5432"]
     volumes: ["pg-invoice:/var/lib/postgresql/data"]
@@ -59,8 +58,8 @@ services:
   postgres-saga:
     <<: *postgres-common
     environment:
-      POSTGRES_USER: horus
-      POSTGRES_PASSWORD: horus
+      POSTGRES_USER: saga_svc
+      POSTGRES_PASSWORD: saga_pw
       POSTGRES_DB: saga_db
     ports: ["5435:5432"]
     volumes: ["pg-saga:/var/lib/postgresql/data"]
