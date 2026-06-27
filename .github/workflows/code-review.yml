@@ -13,13 +13,35 @@ permissions:
   contents: read
   pull-requests: write
   issues: write
+  id-token: write          # necessário para o OIDC do claude-code-action@v1
 
 concurrency:
   group: ai-review-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
+  # Porteiro: o review só roda se a secret ANTHROPIC_API_KEY estiver configurada.
+  # Sem ela, o job de review é PULADO (status neutro), em vez de falhar e bloquear/poluir o PR.
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.check.outputs.enabled }}
+    steps:
+      - name: Checar secret de IA
+        id: check
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::notice::ANTHROPIC_API_KEY ausente — review por IA pulado (configure em Settings -> Secrets and variables -> Actions)."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
   ai-review:
+    needs: gate
+    if: needs.gate.outputs.enabled == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (histórico completo para o diff)
