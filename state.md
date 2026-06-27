@@ -7,21 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-27 |
-| **Branch atual** | `task/T-106-db-isolation` |
-| **Fase do roadmap** | Fase 1 — Microsserviços de domínio |
-| **Task ativa** | `T-106` — isolamento (credenciais por serviço) (em revisão (PR)) |
+| **Branch atual** | `main` |
+| **Fase do roadmap** | Fase 1 **completa** → Fase 4 (telemetria) |
+| **Task ativa** | — (próxima: `T-404`/`T-405`) |
 
 ---
 
 ## 🟢 Última entrega (mergeada)
 
-**`T-107` — SAGA por orquestração, fluxo pagar→emitir NF (entregue via [PR #13](https://github.com/mclovin137/Horus/pull/13), mergeada em `main`).** Módulo `saga-orchestrator` (estado persistido, compensação por estorno). **CI verde.**
-
-> 🔄 **Em revisão:** **`T-106`** — isolamento de persistência (RNF-002/003): credenciais **segregadas por serviço** (`prontuario_svc`/`payment_svc`/`invoice_svc`/`saga_svc`) no compose e nos datasources, healthcheck por `$POSTGRES_USER`, e doc `docs/architecture/db-isolation.md`. Fecha a Fase 1 do lado de dados.
+**`T-106` — isolamento de persistência (entregue via [PR #14](https://github.com/mclovin137/Horus/pull/14), mergeada em `main`).**
+- Credenciais **segregadas por serviço** (`prontuario_svc`/`payment_svc`/`invoice_svc`/`saga_svc`) no compose e nos datasources; healthcheck por `$POSTGRES_USER`; doc `docs/architecture/db-isolation.md` (RNF-002/003). **CI verde.**
+- ✅ **Fase 1 COMPLETA** — scaffold (T-101), 3 domínios (T-102/103/104), migrações (T-105), SAGA (T-107) e isolamento (T-106).
 
 ## ▶️ Próxima ação
 
-**`T-106`** **em revisão** (PR); build verde. Caminho crítico de telemetria: **`T-404`** (OTel Collector + backends — config aprofundada) e **`T-405`** (validar **correlação ponta a ponta** por `trace_id`, com a SAGA real para visualizar). Em paralelo restam **`T-402`/`T-403`** (FastAPI/LB e worker Rust) e **`T-507`** (visualização da SAGA — RF-H-016).
+Caminho crítico de **telemetria**: **`T-404`** (OTel Collector + backends — config aprofundada de roteamento/retention) e **`T-405`** (validar **correlação ponta a ponta** por `trace_id`: request→query→log, com a **SAGA real** para visualizar). Em paralelo restam **`T-402`/`T-403`** (instrumentação FastAPI/LB e worker Rust) e **`T-507`** (visualização da SAGA no Horus — RF-H-016).
 
 > ⚠️ **Nota técnica (vale p/ T-103/104):** entidades Panache geram id via **sequência `<tabela>_seq`** (PooledLo, INCREMENT 50) — as migrações Flyway devem criar a sequência (não usar coluna IDENTITY), senão `INSERT` falha em `nextval`.
 
@@ -33,7 +33,7 @@
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
-| 2026-06-27 | `T-106` | Isolamento de persistência (RNF-002/003): credenciais segregadas por serviço (compose + datasources), healthcheck por `$POSTGRES_USER`, doc `db-isolation.md` | `task/T-106-db-isolation` | [#14](https://github.com/mclovin137/Horus/pull/14) | 🔄 Em revisão (PR) |
+| 2026-06-27 | `T-106` | Isolamento de persistência (RNF-002/003): credenciais segregadas por serviço (compose + datasources), healthcheck por `$POSTGRES_USER`, doc `db-isolation.md` | `task/T-106-db-isolation` | [#14](https://github.com/mclovin137/Horus/pull/14) | ✅ Entregue |
 | 2026-06-27 | `T-107` | SAGA (orquestração) — fluxo pagar→emitir NF: módulo `saga-orchestrator` (estado persistido em `saga_db`, clients REST, compensação por estorno, teste feliz+compensação) | `task/T-107-saga-orchestrator` | [#13](https://github.com/mclovin137/Horus/pull/13) | ✅ Entregue |
 | 2026-06-27 | `T-105` | Migrações Flyway por banco (RF-028/RNF-015): hardening (`validate-on-migrate`, `clean-disabled`) nos 3 serviços + doc da estratégia | `task/T-105-flyway-migrations` | [#12](https://github.com/mclovin137/Horus/pull/12) | ✅ Entregue |
 | 2026-06-27 | `T-401` | Instrumentação OTel dos 3 serviços (HTTP + JDBC/Hibernate, logs JSON correlacionados, OTLP→Collector); contrato T-005 na camada de serviços | `task/T-401-otel-services` | [#11](https://github.com/mclovin137/Horus/pull/11) | ✅ Entregue |
