@@ -28,7 +28,7 @@
 3. ✅ Atualizar o teste da SAGA (sucesso solicita; compensação não).
 4. ✅ Doc dos produtores por fluxo.
 5. ✅ Validação local: build de produção + test-compile verdes.
-6. ⬜ Atualizar `state.md`; abrir o PR `T-302: …`; preencher o nº do PR aqui e no PRD.
+6. ✅ Atualizar `state.md`; abrir o PR [#16](https://github.com/mclovin137/Horus/pull/16); nº preenchido aqui e no PRD.
 
 ## Verificação / testes
 

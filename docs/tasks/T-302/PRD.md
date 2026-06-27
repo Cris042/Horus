@@ -6,7 +6,7 @@
 | **Fase do roadmap** | Fase 3 — Mensageria e worker |
 | **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-302-saga-report-publication` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | [#16](https://github.com/mclovin137/Horus/pull/16) |
 | **Depende de** | `T-301` |
 | **Requisitos atendidos** | RF-021 |
 | **ADRs relacionados** | ADR-0004 (RabbitMQ restrito a relatórios), ADR-0013 (SAGA), ADR-0009 (tracing) |
