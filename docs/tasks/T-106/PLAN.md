@@ -30,7 +30,7 @@
 3. ✅ Datasource user/pass por serviço (4 serviços).
 4. ✅ Documentar em `docs/architecture/db-isolation.md`.
 5. ✅ Validação: `compose config` ok; build de produção dos 4 módulos verde.
-6. ⬜ Atualizar `state.md`; abrir o PR `T-106: …`; preencher o nº do PR aqui e no PRD.
+6. ✅ Atualizar `state.md`; abrir o PR [#14](https://github.com/mclovin137/Horus/pull/14); nº preenchido aqui e no PRD.
 
 ## Verificação / testes
 

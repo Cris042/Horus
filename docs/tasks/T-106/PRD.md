@@ -6,7 +6,7 @@
 | **Fase do roadmap** | Fase 1 — Microsserviços de domínio |
 | **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-106-db-isolation` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | [#14](https://github.com/mclovin137/Horus/pull/14) |
 | **Depende de** | `T-105` |
 | **Requisitos atendidos** | RNF-002, RNF-003 |
 | **ADRs relacionados** | ADR-0002 (banco por serviço) |
