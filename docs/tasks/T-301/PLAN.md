@@ -33,7 +33,7 @@
 4. ✅ Teste com conector in-memory (publica 1 msg; falha não publica).
 5. ✅ Documentar o contrato (corpo + tracing nos headers).
 6. ✅ Validação local: build de produção + test-compile verdes.
-7. ⬜ Atualizar `state.md`; abrir o PR `T-301: …`; preencher o nº do PR aqui e no PRD.
+7. ✅ Atualizar `state.md`; abrir o PR [#15](https://github.com/mclovin137/Horus/pull/15); nº preenchido aqui e no PRD.
 
 ## Verificação / testes
 

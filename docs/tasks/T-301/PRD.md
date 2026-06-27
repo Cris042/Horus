@@ -6,7 +6,7 @@
 | **Fase do roadmap** | Fase 3 — Mensageria e worker |
 | **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-301-rabbitmq-report-contract` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | [#15](https://github.com/mclovin137/Horus/pull/15) |
 | **Depende de** | `T-101` |
 | **Requisitos atendidos** | RF-021, RNF-011 (base p/ RF-022/T-303) |
 | **ADRs relacionados** | ADR-0004 (RabbitMQ restrito a relatórios), ADR-0007/0009 (tracing) |
