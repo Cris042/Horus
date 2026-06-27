@@ -37,17 +37,17 @@ The Maven build is a parent/aggregator at the repo root (`pom.xml`, `packaging=p
 
 ## Build & Run
 
-The root `pom.xml` is a parent/aggregator (Java 25, Quarkus BOM in `dependencyManagement`); the buildable app lives in the `horus/` module. No Maven wrapper is committed yet (`.mvn/` is empty), so use a system `mvn` (3.9+). Build the whole tree from the root, or the module directly.
+The root `pom.xml` is a parent/aggregator (Java 25, Quarkus BOM in `dependencyManagement`); the buildable app lives in the `horus/` module. A **Maven Wrapper is committed** (`./mvnw`, pinned to Maven 3.9.9 via `.mvn/wrapper/maven-wrapper.properties`), so builds are reproducible without a host `mvn` — prefer `./mvnw`. Build the whole tree from the root, or the module directly.
 
-- Dev mode (live reload): `mvn -pl horus quarkus:dev` (or `cd horus && mvn quarkus:dev`)
-- Build + test: `mvn package` (root, all modules) or `mvn -pl horus -am package`
+- Dev mode (live reload): `./mvnw -pl horus quarkus:dev`
+- Build + test: `./mvnw package` (root, all modules) or `./mvnw -pl horus -am package`
 - Run packaged: `java -jar horus/target/quarkus-app/quarkus-run.jar`
-- Tests: JUnit 5 + REST Assured via Quarkus (`@QuarkusTest`); `mvn test`.
+- Tests: JUnit 5 + REST Assured via Quarkus (`@QuarkusTest`); `./mvnw test`.
 - Smoke once running: `GET http://localhost:8080/horus/info`, `GET /q/health`.
 
-> Some environments here have no Maven/network — pin versions per `lib.md` and run the real build in CI or a dev box with internet.
+> **CI (T-004):** `.github/workflows/ci.yml` runs `./mvnw … verify` (JDK 25 + Maven cache) on every push to `main` and every PR — it gates the flow and **validated the T-002 bootstrap** (local + CI: Java 25.0.3 + Quarkus 3.20.0 → BUILD SUCCESS). The first `./mvnw` call downloads Maven 3.9.9; if a host `~/.m2` has root-owned dirs, point at a fresh repo with `-Dmaven.repo.local=<dir>`.
 
 ## Key constraints
 
-- **Java 25** (`maven.compiler.release = 25`, set once in the parent `pom.xml`). The old placeholder used Java 25 **preview** features (instance `main`, implicit `IO.println`); the Quarkus bootstrap **dropped them** (T-002) — Quarkus owns the entry point, so no `--enable-preview` is needed. If Quarkus 3.20 turns out not to support JDK 25, the fallback is Java 21 (LTS): change `maven.compiler.release` in the parent only (see `lib.md` and `docs/tasks/T-002/PRD.md`).
+- **Java 25** (`maven.compiler.release = 25`, set once in the parent `pom.xml`). The old placeholder used Java 25 **preview** features (instance `main`, implicit `IO.println`); the Quarkus bootstrap **dropped them** (T-002) — Quarkus owns the entry point, so no `--enable-preview` is needed. **Quarkus 3.20 on JDK 25 is confirmed working** (T-004 build: local + CI, BUILD SUCCESS), so the Java 21 (LTS) fallback is no longer expected to be needed — it stays documented as a one-line escape hatch (change `maven.compiler.release` in the parent only; see `lib.md` and `docs/tasks/T-002/PRD.md`).
 - Base package `org.example`; the Horus module uses `org.example.horus`. Maven coordinates: parent `org.example:horus-parent`, app module `org.example:horus`.
