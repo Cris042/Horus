@@ -7,7 +7,7 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-27 |
-| **Branch atual** | `task/T-001-estrutura-monorepo` (em revisão — PR) |
+| **Branch atual** | `task/T-001-estrutura-monorepo` (em revisão — [PR #1](https://github.com/mclovin137/Horus/pull/1)) |
 | **Fase do roadmap** | Fase 0 — Fundação |
 | **Task ativa** | `T-001` (em revisão — PR) |
 
@@ -23,7 +23,7 @@
 
 ## ▶️ Próxima ação
 
-Revisar e **mergear o PR de `T-001`**. Em seguida iniciar **`T-002` — Bootstrap Quarkus do Horus** (substituir `src/main/java/org/example/Main.java` e reorganizar o `pom.xml`, movendo o build para `horus/`), na branch `task/T-002-bootstrap-quarkus`.
+Revisar e **mergear o [PR #1](https://github.com/mclovin137/Horus/pull/1) de `T-001`**. Em seguida iniciar **`T-002` — Bootstrap Quarkus do Horus** (substituir `src/main/java/org/example/Main.java` e reorganizar o `pom.xml`, movendo o build para `horus/`), na branch `task/T-002-bootstrap-quarkus`.
 *Pré-requisito para os workflows de IA:* configurar o secret `ANTHROPIC_API_KEY` (e, para as rotinas de logs/banco, `LOKI_URL` / `DB_DSNS`) em **Settings → Secrets → Actions**.
 
 ---
@@ -32,7 +32,7 @@ Revisar e **mergear o PR de `T-001`**. Em seguida iniciar **`T-002` — Bootstra
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
-| 2026-06-27 | `T-001` | Estrutura de monorepo (diretórios + READMEs por componente, `Makefile`, `.editorconfig`, mapa no README) | `task/T-001-estrutura-monorepo` | _(a abrir)_ | 🟡 Em revisão (PR) |
+| 2026-06-27 | `T-001` | Estrutura de monorepo (diretórios + READMEs por componente, `Makefile`, `.editorconfig`, mapa no README) | `task/T-001-estrutura-monorepo` | [#1](https://github.com/mclovin137/Horus/pull/1) | 🟡 Em revisão (PR) |
 | 2026-06-26 | — | Publicação do projeto no Git/GitHub | `main` | — | ✅ Entregue |
 | 2026-06-26 | — | Reversão de SAGA: ADR-0006 → ADR-0013 (adotar SAGA) + cascata | `main` | — | ✅ Entregue |
 | 2026-06-26 | — | CI/CD: review por IA em PR + 3 rotinas diárias de monitoramento + skills | `main` | — | ✅ Entregue |
