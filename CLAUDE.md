@@ -13,6 +13,7 @@ The design is fully documented in **`docs/`** and **`lib.md`** — read these be
 - `docs/adr/` — 12 Architecture Decision Records. ADR-0008..0011 + ADR-0013 (SAGA) are the new Horus decisions; ADR-0001..0005, 0007, 0012 are inherited from the source spec. (ADR-0006 "no SAGA" was removed when SAGA was adopted — see ADR-0013; numbering intentionally skips 0006.)
 - `docs/ROLES.md` — RBAC roles (human + machine + AI-agent roles).
 - `docs/ROADMAP.md` — phased plan broken into tasks (`T-xxx`) with requirement traceability and the critical path.
+- `docs/telemetry/CONTRACT.md` — the **telemetry contract** (T-005): canonical `service.name`s, W3C context over HTTP **and** RabbitMQ headers, span/log conventions, and PII rules. Read before any OTel/instrumentation work (Phases 4+).
 - `lib.md` — every dependency and target version, per component.
 
 Source of truth for the original spec: a Portuguese PDF (*Documento Consolidado de Escopo e Requisitos, v2.0*) on the user's desktop; its requirements are transcribed into `docs/PRD.md`.
