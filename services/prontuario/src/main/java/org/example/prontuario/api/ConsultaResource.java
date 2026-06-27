@@ -17,7 +17,6 @@ import org.example.prontuario.service.ConsultaService;
 /** Endpoints de consulta: consultar, atualizar (RF-009) e finalizar (RF-010). */
 @Path("/consultas")
 @Produces(MediaType.APPLICATION_JSON)
-@Consumes(MediaType.APPLICATION_JSON)
 public class ConsultaResource {
 
     @Inject
@@ -31,10 +30,12 @@ public class ConsultaResource {
 
     @PUT
     @Path("/{id}")
+    @Consumes(MediaType.APPLICATION_JSON)
     public ConsultaResponse atualizar(@PathParam("id") Long id, @Valid AtualizarConsultaRequest req) {
         return ConsultaResponse.from(consultas.atualizar(id, req.descricao()));
     }
 
+    /** Finalização não tem corpo de requisição (RF-010). */
     @POST
     @Path("/{id}/finalizar")
     public ConsultaResponse finalizar(@PathParam("id") Long id) {
