@@ -1,0 +1,14 @@
+# Prometheus — config de DEV (T-003, ADR-0010)
+#
+# Em dev as métricas chegam por **remote_write** a partir do OTel Collector
+# (`--web.enable-remote-write-receiver`), então não há `scrape_configs` de apps.
+# Mantém-se apenas o self-scrape do próprio Prometheus para sanidade.
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]

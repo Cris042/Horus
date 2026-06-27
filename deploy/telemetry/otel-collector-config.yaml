@@ -1,0 +1,57 @@
+# OpenTelemetry Collector (contrib) — config de DEV (T-003, ADR-0010)
+#
+# Único ponto de ingestão OTLP do projeto: recebe traces/logs/métricas de todos os
+# componentes e roteia para os backends — Jaeger (traces), Loki (logs), Prometheus (métricas).
+# A redação/sanitização de borda mais profunda (PII) é endereçada em T-406; aqui fica o
+# roteamento mínimo que faz `make up` entregar um pipeline funcional ponta a ponta.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 5s
+  memory_limiter:
+    check_interval: 5s
+    limit_percentage: 80
+    spike_limit_percentage: 25
+
+exporters:
+  # Traces → Jaeger (via OTLP nativo do Jaeger 2)
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+
+  # Logs → Loki (via OTLP HTTP; Loki 3 aceita OTLP em /otlp)
+  otlphttp/loki:
+    endpoint: http://loki:3100/otlp
+
+  # Métricas → Prometheus (via remote_write; receiver habilitado no Prometheus)
+  prometheusremotewrite:
+    endpoint: http://prometheus:9090/api/v1/write
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp/jaeger]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlphttp/loki]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [prometheusremotewrite]
+  telemetry:
+    logs:
+      level: info
