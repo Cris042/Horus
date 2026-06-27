@@ -12,6 +12,7 @@ public record CriarCarteiraRequest(
         @DecimalMin("0.00") BigDecimal saldoInicial) {
 
     public BigDecimal saldoInicialOuZero() {
-        return saldoInicial == null ? BigDecimal.ZERO : saldoInicial;
+        // Escala 2 fixa para representação monetária consistente (JSON sempre "0.00").
+        return saldoInicial == null ? BigDecimal.ZERO.setScale(2) : saldoInicial;
     }
 }
