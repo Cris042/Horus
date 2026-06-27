@@ -6,7 +6,7 @@
 | **Fase do roadmap** | Fase 0 — Fundação |
 | **Status** | `Em progresso` |
 | **Branch** | `task/T-002-bootstrap-quarkus` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | [`#3`](https://github.com/mclovin137/Horus/pull/3) |
 | **Depende de** | `T-001` |
 | **Requisitos atendidos** | RNF-014 |
 | **ADRs relacionados** | ADR-0008, ADR-0011 |

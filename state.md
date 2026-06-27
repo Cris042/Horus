@@ -7,7 +7,7 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-27 |
-| **Branch atual** | `task/T-002-bootstrap-quarkus` (em revisão — PR) |
+| **Branch atual** | `task/T-002-bootstrap-quarkus` (em revisão — [PR #3](https://github.com/mclovin137/Horus/pull/3)) |
 | **Fase do roadmap** | Fase 0 — Fundação |
 | **Task ativa** | `T-002` (em revisão — PR) |
 
@@ -35,7 +35,7 @@ Concluir a **Fase 0**. Recomendado iniciar por **`T-004` — CI: build/test por 
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
-| 2026-06-27 | `T-002` | Bootstrap Quarkus do Horus (parent/aggregator + módulo `horus` REST/health; remove `Main.java`) | `task/T-002-bootstrap-quarkus` | _(a abrir)_ | 🟡 Em revisão (PR) |
+| 2026-06-27 | `T-002` | Bootstrap Quarkus do Horus (parent/aggregator + módulo `horus` REST/health; remove `Main.java`) | `task/T-002-bootstrap-quarkus` | [#3](https://github.com/mclovin137/Horus/pull/3) | 🟡 Em revisão (PR) |
 | 2026-06-27 | — (fix) | `fix(ci)`: `id-token: write` + job `gate` de secret no review por IA | `fix/ai-review-oidc-permission` | [#2](https://github.com/mclovin137/Horus/pull/2) | ✅ Entregue |
 | 2026-06-27 | `T-001` | Estrutura de monorepo (diretórios + READMEs por componente, `Makefile`, `.editorconfig`, mapa no README) | `task/T-001-estrutura-monorepo` | [#1](https://github.com/mclovin137/Horus/pull/1) | ✅ Entregue |
 | 2026-06-26 | — | Publicação do projeto no Git/GitHub | `main` | — | ✅ Entregue |
