@@ -81,6 +81,7 @@ Cada componente tem seu próprio `README.md` (papel, stack e tasks). O `pom.xml`
 | [`docs/ROLES.md`](docs/ROLES.md) | Papéis (humanos, de máquina e de agentes de IA) + RBAC |
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | Plano em fases, tasks `T-xxx`, caminho crítico |
 | [`docs/WORKFLOW.md`](docs/WORKFLOW.md) | Fluxo de trabalho (processo canônico) |
+| [`docs/telemetry/CONTRACT.md`](docs/telemetry/CONTRACT.md) | **Contrato de telemetria** — convenções de logging/spans, propagação (HTTP+AMQP) e PII |
 | [`lib.md`](lib.md) | Dependências e versões por componente |
 | [`state.md`](state.md) | **Estado atual do projeto** (última entrega) |
 
