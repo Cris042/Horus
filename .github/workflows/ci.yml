@@ -1,0 +1,57 @@
+name: CI
+
+# Build + test + lint por componente do monorepo Horus (Fase 0 / T-004).
+#
+# Hoje só o módulo Java `horus/` é compilável. O worker (Rust, `worker/`) e o
+# load test (Python, `loadtest/`) ainda são scaffolding (ver seus READMEs); seus
+# jobs entram quando ganharem código real (T-303 e T-203, respectivamente).
+#
+# Este pipeline NÃO depende de segredos (ao contrário do AI review): ele sempre
+# roda e gateia os PRs com build/test reais. Usa o Maven Wrapper (`./mvnw`,
+# fixado em Maven 3.9.9) para um build reproduzível sem depender de um mvn do host.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-java:
+    name: Build, test & lint (Java / horus)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 25 (Temurin) + cache Maven
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Build + test + lint (Maven Wrapper)
+        # `verify` = compila + roda os testes (surefire). As flags de warning fazem
+        # o papel de lint leve (deprecation/unchecked nas nossas fontes) sem `-Werror`,
+        # para não quebrar o build por warnings vindos de libs no JDK 25.
+        run: >-
+          ./mvnw -B -ntp
+          -Dmaven.compiler.showWarnings=true
+          -Dmaven.compiler.showDeprecation=true
+          verify
+
+      - name: Publicar relatórios de teste (sempre)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: '**/target/surefire-reports/**'
+          if-no-files-found: ignore

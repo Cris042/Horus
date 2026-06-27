@@ -1,5 +1,7 @@
 # Horus 👁️ — Observabilidade Automatizada com IA
 
+[![CI](https://github.com/mclovin137/Horus/actions/workflows/ci.yml/badge.svg)](https://github.com/mclovin137/Horus/actions/workflows/ci.yml)
+
 > **Horus é o "olho que tudo vê" da aplicação.** Captura o **ciclo de vida completo de cada request e de cada query**, centraliza **todos os logs de erro** e usa **IA (Claude)** para resumir, em linguagem natural, o que está acontecendo no sistema — estado, explicação de traces, análise de causa raiz e detecção de anomalias.
 
 Este repositório contém **dois níveis**:

@@ -18,14 +18,14 @@ Catálogo de dependências de **todos os componentes** do projeto **Horus** (pla
 |---|---|---|
 | Java (OpenJDK) | **25 (LTS)** | Runtime dos serviços Quarkus e do Horus (configurado no `pom.xml`) |
 | Maven | **3.9.x** | Build dos módulos Java |
-| Maven Wrapper (`mvnw`) | 3.9.x | Build reproduzível (recomendado adicionar — hoje `.mvn/` está vazio) |
+| Maven Wrapper (`mvnw`) | **3.9.9** | Build reproduzível — **commitado** (T-004; variante `only-script`, sem jar no repo) |
 | Docker Engine | **27.x** | Empacotamento de contêineres |
 | Docker Compose | **2.3x** | Ambiente de desenvolvimento local |
 | Kubernetes | **1.3x** | Orquestração |
 | Helm | **3.16.x** | Empacotamento de deploy |
 | kubectl | 1.3x | Operação do cluster |
 
-> **Nota Java 25:** o projeto está em Java 25 (`maven.compiler.release=25` no parent `pom.xml`; o bootstrap Quarkus do Horus em T-002 abandonou as features de preview do antigo `Main.java`). Confirme o suporte da versão do Quarkus escolhida ao JDK 25; **Java 21 (LTS)** é a alternativa conservadora caso surja incompatibilidade.
+> **Nota Java 25:** o projeto está em Java 25 (`maven.compiler.release=25` no parent `pom.xml`; o bootstrap Quarkus do Horus em T-002 abandonou as features de preview do antigo `Main.java`). O suporte de **Quarkus 3.20 ao JDK 25 foi confirmado** (T-004: build local + CI → BUILD SUCCESS, testes verdes); **Java 21 (LTS)** permanece documentado como alternativa conservadora caso surja incompatibilidade futura.
 
 ---
 
