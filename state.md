@@ -7,9 +7,9 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-27 |
-| **Branch atual** | `task/T-005-telemetry-conventions` |
+| **Branch atual** | `task/T-003-docker-compose-dev` |
 | **Fase do roadmap** | Fase 0 — Fundação |
-| **Task ativa** | `T-005` — Contrato de telemetria (em revisão (PR)) |
+| **Task ativa** | `T-003` — `docker-compose` de dev (em revisão (PR)) · `T-005` já mergeada ([PR #5](https://github.com/mclovin137/Horus/pull/5)) |
 
 ---
 
@@ -24,7 +24,7 @@
 
 ## ▶️ Próxima ação
 
-**`T-005`** (contrato de telemetria) está **em revisão** ([PR #5](https://github.com/mclovin137/Horus/pull/5)). Ao mergear, resta da **Fase 0** apenas **`T-003`** (docker-compose de dev: Postgres ×3, RabbitMQ, Collector, Jaeger, Loki, Prometheus). Em seguida o caminho crítico abre **`T-101`** (scaffold dos 3 serviços Quarkus), já guiado pelo contrato de telemetria.
+**`T-005`** (contrato de telemetria) já está **mergeada** ([PR #5](https://github.com/mclovin137/Horus/pull/5)). Falta da **Fase 0** apenas **`T-003`** (docker-compose de dev — Postgres ×3, RabbitMQ, Collector, Jaeger, Loki, Prometheus; `make up` sobe a infra), nesta PR. Ao mergear, o caminho crítico abre **`T-101`** (scaffold dos 3 serviços Quarkus: REST + Hibernate Panache + Flyway), já guiado pelo contrato de telemetria e rodando contra a infra do compose.
 
 > ⚙️ **Pendência sua (não bloqueia o roadmap):** configurar a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** para o review por IA rodar de fato (o `gate` o pula com status neutro). O pipeline de **CI (build/test) não usa segredo** e roda sempre.
 
@@ -34,7 +34,8 @@
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
-| 2026-06-27 | `T-005` | Contrato de telemetria (`docs/telemetry/CONTRACT.md`): logging/spans, propagação HTTP+AMQP, métricas mínimas, PII | `task/T-005-telemetry-conventions` | [#5](https://github.com/mclovin137/Horus/pull/5) | 🔄 Em revisão (PR) |
+| 2026-06-27 | `T-003` | `docker-compose` de dev (Postgres ×3, RabbitMQ, OTel Collector, Jaeger, Loki, Prometheus) + `Makefile` (`make up`) + configs de telemetria | `task/T-003-docker-compose-dev` | [#6](https://github.com/mclovin137/Horus/pull/6) | 🔄 Em revisão (PR) |
+| 2026-06-27 | `T-005` | Contrato de telemetria (`docs/telemetry/CONTRACT.md`): logging/spans, propagação HTTP+AMQP, métricas mínimas, PII | `task/T-005-telemetry-conventions` | [#5](https://github.com/mclovin137/Horus/pull/5) | ✅ Entregue |
 | 2026-06-27 | `T-004` | CI de build/test (`ci.yml`) + **Maven Wrapper** (3.9.9); build validado local + CI (Java 25 + Quarkus 3.20 → SUCCESS, testes verdes) | `task/T-004-ci-build` | [#4](https://github.com/mclovin137/Horus/pull/4) | ✅ Entregue |
 | 2026-06-27 | `T-002` | Bootstrap Quarkus do Horus (parent/aggregator + módulo `horus` REST/health; remove `Main.java`) | `task/T-002-bootstrap-quarkus` | [#3](https://github.com/mclovin137/Horus/pull/3) | ✅ Entregue |
 | 2026-06-27 | — (fix) | `fix(ci)`: `id-token: write` + job `gate` de secret no review por IA | `fix/ai-review-oidc-permission` | [#2](https://github.com/mclovin137/Horus/pull/2) | ✅ Entregue |

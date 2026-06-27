@@ -1,0 +1,126 @@
+# Horus — docker-compose de DESENVOLVIMENTO (T-003, RF-032)
+#
+# Sobe a infraestrutura local do sistema observado + backends de telemetria:
+#   - PostgreSQL ×3 (um por serviço de domínio): prontuario_db, payment_db, invoice_db
+#   - RabbitMQ 4.0 (com management) — mensageria restrita a relatórios (ADR-0004)
+#   - OpenTelemetry Collector (contrib) — único ponto de ingestão OTLP (ADR-0010)
+#   - Jaeger 2 (traces), Loki 3 (logs), Prometheus 3 (métricas)
+#
+# Uso: `make up` / `make down` (na raiz do repo). As aplicações (Quarkus/Rust/Python)
+# ainda NÃO entram aqui — chegam nas Fases 1+. Este compose entrega só a infra.
+#
+# ⚠️ Versões fixadas para reprodutibilidade (ver lib.md). Confirme/ajuste ao evoluir.
+# ⚠️ Credenciais abaixo são de DEV (não-secretas, locais). Nunca usar em prod.
+
+name: horus-dev
+
+x-postgres-common: &postgres-common
+  image: postgres:17.2-alpine
+  restart: unless-stopped
+  environment:
+    POSTGRES_USER: horus
+    POSTGRES_PASSWORD: horus
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U horus -d $${POSTGRES_DB}"]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+  networks: [horus]
+
+services:
+  # ---------------------------------------------------------------- Bancos (1 por serviço)
+  postgres-prontuario:
+    <<: *postgres-common
+    environment:
+      POSTGRES_USER: horus
+      POSTGRES_PASSWORD: horus
+      POSTGRES_DB: prontuario_db
+    ports: ["5432:5432"]
+    volumes: ["pg-prontuario:/var/lib/postgresql/data"]
+
+  postgres-payment:
+    <<: *postgres-common
+    environment:
+      POSTGRES_USER: horus
+      POSTGRES_PASSWORD: horus
+      POSTGRES_DB: payment_db
+    ports: ["5433:5432"]
+    volumes: ["pg-payment:/var/lib/postgresql/data"]
+
+  postgres-invoice:
+    <<: *postgres-common
+    environment:
+      POSTGRES_USER: horus
+      POSTGRES_PASSWORD: horus
+      POSTGRES_DB: invoice_db
+    ports: ["5434:5432"]
+    volumes: ["pg-invoice:/var/lib/postgresql/data"]
+
+  # ---------------------------------------------------------------- Mensageria (relatórios)
+  rabbitmq:
+    image: rabbitmq:4.0-management-alpine
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: horus
+      RABBITMQ_DEFAULT_PASS: horus
+    ports:
+      - "5672:5672"    # AMQP
+      - "15672:15672"  # management UI
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    networks: [horus]
+
+  # ---------------------------------------------------------------- Telemetria: backends
+  jaeger:
+    image: jaegertracing/jaeger:2.2.0
+    restart: unless-stopped
+    ports:
+      - "16686:16686"  # UI (RF-031)
+    networks: [horus]
+
+  loki:
+    image: grafana/loki:3.4.1
+    restart: unless-stopped
+    command: ["-config.file=/etc/loki/loki-config.yaml"]
+    volumes:
+      - ./telemetry/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+    ports:
+      - "3100:3100"
+    networks: [horus]
+
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--web.enable-remote-write-receiver"   # recebe métricas do Collector via remote_write
+    volumes:
+      - ./telemetry/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    networks: [horus]
+
+  # ---------------------------------------------------------------- Telemetria: ingestão (OTLP)
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.118.0
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./telemetry/otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC  (apps emitem aqui)
+      - "4318:4318"   # OTLP HTTP
+    depends_on: [jaeger, loki, prometheus]
+    networks: [horus]
+
+volumes:
+  pg-prontuario:
+  pg-payment:
+  pg-invoice:
+
+networks:
+  horus:
+    driver: bridge
