@@ -56,6 +56,15 @@ public class SagaService {
             saga.notaId = nota.id();
             marcar(saga, StatusSaga.CONCLUIDA);
             LOG.infof("SAGA %d concluída (pagamento=%d, nota=%d)", saga.id, saga.pagamentoId, saga.notaId);
+
+            // Passo final (best-effort, RF-021/T-302): solicita o relatório/e-mail da NF emitida.
+            // Falha aqui NÃO compensa a SAGA (já concluída) — apenas é registrada.
+            try {
+                invoice.solicitarRelatorio(saga.notaId);
+            } catch (RuntimeException ex) {
+                LOG.warnf(ex, "SAGA %d: falha ao solicitar relatório da nota %d (não compensa)",
+                        saga.id, saga.notaId);
+            }
         } catch (RuntimeException e) {
             compensar(saga, e.getMessage());
         }
