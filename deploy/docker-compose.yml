@@ -56,6 +56,15 @@ services:
     ports: ["5434:5432"]
     volumes: ["pg-invoice:/var/lib/postgresql/data"]
 
+  postgres-saga:
+    <<: *postgres-common
+    environment:
+      POSTGRES_USER: horus
+      POSTGRES_PASSWORD: horus
+      POSTGRES_DB: saga_db
+    ports: ["5435:5432"]
+    volumes: ["pg-saga:/var/lib/postgresql/data"]
+
   # ---------------------------------------------------------------- Mensageria (relatórios)
   rabbitmq:
     image: rabbitmq:4.0-management-alpine
@@ -120,6 +129,7 @@ volumes:
   pg-prontuario:
   pg-payment:
   pg-invoice:
+  pg-saga:
 
 networks:
   horus:

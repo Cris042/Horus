@@ -22,6 +22,7 @@
         <module>services/prontuario</module>
         <module>services/payment</module>
         <module>services/invoice</module>
+        <module>services/saga-orchestrator</module>
     </modules>
 
     <properties>
