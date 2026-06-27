@@ -33,18 +33,21 @@ Two mandatory upkeep rules (see WORKFLOW.md / `docs/ROLES.md` §5):
 
 ## Current code status
 
-Greenfield. The only source file is `src/main/java/org/example/Main.java`, a generated IntelliJ "Hello World" scaffold — a placeholder to be replaced by the Quarkus bootstrap (ROADMAP task `T-002`). No tests, no business logic, no Quarkus deps yet. Docs (above) lead the code for now.
+The Maven build is a parent/aggregator at the repo root (`pom.xml`, `packaging=pom`) with one module so far: **`horus/`** — the Quarkus bootstrap of the Horus platform (task `T-002`). It exposes a smoke endpoint `GET /horus/info` plus SmallRye health at `/q/health`, with a `@QuarkusTest` smoke test. No domain logic yet — the domain services (`services/`), worker (`worker/`) and load test (`loadtest/`) are still scaffolding (see their READMEs). Docs (above) lead the code.
 
 ## Build & Run
 
-This project uses Maven but `pom.xml` declares no plugins, dependencies, or packaging — only the compiler source/target. There is no Maven wrapper script committed (`.mvn/` is empty), so use a system `mvn`.
+The root `pom.xml` is a parent/aggregator (Java 25, Quarkus BOM in `dependencyManagement`); the buildable app lives in the `horus/` module. No Maven wrapper is committed yet (`.mvn/` is empty), so use a system `mvn` (3.9+). Build the whole tree from the root, or the module directly.
 
-- Build: `mvn compile`
-- Package: `mvn package`
-- Run (no `exec` plugin configured): compile then run directly, e.g. `java -cp target/classes org.example.Main`
-- Tests: none exist and no test framework is on the classpath. Adding JUnit requires a `dependencies` block in `pom.xml` first.
+- Dev mode (live reload): `mvn -pl horus quarkus:dev` (or `cd horus && mvn quarkus:dev`)
+- Build + test: `mvn package` (root, all modules) or `mvn -pl horus -am package`
+- Run packaged: `java -jar horus/target/quarkus-app/quarkus-run.jar`
+- Tests: JUnit 5 + REST Assured via Quarkus (`@QuarkusTest`); `mvn test`.
+- Smoke once running: `GET http://localhost:8080/horus/info`, `GET /q/health`.
+
+> Some environments here have no Maven/network — pin versions per `lib.md` and run the real build in CI or a dev box with internet.
 
 ## Key constraints
 
-- **Java 25** (`maven.compiler.source`/`target` = 25). The code relies on Java 25 preview features: an instance/no-args `main()` method (no `public static void main(String[])`) and the implicit `IO.println` console API. Keep these in mind — running on an older JDK will fail, and adding a class with a classic `main` signature would diverge from the existing style.
-- Base package is `org.example`; groupId `org.example`, artifactId `Horus`.
+- **Java 25** (`maven.compiler.release = 25`, set once in the parent `pom.xml`). The old placeholder used Java 25 **preview** features (instance `main`, implicit `IO.println`); the Quarkus bootstrap **dropped them** (T-002) — Quarkus owns the entry point, so no `--enable-preview` is needed. If Quarkus 3.20 turns out not to support JDK 25, the fallback is Java 21 (LTS): change `maven.compiler.release` in the parent only (see `lib.md` and `docs/tasks/T-002/PRD.md`).
+- Base package `org.example`; the Horus module uses `org.example.horus`. Maven coordinates: parent `org.example:horus-parent`, app module `org.example:horus`.

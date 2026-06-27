@@ -57,7 +57,7 @@ Horus/
 │   └── invoice/         #   Invoice: emissão de NF simulada
 ├── worker/              # Worker Rust: relatório + e-mail (consome RabbitMQ)
 ├── loadtest/            # API de carga (FastAPI + Locust)
-├── horus/               # Plataforma Horus (observabilidade com IA) — código vem em T-002
+├── horus/               # Plataforma Horus (observabilidade com IA) — app Quarkus (bootstrap, T-002)
 ├── deploy/              # docker-compose (dev) e manifests Kubernetes
 ├── docs/                # PRD, ADRs, ROADMAP, WORKFLOW, ROLES e tasks/
 ├── scripts/             # Automações auxiliares
@@ -66,7 +66,7 @@ Horus/
 └── lib.md               # Dependências e versões por componente
 ```
 
-Cada componente tem seu próprio `README.md` (papel, stack e tasks). O `pom.xml`/`src/` na raiz são o scaffold atual do Horus e migram para `horus/` em **T-002**.
+Cada componente tem seu próprio `README.md` (papel, stack e tasks). O `pom.xml` raiz é o **parent/agregador** Maven; o app Quarkus do Horus vive em `horus/` (o scaffold `Main.java` foi substituído pelo bootstrap em **T-002**).
 
 ---
 
@@ -170,8 +170,8 @@ Resumo das decisões-chave (cada uma é um ADR em [`docs/adr/`](docs/adr/)):
 
 ## 🚦 Estado atual
 
-Projeto em **Fase 0 (Fundação)**. Documentação e governança estabelecidas; próxima task de execução: **`T-001` — estrutura de monorepo**.
-Veja sempre [`state.md`](state.md) para o estado mais recente.
+Projeto em **Fase 0 (Fundação)**, em andamento: monorepo (`T-001`) e bootstrap Quarkus do Horus (`T-002`) entregues.
+Veja sempre [`state.md`](state.md) para o estado mais recente e a próxima ação.
 
 ## Pré-requisitos de desenvolvimento
 
@@ -179,4 +179,4 @@ Veja sempre [`state.md`](state.md) para o estado mais recente.
 - Python 3.13 (API de carga), Rust 1.85+ (worker)
 - Docker + Docker Compose (infra local); Kubernetes (deploy)
 
-> O código ainda é um scaffold (`src/main/java/org/example/Main.java`); será substituído pelo bootstrap Quarkus do Horus na task `T-002`. Detalhes para contribuidores e para o Claude Code em [`CLAUDE.md`](CLAUDE.md).
+> O Horus já tem um **bootstrap Quarkus** em `horus/` (REST + health), entregue em `T-002`; os serviços de domínio, worker e loadtest ainda são scaffolding. Detalhes para contribuidores e para o Claude Code em [`CLAUDE.md`](CLAUDE.md).

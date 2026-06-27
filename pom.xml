@@ -5,13 +5,46 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.example</groupId>
-    <artifactId>Horus</artifactId>
+    <artifactId>horus-parent</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>Horus (parent)</name>
+    <description>POM parent/agregador do monorepo Horus — propriedades comuns e BOM do Quarkus para os módulos Java.</description>
+
+    <!--
+      Build do monorepo Java. Cada módulo Quarkus (hoje: horus; futuramente os serviços de
+      domínio) herda Java 25, encoding e o BOM do Quarkus deste parent. Componentes não-Java
+      (worker Rust, loadtest Python) têm build próprio fora do Maven.
+    -->
+    <modules>
+        <module>horus</module>
+    </modules>
 
     <properties>
-        <maven.compiler.source>25</maven.compiler.source>
-        <maven.compiler.target>25</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.release>25</maven.compiler.release>
+        <maven.compiler.parameters>true</maven.compiler.parameters>
+
+        <!-- Quarkus (ver lib.md §2). Confirme a versão estável e o suporte ao JDK 25 ao implementar. -->
+        <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
+        <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
+        <quarkus.platform.version>3.20.0</quarkus.platform.version>
+
+        <compiler-plugin.version>3.13.0</compiler-plugin.version>
+        <surefire-plugin.version>3.5.1</surefire-plugin.version>
     </properties>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>${quarkus.platform.group-id}</groupId>
+                <artifactId>${quarkus.platform.artifact-id}</artifactId>
+                <version>${quarkus.platform.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 </project>
