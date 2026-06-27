@@ -30,7 +30,7 @@
 2. ✅ Adicionar `quarkus-opentelemetry` + `quarkus-logging-json` aos 3 módulos.
 3. ✅ Config OTel por serviço: OTLP por perfil, `service.namespace`/ambiente, JDBC telemetry, logs JSON, SDK off em teste.
 4. ✅ Build de produção verde (`-DskipTests`); testes de fluxo (Dev Services) no CI com SDK OTel desligado.
-5. ⬜ Atualizar `state.md`; abrir o PR `T-401: …`; preencher o nº do PR aqui e no PRD.
+5. ✅ Atualizar `state.md`; abrir o PR [#11](https://github.com/mclovin137/Horus/pull/11); nº preenchido aqui e no PRD.
 
 ## Verificação / testes
 
