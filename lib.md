@@ -25,7 +25,7 @@ Catálogo de dependências de **todos os componentes** do projeto **Horus** (pla
 | Helm | **3.16.x** | Empacotamento de deploy |
 | kubectl | 1.3x | Operação do cluster |
 
-> **Nota Java 25:** o projeto está em Java 25 (`maven.compiler.release=25` no parent `pom.xml`; o bootstrap Quarkus do Horus em T-002 abandonou as features de preview do antigo `Main.java`). O suporte de **Quarkus 3.20 ao JDK 25 foi confirmado** (T-004: build local + CI → BUILD SUCCESS, testes verdes); **Java 21 (LTS)** permanece documentado como alternativa conservadora caso surja incompatibilidade futura.
+> **Nota Java 25:** o projeto está em Java 25 (`maven.compiler.release=25` no parent `pom.xml`; o bootstrap Quarkus do Horus em T-002 abandonou as features de preview do antigo `Main.java`). O bootstrap sem persistência (Horus, T-002/T-004) rodou em Quarkus 3.20; porém o **enhancement de entidades Panache do 3.20 não suporta o bytecode do JDK 25** (ASM anterior ao Java 25 → `Unsupported class file major version 69`). Por isso **T-101 elevou o Quarkus para 3.37.0** (linha que suporta JDK 25), confirmado com `BUILD SUCCESS` nos 5 módulos. **Java 21 (LTS)** permanece documentado como alternativa conservadora caso surja incompatibilidade futura.
 
 ---
 
@@ -35,7 +35,7 @@ Catálogo de dependências de **todos os componentes** do projeto **Horus** (pla
 
 | Dependência (extensão Quarkus, salvo nota) | Versão-alvo | Uso |
 |---|---|---|
-| Quarkus BOM / Platform | **3.20.x** | Base do framework (linha 2026) |
+| Quarkus BOM / Platform | **3.37.x** | Base do framework (bump em T-101: 3.20 não suporta Panache sob JDK 25) |
 | `quarkus-rest` (+ `quarkus-rest-jackson`) | (via BOM) | API REST do Horus |
 | `quarkus-websockets-next` | (via BOM) | Streaming do painel em tempo real (RF-H-012) |
 | `quarkus-opentelemetry` | (via BOM) | Ingestão/propagação OTel |
@@ -69,7 +69,7 @@ Mesma base para os três serviços.
 
 | Dependência | Versão-alvo | Uso |
 |---|---|---|
-| Quarkus BOM / Platform | **3.20.x** | Base do framework |
+| Quarkus BOM / Platform | **3.37.x** | Base do framework |
 | `quarkus-rest` (+ `quarkus-rest-jackson`) | (via BOM) | APIs HTTP de domínio (RF-006..020) |
 | `quarkus-hibernate-orm-panache` | (via BOM) | Persistência |
 | `quarkus-jdbc-postgresql` | (via BOM) | Driver PostgreSQL |
@@ -143,7 +143,7 @@ Mesma base para os três serviços.
 
 | Stack | Componentes | Núcleo de dependências |
 |---|---|---|
-| **Java 25 / Quarkus 3.20** | Horus, Prontuário, Payment, Invoice | Quarkus REST, Hibernate Panache, Flyway, OTel, RabbitMQ, LangChain4j-Anthropic |
+| **Java 25 / Quarkus 3.37** | Horus, Prontuário, Payment, Invoice | Quarkus REST, Hibernate Panache, Flyway, OTel, RabbitMQ, LangChain4j-Anthropic |
 | **Python 3.13** | API de carga | FastAPI, Uvicorn, Locust, OTel |
 | **Rust 1.85** | Worker de relatório/e-mail | tokio, lapin, lettre, opentelemetry, tracing |
 | **Infra** | Bancos, fila, LB, telemetria | PostgreSQL, RabbitMQ, NGINX/Traefik, OTel Collector, Jaeger, Loki, Prometheus |
