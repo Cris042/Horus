@@ -39,7 +39,7 @@ O **`traceparent`/`tracestate`** (W3C Trace Context) viaja nos **headers da mens
 ## Produtor (T-301/T-302)
 
 - `invoice-service`: `POST /notas/{id}/relatorio` (NF **emitida**) → publica `RelatorioMensagem` no canal `relatorios` de forma **assíncrona** (não bloqueia a request — RNF-011).
-- A integração do publish em outros fluxos/serviços é **T-302**.
+- **Disparo por fluxo (T-302):** ao concluir a SAGA `pagar→emitir NF` (T-107), o **`saga-orchestrator`** chama `POST /notas/{id}/relatorio` no invoice — passo final **best-effort** (falha não compensa a SAGA já concluída). Assim o fluxo fica `pagar → emitir → solicitar relatório`, todo no mesmo `trace_id`.
 
 ## Fora do escopo (próximas tasks)
 

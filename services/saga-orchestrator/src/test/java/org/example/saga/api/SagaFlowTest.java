@@ -51,6 +51,8 @@ class SagaFlowTest {
                 .body("notaId", is(10));
 
         verify(payment, never()).estornar(any());
+        // T-302: após concluir, solicita o relatório da NF emitida
+        verify(invoice).solicitarRelatorio(eq(10L));
     }
 
     @Test
@@ -73,5 +75,7 @@ class SagaFlowTest {
 
         // Compensação do passo de pagamento foi disparada
         verify(payment).estornar(eq(2L));
+        // Sem emissão concluída, não há solicitação de relatório
+        verify(invoice, never()).solicitarRelatorio(any());
     }
 }
