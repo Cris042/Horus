@@ -6,7 +6,7 @@
 | **Fase do roadmap** | Fase 1 — Microsserviços de domínio |
 | **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-107-saga-orchestrator` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | [#13](https://github.com/mclovin137/Horus/pull/13) |
 | **Depende de** | `T-102`, `T-103`, `T-104` |
 | **Requisitos atendidos** | RNF-019 (+ base para RF-H-016) |
 | **ADRs relacionados** | ADR-0013 (SAGA), ADR-0002 (banco por serviço), ADR-0007/0009 (OTel) |

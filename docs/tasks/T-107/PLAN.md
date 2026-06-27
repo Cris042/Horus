@@ -41,7 +41,7 @@
 3. ✅ API REST + OTel/logs JSON; `postgres-saga` no compose.
 4. ✅ Teste `@QuarkusTest` com clients mockados (caminho feliz + compensação).
 5. ✅ Validação local: `compose config` ok; build de produção + test-compile verdes.
-6. ⬜ Atualizar `state.md`; abrir o PR `T-107: …`; preencher o nº do PR aqui e no PRD.
+6. ✅ Atualizar `state.md`; abrir o PR [#13](https://github.com/mclovin137/Horus/pull/13); nº preenchido aqui e no PRD.
 
 ## Verificação / testes
 
