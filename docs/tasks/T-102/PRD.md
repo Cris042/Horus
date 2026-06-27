@@ -6,7 +6,7 @@
 | **Fase do roadmap** | Fase 1 — Microsserviços de domínio |
 | **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-102-prontuario-domain` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | [#8](https://github.com/mclovin137/Horus/pull/8) |
 | **Depende de** | `T-101` (scaffold) |
 | **Requisitos atendidos** | RF-006, RF-007, RF-008, RF-009, RF-010, RF-025 |
 | **ADRs relacionados** | ADR-0002 (banco por serviço), ADR-0003 (Quarkus), ADR-0005 (Flyway) |
