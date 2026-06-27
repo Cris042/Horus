@@ -54,4 +54,11 @@ public class NotaFiscalResource {
     public NotaFiscalResponse reprocessar(@PathParam("id") Long id) {
         return NotaFiscalResponse.from(notas.reprocessar(id));
     }
+
+    /** Solicita (assíncrono) a geração de relatório/e-mail da NF emitida (RF-021). */
+    @POST
+    @Path("/{id}/relatorio")
+    public Response solicitarRelatorio(@PathParam("id") Long id) {
+        return Response.accepted(notas.solicitarRelatorio(id)).build();
+    }
 }

@@ -7,21 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-27 |
-| **Branch atual** | `main` |
-| **Fase do roadmap** | Fase 1 **completa** → Fase 4 (telemetria) |
-| **Task ativa** | — (próxima: `T-404`/`T-405`) |
+| **Branch atual** | `task/T-301-rabbitmq-report-contract` |
+| **Fase do roadmap** | Fase 3 — Mensageria e worker |
+| **Task ativa** | `T-301` — RabbitMQ + contrato da mensagem de relatório (em revisão (PR)) |
 
 ---
 
 ## 🟢 Última entrega (mergeada)
 
-**`T-106` — isolamento de persistência (entregue via [PR #14](https://github.com/mclovin137/Horus/pull/14), mergeada em `main`).**
-- Credenciais **segregadas por serviço** (`prontuario_svc`/`payment_svc`/`invoice_svc`/`saga_svc`) no compose e nos datasources; healthcheck por `$POSTGRES_USER`; doc `docs/architecture/db-isolation.md` (RNF-002/003). **CI verde.**
-- ✅ **Fase 1 COMPLETA** — scaffold (T-101), 3 domínios (T-102/103/104), migrações (T-105), SAGA (T-107) e isolamento (T-106).
+**`T-106` — isolamento de persistência (entregue via [PR #14](https://github.com/mclovin137/Horus/pull/14), mergeada em `main`).** Credenciais segregadas por serviço + doc (RNF-002/003). ✅ **Fase 1 completa.**
+
+> 🔄 **Em revisão:** **`T-301`** — RabbitMQ + **contrato da mensagem de relatório** (RF-021/RNF-011): `RelatorioMensagem` + publisher no `invoice-service` (canal `relatorios`), endpoint `POST /notas/{id}/relatorio` (assíncrono), conexão por perfil (test = conector in-memory), e doc `docs/architecture/report-message.md` (incl. `traceparent` nos headers — RF-029).
 
 ## ▶️ Próxima ação
 
-Caminho crítico de **telemetria**: **`T-404`** (OTel Collector + backends — config aprofundada de roteamento/retention) e **`T-405`** (validar **correlação ponta a ponta** por `trace_id`: request→query→log, com a **SAGA real** para visualizar). Em paralelo restam **`T-402`/`T-403`** (instrumentação FastAPI/LB e worker Rust) e **`T-507`** (visualização da SAGA no Horus — RF-H-016).
+**`T-301`** **em revisão** (PR); build/test-compile verdes. Depois **`T-302`** (publicação integrada nos fluxos dos serviços) e **`T-303`** (worker Rust: consumir/gerar relatório/e-mail — RF-022..024). Caminho crítico de telemetria segue em **`T-404`**/**`T-405`**; restam ainda **`T-402`/`T-403`** (FastAPI/LB e worker Rust) e **`T-507`** (visualização da SAGA — RF-H-016).
 
 > ⚠️ **Nota técnica (vale p/ T-103/104):** entidades Panache geram id via **sequência `<tabela>_seq`** (PooledLo, INCREMENT 50) — as migrações Flyway devem criar a sequência (não usar coluna IDENTITY), senão `INSERT` falha em `nextval`.
 
@@ -33,6 +33,7 @@ Caminho crítico de **telemetria**: **`T-404`** (OTel Collector + backends — c
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
+| 2026-06-27 | `T-301` | RabbitMQ + contrato da mensagem de relatório (RF-021/RNF-011): `RelatorioMensagem` + publisher no invoice, `POST /notas/{id}/relatorio`, teste in-memory, doc `report-message.md` | `task/T-301-rabbitmq-report-contract` | `#<n>` | 🔄 Em revisão (PR) |
 | 2026-06-27 | `T-106` | Isolamento de persistência (RNF-002/003): credenciais segregadas por serviço (compose + datasources), healthcheck por `$POSTGRES_USER`, doc `db-isolation.md` | `task/T-106-db-isolation` | [#14](https://github.com/mclovin137/Horus/pull/14) | ✅ Entregue |
 | 2026-06-27 | `T-107` | SAGA (orquestração) — fluxo pagar→emitir NF: módulo `saga-orchestrator` (estado persistido em `saga_db`, clients REST, compensação por estorno, teste feliz+compensação) | `task/T-107-saga-orchestrator` | [#13](https://github.com/mclovin137/Horus/pull/13) | ✅ Entregue |
 | 2026-06-27 | `T-105` | Migrações Flyway por banco (RF-028/RNF-015): hardening (`validate-on-migrate`, `clean-disabled`) nos 3 serviços + doc da estratégia | `task/T-105-flyway-migrations` | [#12](https://github.com/mclovin137/Horus/pull/12) | ✅ Entregue |
