@@ -6,7 +6,7 @@
 | **Fase do roadmap** | Fase 0 — Fundação |
 | **Status** | `Planejada` |
 | **Branch** | `task/T-001-estrutura-monorepo` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | [`#1`](https://github.com/mclovin137/Horus/pull/1) |
 | **Depende de** | — |
 | **Requisitos atendidos** | base para RF-032 / RNF-014 |
 | **ADRs relacionados** | ADR-0001, ADR-0012 |

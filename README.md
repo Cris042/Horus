@@ -47,6 +47,29 @@ Versões completas em [`lib.md`](lib.md).
 
 ---
 
+## 🗂️ Estrutura do repositório
+
+```
+Horus/
+├── services/            # Microsserviços de domínio (Quarkus, banco por serviço)
+│   ├── prontuario/      #   Prontuário: registros e consultas médicas
+│   ├── payment/         #   Payment: carteira, movimentações, estornos
+│   └── invoice/         #   Invoice: emissão de NF simulada
+├── worker/              # Worker Rust: relatório + e-mail (consome RabbitMQ)
+├── loadtest/            # API de carga (FastAPI + Locust)
+├── horus/               # Plataforma Horus (observabilidade com IA) — código vem em T-002
+├── deploy/              # docker-compose (dev) e manifests Kubernetes
+├── docs/                # PRD, ADRs, ROADMAP, WORKFLOW, ROLES e tasks/
+├── scripts/             # Automações auxiliares
+├── .github/workflows/   # CI/CD + rotinas diárias de IA
+├── state.md             # Estado atual do projeto ("onde estamos")
+└── lib.md               # Dependências e versões por componente
+```
+
+Cada componente tem seu próprio `README.md` (papel, stack e tasks). O `pom.xml`/`src/` na raiz são o scaffold atual do Horus e migram para `horus/` em **T-002**.
+
+---
+
 ## 📚 Documentação
 
 | Documento | Conteúdo |
