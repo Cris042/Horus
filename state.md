@@ -7,9 +7,9 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-27 |
-| **Branch atual** | `main` |
+| **Branch atual** | `task/T-103-payment-domain` |
 | **Fase do roadmap** | Fase 1 — Microsserviços de domínio |
-| **Task ativa** | — (próxima: `T-103` Payment) |
+| **Task ativa** | `T-103` — Payment Service (domínio) (em revisão (PR)) |
 
 ---
 
@@ -21,7 +21,7 @@
 
 ## ▶️ Próxima ação
 
-**`T-103`** (Payment — carteira/saldo, movimentações, aprovar/rejeitar/estornar, histórico — RF-011..015, RF-026) em progresso, mesmo padrão de T-102. Depois **`T-104`** (Invoice), **`T-105`** (migrações consolidadas), **`T-107`** (SAGA) e **`T-401`** (OTel HTTP+JDBC).
+**`T-103`** (Payment — carteira/saldo, movimentações, aprovar/rejeitar/estornar, histórico — RF-011..015, RF-026) **em revisão** (PR); build de produção verde. Depois **`T-104`** (Invoice — RF-016..020, RF-027), **`T-105`** (migrações consolidadas), **`T-107`** (SAGA) e **`T-401`** (OTel HTTP+JDBC).
 
 > ⚠️ **Nota técnica (vale p/ T-103/104):** entidades Panache geram id via **sequência `<tabela>_seq`** (PooledLo, INCREMENT 50) — as migrações Flyway devem criar a sequência (não usar coluna IDENTITY), senão `INSERT` falha em `nextval`.
 
@@ -33,6 +33,7 @@
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
+| 2026-06-27 | `T-103` | Payment Service (domínio): carteira/saldo, movimentações, aprovar/rejeitar/estornar, histórico (RF-011..015); entidades `Movimentacao`/`Pagamento`, migração `V2`, REST+validação, teste de fluxo | `task/T-103-payment-domain` | `#<n>` | 🔄 Em revisão (PR) |
 | 2026-06-27 | `T-102` | Prontuário Service (domínio): criar/consultar prontuário, registrar/atualizar/finalizar consulta (RF-006..010); entidade `Consulta`, migração `V2`, REST+validação, teste de fluxo | `task/T-102-prontuario-domain` | [#8](https://github.com/mclovin137/Horus/pull/8) | ✅ Entregue |
 | 2026-06-27 | `T-101` | Scaffold Quarkus dos 3 serviços (REST + Panache + Flyway, banco por serviço, smoke test); **Quarkus 3.20→3.37** (Panache sob JDK 25) | `task/T-101-scaffold-services` | [#7](https://github.com/mclovin137/Horus/pull/7) | ✅ Entregue |
 | 2026-06-27 | `T-003` | `docker-compose` de dev (Postgres ×3, RabbitMQ, OTel Collector, Jaeger, Loki, Prometheus) + `Makefile` (`make up`) + configs de telemetria | `task/T-003-docker-compose-dev` | [#6](https://github.com/mclovin137/Horus/pull/6) | ✅ Entregue |
