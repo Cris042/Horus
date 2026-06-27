@@ -19,6 +19,9 @@
     -->
     <modules>
         <module>horus</module>
+        <module>services/prontuario</module>
+        <module>services/payment</module>
+        <module>services/invoice</module>
     </modules>
 
     <properties>
@@ -27,10 +30,12 @@
         <maven.compiler.release>25</maven.compiler.release>
         <maven.compiler.parameters>true</maven.compiler.parameters>
 
-        <!-- Quarkus (ver lib.md §2). Confirme a versão estável e o suporte ao JDK 25 ao implementar. -->
+        <!-- Quarkus (ver lib.md §2). 3.37.x é a primeira linha que suportamos sob JDK 25:
+             o enhancement de entidades Panache do 3.20.0 usava um ASM anterior ao Java 25
+             (falha "Unsupported class file major version 69"). Bump feito em T-101. -->
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
-        <quarkus.platform.version>3.20.0</quarkus.platform.version>
+        <quarkus.platform.version>3.37.0</quarkus.platform.version>
 
         <compiler-plugin.version>3.13.0</compiler-plugin.version>
         <surefire-plugin.version>3.5.1</surefire-plugin.version>
