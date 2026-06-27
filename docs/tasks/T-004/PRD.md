@@ -4,9 +4,9 @@
 |---|---|
 | **Task** | `T-004` |
 | **Fase do roadmap** | Fase 0 — Fundação |
-| **Status** | `Em progresso` |
+| **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-004-ci-build` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | [#4](https://github.com/mclovin137/Horus/pull/4) |
 | **Depende de** | `T-002` |
 | **Requisitos atendidos** | — (valida indiretamente RNF-014: o Horus compila) |
 | **ADRs relacionados** | — |

@@ -35,7 +35,7 @@
 5. ✅ Criar PRD e este PLAN.
 6. ✅ Atualizar `CLAUDE.md`, `lib.md`, `README.md`.
 7. ✅ Re-rodar o build com o comando exato da CI (flags de lint) para confirmar paridade.
-8. ⬜ Atualizar `state.md`; abrir o PR `T-004: CI de build/test + Maven Wrapper`; preencher o nº do PR aqui e no PRD.
+8. 🟡 `state.md` atualizado (R1); **PR [#4](https://github.com/mclovin137/Horus/pull/4) aberto**; nº registrado aqui, no PRD e no `state.md`. Resta: CI verde + merge.
 
 ## Verificação / testes
 

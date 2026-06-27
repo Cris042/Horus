@@ -15,7 +15,7 @@
 
 ## 🟢 Última entrega
 
-**`T-004` — CI de build/test + Maven Wrapper (em revisão via PR `#<n>`, branch `task/T-004-ci-build`).**
+**`T-004` — CI de build/test + Maven Wrapper (em revisão via PR [#4](https://github.com/mclovin137/Horus/pull/4), branch `task/T-004-ci-build`).**
 - **Maven Wrapper commitado** (`mvnw`, `mvnw.cmd`, `.mvn/wrapper/maven-wrapper.properties`) — variante `only-script` fixando **Maven 3.9.9**; build reproduzível sem `mvn` no host (prefira `./mvnw`).
 - **`.github/workflows/ci.yml`**: job `build-java` (setup-java **25** + cache Maven + `./mvnw … verify` + upload de relatórios surefire), disparando em push para `main`, em todo PR e via `workflow_dispatch`. **Sem segredos** — roda sempre.
 - **Build validado localmente** (fecha a lacuna de T-002): **Java 25.0.3 + Quarkus 3.20.0 → BUILD SUCCESS**, `Tests run: 2, Failures: 0`. O par **JDK 25 / Quarkus 3.20 está confirmado** — o fallback Java 21 **não** foi necessário.
@@ -33,7 +33,7 @@ Acompanhar a **CI do PR de T-004** e **mergear** quando verde (Actions/badge con
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
-| 2026-06-27 | `T-004` | CI de build/test (`ci.yml`) + **Maven Wrapper** (3.9.9); build validado localmente (Java 25 + Quarkus 3.20 → SUCCESS, testes verdes) | `task/T-004-ci-build` | `#<n>` | 🔄 Em revisão (PR) |
+| 2026-06-27 | `T-004` | CI de build/test (`ci.yml`) + **Maven Wrapper** (3.9.9); build validado localmente (Java 25 + Quarkus 3.20 → SUCCESS, testes verdes) | `task/T-004-ci-build` | [#4](https://github.com/mclovin137/Horus/pull/4) | 🔄 Em revisão (PR) |
 | 2026-06-27 | `T-002` | Bootstrap Quarkus do Horus (parent/aggregator + módulo `horus` REST/health; remove `Main.java`) | `task/T-002-bootstrap-quarkus` | [#3](https://github.com/mclovin137/Horus/pull/3) | ✅ Entregue |
 | 2026-06-27 | — (fix) | `fix(ci)`: `id-token: write` + job `gate` de secret no review por IA | `fix/ai-review-oidc-permission` | [#2](https://github.com/mclovin137/Horus/pull/2) | ✅ Entregue |
 | 2026-06-27 | `T-001` | Estrutura de monorepo (diretórios + READMEs por componente, `Makefile`, `.editorconfig`, mapa no README) | `task/T-001-estrutura-monorepo` | [#1](https://github.com/mclovin137/Horus/pull/1) | ✅ Entregue |
