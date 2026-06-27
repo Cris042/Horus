@@ -6,7 +6,7 @@
 | **Fase do roadmap** | Fase 1 — Microsserviços de domínio |
 | **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-104-invoice-domain` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | [#10](https://github.com/mclovin137/Horus/pull/10) |
 | **Depende de** | `T-101` (scaffold) |
 | **Requisitos atendidos** | RF-016, RF-017, RF-018, RF-019, RF-020, RF-027 |
 | **ADRs relacionados** | ADR-0002 (banco por serviço), ADR-0003 (Quarkus), ADR-0005 (Flyway) |
