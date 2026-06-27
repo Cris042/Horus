@@ -5,7 +5,7 @@
 - **Stack:** Quarkus (Java 25) + Quarkus LangChain4j (Anthropic/Claude).
 - **Requisitos:** `RF-H-*`, `RNF-H-*`.
 
-> **Destino do bootstrap em T-002:** o `pom.xml`/`src/` que hoje vivem na raiz do repositório migram para cá quando o scaffold IntelliJ for substituído pelo bootstrap Quarkus.
+> **Bootstrap entregue (T-002):** este módulo é um app Quarkus (Java 25) com `pom.xml` próprio herdando do parent na raiz. Hoje expõe `GET /horus/info` e health em `/q/health`; as extensões reais (OTLP, LangChain4j/Claude, Postgres) entram nas Fases 5-7.
 
 ## Responsabilidades (por fase)
 

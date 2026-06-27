@@ -25,7 +25,7 @@ Catálogo de dependências de **todos os componentes** do projeto **Horus** (pla
 | Helm | **3.16.x** | Empacotamento de deploy |
 | kubectl | 1.3x | Operação do cluster |
 
-> **Nota Java 25:** o projeto já está em Java 25 (com recursos de preview no `Main.java` placeholder). Confirme o suporte da versão do Quarkus escolhida ao JDK 25; **Java 21 (LTS)** é a alternativa conservadora caso surja incompatibilidade.
+> **Nota Java 25:** o projeto está em Java 25 (`maven.compiler.release=25` no parent `pom.xml`; o bootstrap Quarkus do Horus em T-002 abandonou as features de preview do antigo `Main.java`). Confirme o suporte da versão do Quarkus escolhida ao JDK 25; **Java 21 (LTS)** é a alternativa conservadora caso surja incompatibilidade.
 
 ---
 
