@@ -45,7 +45,7 @@
 2. ✅ Registrar os 3 módulos no `pom.xml` parent.
 3. ✅ Gerar cada módulo (pom, config, migração, entidade, resource, teste) seguindo o padrão do módulo `horus` e o contrato de telemetria.
 4. ✅ Validar com `./mvnw package` (testes via Dev Services PostgreSQL).
-5. ⬜ Atualizar `state.md`; abrir o PR `T-101: …`; preencher o nº do PR aqui e no PRD.
+5. ✅ Atualizar `state.md`; abrir o PR `T-101: …`; nº [#7](https://github.com/mclovin137/Horus/pull/7) preenchido aqui e no PRD.
 
 ## Verificação / testes
 

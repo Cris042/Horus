@@ -6,7 +6,7 @@
 | **Fase do roadmap** | Fase 1 — Microsserviços de domínio |
 | **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-101-scaffold-services` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | [#7](https://github.com/mclovin137/Horus/pull/7) |
 | **Depende de** | `T-002` (build/parent), `T-003` (infra dev), `T-005` (contrato de telemetria) |
 | **Requisitos atendidos** | RF-006..020 (scaffold; domínio detalhado em T-102..104) |
 | **ADRs relacionados** | ADR-0002 (banco por serviço), ADR-0003 (Quarkus), ADR-0005 (Flyway) |
