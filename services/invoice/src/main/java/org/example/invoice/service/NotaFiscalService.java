@@ -1,14 +1,18 @@
 package org.example.invoice.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
 import org.example.invoice.domain.NotaFiscal;
 import org.example.invoice.domain.StatusNota;
+import org.example.invoice.relatorio.RelatorioMensagem;
+import org.example.invoice.relatorio.RelatorioPublisher;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Casos de uso da nota fiscal simulada (RF-016..020). Persiste só em {@code invoice_db} (RF-027).
@@ -18,6 +22,26 @@ import java.util.List;
  */
 @ApplicationScoped
 public class NotaFiscalService {
+
+    @Inject
+    RelatorioPublisher relatorios;
+
+    /**
+     * Solicita um relatório da NF (RF-021): publica a mensagem no RabbitMQ de forma assíncrona
+     * (RNF-011). Exige nota {@code EMITIDA}.
+     */
+    public RelatorioMensagem solicitarRelatorio(Long notaId) {
+        NotaFiscal n = buscar(notaId);
+        if (n.status != StatusNota.EMITIDA) {
+            throw new ConflitoNotaException(
+                    "Nota " + notaId + " não está emitida; estado atual: " + n.status);
+        }
+        RelatorioMensagem msg = new RelatorioMensagem(
+                UUID.randomUUID().toString(), RelatorioMensagem.TIPO_NOTA_FISCAL,
+                n.id, n.valor, n.numero, OffsetDateTime.now());
+        relatorios.publicar(msg);
+        return msg;
+    }
 
     /** Recebe a solicitação (RF-016) e tenta emitir (RF-017/018). */
     @Transactional

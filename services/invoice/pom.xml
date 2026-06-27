@@ -43,6 +43,11 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-flyway</artifactId>
         </dependency>
+        <!-- Mensageria: publicar solicitação de relatório no RabbitMQ (T-301, RF-021) -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-messaging-rabbitmq</artifactId>
+        </dependency>
         <!-- Observabilidade: OpenTelemetry (HTTP + JDBC) + logs JSON (T-401, contrato T-005) -->
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -63,7 +68,13 @@
             <artifactId>quarkus-arc</artifactId>
         </dependency>
 
-        <!-- Testes: Dev Services sobe um PostgreSQL efêmero (Testcontainers) -->
+        <!-- Testes: Dev Services sobe um PostgreSQL efêmero (Testcontainers);
+             conector in-memory p/ verificar a publicação sem RabbitMQ real -->
+        <dependency>
+            <groupId>io.smallrye.reactive</groupId>
+            <artifactId>smallrye-reactive-messaging-in-memory</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-junit5</artifactId>
