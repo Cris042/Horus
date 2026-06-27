@@ -7,21 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-27 |
-| **Branch atual** | `main` |
-| **Fase do roadmap** | Fase 4 — Telemetria |
-| **Task ativa** | — (próxima: `T-404`/`T-405`, ou `T-105`/`T-107` em paralelo) |
+| **Branch atual** | `task/T-105-flyway-migrations` |
+| **Fase do roadmap** | Fase 1 — Microsserviços de domínio |
+| **Task ativa** | `T-105` — migrações Flyway por banco (em revisão (PR)) |
 
 ---
 
 ## 🟢 Última entrega (mergeada)
 
-**`T-401` — instrumentação OTel dos 3 serviços Quarkus (entregue via [PR #11](https://github.com/mclovin137/Horus/pull/11), mergeada em `main`).**
-- `quarkus-opentelemetry` + `quarkus-logging-json` nos 3 serviços; OTLP por perfil (`%dev` localhost / `%prod` collector), `service.name` canônico + `service.namespace=medrec`, **span por query JDBC** (`db.query.text` parametrizado — RF-H-002), **logs JSON** correlacionados, SDK OTel desligado em teste. **CI verde** (testes de fluxo intactos).
-- ✅ Fase 1 (domínio dos 3 serviços) + primeira camada de telemetria (T-401) entregues.
+**`T-401` — instrumentação OTel dos 3 serviços Quarkus (entregue via [PR #11](https://github.com/mclovin137/Horus/pull/11), mergeada em `main`).** OTLP por perfil, `service.name` canônico, span por query JDBC (`db.query.text` parametrizado), logs JSON correlacionados, SDK off em teste. **CI verde.**
+
+> 🔄 **Em revisão:** **`T-105`** — formaliza/endurece a estratégia de migrações Flyway por banco (RF-028/RNF-015): `validate-on-migrate` + `clean-disabled` nos 3 serviços e doc `docs/architecture/db-migrations.md`. As migrações `V*` em si já vieram com os domínios (T-102/103/104).
 
 ## ▶️ Próxima ação
 
-Caminho crítico de telemetria: **`T-404`** (OTel Collector + backends — config aprofundada de roteamento/retention) e **`T-405`** (validar **correlação ponta a ponta** por `trace_id`: request→query→log). Em paralelo restam **`T-105`** (migrações consolidadas/`RF-028`), **`T-106`** (isolamento), **`T-107`** (SAGA cross-service) e **`T-402`/`T-403`** (instrumentação FastAPI/LB e worker Rust).
+**`T-105`** **em revisão** (PR); build verde. Ao mergear, **`T-106`** (isolamento: credenciais/usuário de banco separados, proibição de acesso cruzado — RNF-002/003) fica desbloqueado. Caminho crítico de telemetria segue em **`T-404`** (Collector/backends — config aprofundada) e **`T-405`** (correlação ponta a ponta por `trace_id`). Em paralelo: **`T-107`** (SAGA), **`T-402`/`T-403`** (FastAPI/LB e worker Rust).
 
 > ⚠️ **Nota técnica (vale p/ T-103/104):** entidades Panache geram id via **sequência `<tabela>_seq`** (PooledLo, INCREMENT 50) — as migrações Flyway devem criar a sequência (não usar coluna IDENTITY), senão `INSERT` falha em `nextval`.
 
@@ -31,6 +31,7 @@ Caminho crítico de telemetria: **`T-404`** (OTel Collector + backends — confi
 
 ## 📒 Log de entregas (mais recente primeiro)
 
+| 2026-06-27 | `T-105` | Migrações Flyway por banco (RF-028/RNF-015): hardening (`validate-on-migrate`, `clean-disabled`) nos 3 serviços + doc da estratégia | `task/T-105-flyway-migrations` | [#12](https://github.com/mclovin137/Horus/pull/12) | 🔄 Em revisão (PR) |
 | 2026-06-27 | `T-401` | Instrumentação OTel dos 3 serviços (HTTP + JDBC/Hibernate, logs JSON correlacionados, OTLP→Collector); contrato T-005 na camada de serviços | `task/T-401-otel-services` | [#11](https://github.com/mclovin137/Horus/pull/11) | ✅ Entregue |
 | 2026-06-27 | `T-104` | Invoice Service (domínio): receber emissão, gerar NF simulada, registrar resultado, listar, reprocessar (RF-016..020); entidade `NotaFiscal`, REST+validação, teste de fluxo | `task/T-104-invoice-domain` | [#10](https://github.com/mclovin137/Horus/pull/10) | ✅ Entregue |
 | 2026-06-27 | `T-103` | Payment Service (domínio): carteira/saldo, movimentações, aprovar/rejeitar/estornar, histórico (RF-011..015); entidades `Movimentacao`/`Pagamento`, migração `V2`, REST+validação, teste de fluxo | `task/T-103-payment-domain` | [#9](https://github.com/mclovin137/Horus/pull/9) | ✅ Entregue |
