@@ -6,7 +6,7 @@
 | **Fase do roadmap** | Fase 1 — Microsserviços de domínio |
 | **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-103-payment-domain` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | [#9](https://github.com/mclovin137/Horus/pull/9) |
 | **Depende de** | `T-101` (scaffold) |
 | **Requisitos atendidos** | RF-011, RF-012, RF-013, RF-014, RF-015, RF-026 |
 | **ADRs relacionados** | ADR-0002 (banco por serviço), ADR-0003 (Quarkus), ADR-0005 (Flyway) |

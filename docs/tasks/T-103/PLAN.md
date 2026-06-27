@@ -46,7 +46,7 @@
 4. ✅ REST + DTOs + Bean Validation + mapper 409.
 5. ✅ Teste de fluxo (RF-011..015 + 409 sem saldo + 404).
 6. ✅ Build de produção verde (`-DskipTests`); testes Dev Services no CI.
-7. ⬜ Atualizar `state.md`; abrir o PR `T-103: …`; preencher o nº do PR aqui e no PRD.
+7. ✅ Atualizar `state.md`; abrir o PR [#9](https://github.com/mclovin137/Horus/pull/9); nº preenchido aqui e no PRD.
 
 ## Verificação / testes
 
