@@ -7,9 +7,9 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-27 |
-| **Branch atual** | `main` |
+| **Branch atual** | `task/T-102-prontuario-domain` |
 | **Fase do roadmap** | Fase 1 — Microsserviços de domínio |
-| **Task ativa** | — (próxima: `T-102`/`T-103`/`T-104`) |
+| **Task ativa** | `T-102` — Prontuário Service (domínio) (em revisão (PR)) |
 
 ---
 
@@ -17,12 +17,13 @@
 
 **`T-101` — scaffold Quarkus dos 3 serviços de domínio (entregue via [PR #7](https://github.com/mclovin137/Horus/pull/7), mergeada em `main`).**
 - Módulos `services/{prontuario,payment,invoice}`: **REST + Hibernate Panache + Flyway**, banco dedicado por serviço, `service.name` canônico (contrato T-005), porta própria, migração `V1`, entidade Panache mínima, endpoint `/info` e teste de fumaça `@QuarkusTest` (Dev Services PostgreSQL).
-- **Quarkus 3.20.0 → 3.37.0** no parent: o enhancement de entidades Panache do 3.20 não lê bytecode JDK 25 (`Unsupported class file major version 69`). 3.37 valida nos 5 módulos.
-- **CI verde** (build + smoke tests no runner com Docker → SUCCESS). `lib.md`/`CLAUDE.md` atualizados.
+- **Quarkus 3.20.0 → 3.37.0** no parent (Panache não lê bytecode JDK 25 no 3.20). **CI verde**.
+
+> 🔄 **Em revisão:** **`T-102`** — domínio do Prontuário Service: criar/consultar prontuário (RF-006/007), registrar/atualizar/finalizar consulta (RF-008..010), persistindo só em `prontuario_db` (RF-025). Entidade `Consulta`+enum, migração `V2`, serviços transacionais (imutabilidade pós-finalização), REST+DTOs+validação (404/409/400) e teste de fluxo.
 
 ## ▶️ Próxima ação
 
-Fase 1 segue com o **domínio de cada serviço**: **`T-102`** (Prontuário — criar/consultar prontuário, consultas), **`T-103`** (Payment — carteira/saldo, movimentações, aprovar/rejeitar/estornar), **`T-104`** (Invoice — emitir NF simulada, listar, reprocessar), todos sobre o scaffold. Em paralelo/depois: **`T-105`** (migrações Flyway completas) e **`T-401`** (instrumentação OTel HTTP+JDBC, guiada pelo contrato de telemetria).
+**`T-102`** está **em revisão** (PR); build de produção verde. Depois: **`T-103`** (Payment — carteira/saldo, movimentações, aprovar/rejeitar/estornar) e **`T-104`** (Invoice — emitir NF simulada, listar, reprocessar), ambos sobre o scaffold. Em seguida **`T-105`** (migrações Flyway consolidadas), **`T-107`** (SAGA) e **`T-401`** (instrumentação OTel HTTP+JDBC).
 
 > ⚙️ **Pendência sua (não bloqueia o roadmap):** configurar a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** para o review por IA rodar de fato (o `gate` o pula com status neutro). O pipeline de **CI (build/test) não usa segredo** e roda sempre.
 
@@ -32,6 +33,7 @@ Fase 1 segue com o **domínio de cada serviço**: **`T-102`** (Prontuário — c
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
+| 2026-06-27 | `T-102` | Prontuário Service (domínio): criar/consultar prontuário, registrar/atualizar/finalizar consulta (RF-006..010); entidade `Consulta`, migração `V2`, REST+validação, teste de fluxo | `task/T-102-prontuario-domain` | `#<n>` | 🔄 Em revisão (PR) |
 | 2026-06-27 | `T-101` | Scaffold Quarkus dos 3 serviços (REST + Panache + Flyway, banco por serviço, smoke test); **Quarkus 3.20→3.37** (Panache sob JDK 25) | `task/T-101-scaffold-services` | [#7](https://github.com/mclovin137/Horus/pull/7) | ✅ Entregue |
 | 2026-06-27 | `T-003` | `docker-compose` de dev (Postgres ×3, RabbitMQ, OTel Collector, Jaeger, Loki, Prometheus) + `Makefile` (`make up`) + configs de telemetria | `task/T-003-docker-compose-dev` | [#6](https://github.com/mclovin137/Horus/pull/6) | ✅ Entregue |
 | 2026-06-27 | `T-005` | Contrato de telemetria (`docs/telemetry/CONTRACT.md`): logging/spans, propagação HTTP+AMQP, métricas mínimas, PII | `task/T-005-telemetry-conventions` | [#5](https://github.com/mclovin137/Horus/pull/5) | ✅ Entregue |
