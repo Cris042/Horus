@@ -7,20 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-27 |
-| **Branch atual** | `task/T-104-invoice-domain` |
-| **Fase do roadmap** | Fase 1 — Microsserviços de domínio |
-| **Task ativa** | `T-104` — Invoice Service (domínio) (em revisão (PR)) |
+| **Branch atual** | `main` |
+| **Fase do roadmap** | Fase 1 → Fase 4 (telemetria) |
+| **Task ativa** | — (próxima: `T-401` instrumentação OTel) |
 
 ---
 
 ## 🟢 Última entrega (mergeada)
 
-**`T-103` — domínio do Payment Service (entregue via [PR #9](https://github.com/mclovin137/Horus/pull/9), mergeada em `main`).**
-- Carteira/saldo (RF-011), movimentações entrada/saída (RF-012), aprovar/rejeitar (RF-013), estornar (RF-014), histórico (RF-015), só em `payment_db` (RF-026). Entidades `Movimentacao`/`Pagamento`+enums, migração `V2` (+ correção `V1` p/ sequência), serviços transacionais (saldo nunca negativo), REST+validação (404/409/400), teste de fluxo. **CI verde**.
+**`T-104` — domínio do Invoice Service (entregue via [PR #10](https://github.com/mclovin137/Horus/pull/10), mergeada em `main`).**
+- Receber emissão (RF-016), gerar NF simulada (RF-017), registrar resultado (RF-018), listar/filtrar (RF-019), reprocessar falhas (RF-020), só em `invoice_db` (RF-027). Entidade `NotaFiscal`+enum, reescrita `V1` (sequência), serviço + REST+validação (404/409/400), teste de fluxo. **CI verde**.
+- ✅ **Os 3 serviços de domínio da Fase 1 estão completos** (Prontuário T-102, Payment T-103, Invoice T-104).
 
 ## ▶️ Próxima ação
 
-**`T-104`** (Invoice — receber emissão, gerar NF simulada, registrar resultado, listar, reprocessar — RF-016..020, RF-027) **em revisão** (PR). Conclui os 3 serviços de domínio (T-102/103/104). Depois **`T-105`** (migrações consolidadas), **`T-107`** (SAGA cross-service) e **`T-401`** (instrumentação OTel HTTP+JDBC).
+Caminho crítico: **`T-401`** — instrumentar os 3 serviços Quarkus com **OpenTelemetry (HTTP + JDBC/Hibernate)**, exportando OTLP para o Collector (T-003), guiado pelo contrato de telemetria (T-005): `service.name` canônico, propagação W3C, spans de query parametrizados, logs JSON correlacionados por `trace_id`. Em paralelo restam **`T-105`** (migrações consolidadas/`RF-028`), **`T-106`** (isolamento) e **`T-107`** (SAGA cross-service).
 
 > ⚠️ **Nota técnica (vale p/ T-103/104):** entidades Panache geram id via **sequência `<tabela>_seq`** (PooledLo, INCREMENT 50) — as migrações Flyway devem criar a sequência (não usar coluna IDENTITY), senão `INSERT` falha em `nextval`.
 
@@ -30,7 +31,7 @@
 
 ## 📒 Log de entregas (mais recente primeiro)
 
-| 2026-06-27 | `T-104` | Invoice Service (domínio): receber emissão, gerar NF simulada, registrar resultado, listar, reprocessar (RF-016..020); entidade `NotaFiscal`, REST+validação, teste de fluxo | `task/T-104-invoice-domain` | [#10](https://github.com/mclovin137/Horus/pull/10) | 🔄 Em revisão (PR) |
+| 2026-06-27 | `T-104` | Invoice Service (domínio): receber emissão, gerar NF simulada, registrar resultado, listar, reprocessar (RF-016..020); entidade `NotaFiscal`, REST+validação, teste de fluxo | `task/T-104-invoice-domain` | [#10](https://github.com/mclovin137/Horus/pull/10) | ✅ Entregue |
 | 2026-06-27 | `T-103` | Payment Service (domínio): carteira/saldo, movimentações, aprovar/rejeitar/estornar, histórico (RF-011..015); entidades `Movimentacao`/`Pagamento`, migração `V2`, REST+validação, teste de fluxo | `task/T-103-payment-domain` | [#9](https://github.com/mclovin137/Horus/pull/9) | ✅ Entregue |
 | 2026-06-27 | `T-102` | Prontuário Service (domínio): criar/consultar prontuário, registrar/atualizar/finalizar consulta (RF-006..010); entidade `Consulta`, migração `V2`, REST+validação, teste de fluxo | `task/T-102-prontuario-domain` | [#8](https://github.com/mclovin137/Horus/pull/8) | ✅ Entregue |
 | 2026-06-27 | `T-101` | Scaffold Quarkus dos 3 serviços (REST + Panache + Flyway, banco por serviço, smoke test); **Quarkus 3.20→3.37** (Panache sob JDK 25) | `task/T-101-scaffold-services` | [#7](https://github.com/mclovin137/Horus/pull/7) | ✅ Entregue |
