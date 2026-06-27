@@ -7,15 +7,15 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-27 |
-| **Branch atual** | `task/T-002-bootstrap-quarkus` (em revisão — [PR #3](https://github.com/mclovin137/Horus/pull/3)) |
+| **Branch atual** | `main` |
 | **Fase do roadmap** | Fase 0 — Fundação |
-| **Task ativa** | `T-002` (em revisão — PR) |
+| **Task ativa** | `T-004` (planejada) — próxima da Fase 0 |
 
 ---
 
 ## 🟢 Última entrega
 
-**`T-002` — Bootstrap Quarkus do Horus (em revisão via PR).**
+**`T-002` — Bootstrap Quarkus do Horus (entregue via [PR #3](https://github.com/mclovin137/Horus/pull/3), mergeado em `main`).**
 - `pom.xml` raiz convertido em **parent/aggregator** (`packaging=pom`): Java 25, BOM do Quarkus 3.20 em `dependencyManagement`, módulo `horus`.
 - `horus/` agora é um **app Quarkus**: extensões de bootstrap (`quarkus-rest`, `rest-jackson`, `smallrye-health`, `arc`), endpoint `GET /horus/info`, health em `/q/health` e teste de fumaça (`@QuarkusTest`).
 - `Main.java` placeholder **removido** (e `src/` raiz eliminado); features de preview do Java 25 abandonadas (Quarkus gerencia o entry point).
@@ -35,7 +35,7 @@ Concluir a **Fase 0**. Recomendado iniciar por **`T-004` — CI: build/test por 
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
-| 2026-06-27 | `T-002` | Bootstrap Quarkus do Horus (parent/aggregator + módulo `horus` REST/health; remove `Main.java`) | `task/T-002-bootstrap-quarkus` | [#3](https://github.com/mclovin137/Horus/pull/3) | 🟡 Em revisão (PR) |
+| 2026-06-27 | `T-002` | Bootstrap Quarkus do Horus (parent/aggregator + módulo `horus` REST/health; remove `Main.java`) | `task/T-002-bootstrap-quarkus` | [#3](https://github.com/mclovin137/Horus/pull/3) | ✅ Entregue |
 | 2026-06-27 | — (fix) | `fix(ci)`: `id-token: write` + job `gate` de secret no review por IA | `fix/ai-review-oidc-permission` | [#2](https://github.com/mclovin137/Horus/pull/2) | ✅ Entregue |
 | 2026-06-27 | `T-001` | Estrutura de monorepo (diretórios + READMEs por componente, `Makefile`, `.editorconfig`, mapa no README) | `task/T-001-estrutura-monorepo` | [#1](https://github.com/mclovin137/Horus/pull/1) | ✅ Entregue |
 | 2026-06-26 | — | Publicação do projeto no Git/GitHub | `main` | — | ✅ Entregue |
