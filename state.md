@@ -7,21 +7,22 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-27 |
-| **Branch atual** | `task/T-101-scaffold-services` |
+| **Branch atual** | `main` |
 | **Fase do roadmap** | Fase 1 — Microsserviços de domínio |
-| **Task ativa** | `T-101` — scaffold dos 3 serviços Quarkus (em revisão (PR)) |
+| **Task ativa** | — (próxima: `T-102`/`T-103`/`T-104`) |
 
 ---
 
 ## 🟢 Última entrega (mergeada)
 
-**Fase 0 concluída** — `T-005` (contrato de telemetria, [PR #5](https://github.com/mclovin137/Horus/pull/5)) e `T-003` (docker-compose de dev, [PR #6](https://github.com/mclovin137/Horus/pull/6)) **mergeadas em `main`**. `make up` sobe a infra local (Postgres ×3, RabbitMQ, Collector, Jaeger, Loki, Prometheus); o contrato de telemetria guia a instrumentação das fases seguintes.
-
-> 🔄 **Em revisão:** **`T-101`** — scaffold Quarkus dos 3 serviços de domínio (Prontuário/Payment/Invoice): REST + Hibernate Panache + Flyway, banco dedicado por serviço, `service.name` canônico, teste de fumaça. **Elevou o Quarkus 3.20→3.37** (Panache não compilava sob JDK 25 no 3.20).
+**`T-101` — scaffold Quarkus dos 3 serviços de domínio (entregue via [PR #7](https://github.com/mclovin137/Horus/pull/7), mergeada em `main`).**
+- Módulos `services/{prontuario,payment,invoice}`: **REST + Hibernate Panache + Flyway**, banco dedicado por serviço, `service.name` canônico (contrato T-005), porta própria, migração `V1`, entidade Panache mínima, endpoint `/info` e teste de fumaça `@QuarkusTest` (Dev Services PostgreSQL).
+- **Quarkus 3.20.0 → 3.37.0** no parent: o enhancement de entidades Panache do 3.20 não lê bytecode JDK 25 (`Unsupported class file major version 69`). 3.37 valida nos 5 módulos.
+- **CI verde** (build + smoke tests no runner com Docker → SUCCESS). `lib.md`/`CLAUDE.md` atualizados.
 
 ## ▶️ Próxima ação
 
-**`T-101`** está **em revisão** (PR). Build de produção dos 5 módulos **verde** sob JDK 25 + Quarkus 3.37; os smoke tests via Dev Services rodam no CI (runner com Docker). Ao mergear, o caminho crítico abre **`T-102`/`T-103`/`T-104`** (domínio de cada serviço) e **`T-105`** (migrações Flyway), depois **`T-401`** (instrumentação OTel HTTP+JDBC).
+Fase 1 segue com o **domínio de cada serviço**: **`T-102`** (Prontuário — criar/consultar prontuário, consultas), **`T-103`** (Payment — carteira/saldo, movimentações, aprovar/rejeitar/estornar), **`T-104`** (Invoice — emitir NF simulada, listar, reprocessar), todos sobre o scaffold. Em paralelo/depois: **`T-105`** (migrações Flyway completas) e **`T-401`** (instrumentação OTel HTTP+JDBC, guiada pelo contrato de telemetria).
 
 > ⚙️ **Pendência sua (não bloqueia o roadmap):** configurar a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** para o review por IA rodar de fato (o `gate` o pula com status neutro). O pipeline de **CI (build/test) não usa segredo** e roda sempre.
 
@@ -31,7 +32,7 @@
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
-| 2026-06-27 | `T-101` | Scaffold Quarkus dos 3 serviços (REST + Panache + Flyway, banco por serviço, smoke test); **Quarkus 3.20→3.37** (Panache sob JDK 25) | `task/T-101-scaffold-services` |  [#7](https://github.com/mclovin137/Horus/pull/7) | 🔄 Em revisão (PR) |
+| 2026-06-27 | `T-101` | Scaffold Quarkus dos 3 serviços (REST + Panache + Flyway, banco por serviço, smoke test); **Quarkus 3.20→3.37** (Panache sob JDK 25) | `task/T-101-scaffold-services` | [#7](https://github.com/mclovin137/Horus/pull/7) | ✅ Entregue |
 | 2026-06-27 | `T-003` | `docker-compose` de dev (Postgres ×3, RabbitMQ, OTel Collector, Jaeger, Loki, Prometheus) + `Makefile` (`make up`) + configs de telemetria | `task/T-003-docker-compose-dev` | [#6](https://github.com/mclovin137/Horus/pull/6) | ✅ Entregue |
 | 2026-06-27 | `T-005` | Contrato de telemetria (`docs/telemetry/CONTRACT.md`): logging/spans, propagação HTTP+AMQP, métricas mínimas, PII | `task/T-005-telemetry-conventions` | [#5](https://github.com/mclovin137/Horus/pull/5) | ✅ Entregue |
 | 2026-06-27 | `T-004` | CI de build/test (`ci.yml`) + **Maven Wrapper** (3.9.9); build validado local + CI (Java 25 + Quarkus 3.20 → SUCCESS, testes verdes) | `task/T-004-ci-build` | [#4](https://github.com/mclovin137/Horus/pull/4) | ✅ Entregue |
