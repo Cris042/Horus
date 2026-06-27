@@ -28,7 +28,7 @@
 2. ✅ Hardening do Flyway nos 3 serviços (`validate-on-migrate`, `clean-disabled`).
 3. ✅ Documentar a estratégia em `docs/architecture/db-migrations.md`.
 4. ✅ Build de produção verde (`-DskipTests`); testes de fluxo (que exercem migrações) no CI.
-5. ⬜ Atualizar `state.md`; abrir o PR `T-105: …`; preencher o nº do PR aqui e no PRD.
+5. ✅ Atualizar `state.md`; abrir o PR [#12](https://github.com/mclovin137/Horus/pull/12); nº preenchido aqui e no PRD.
 
 ## Verificação / testes
 
