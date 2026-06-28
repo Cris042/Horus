@@ -7,21 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-27 |
-| **Branch atual** | `task/T-404-otel-collector-backends` |
+| **Branch atual** | `task/T-406-pii-redaction` |
 | **Fase do roadmap** | Fase 4 — Telemetria e correlação |
-| **Task ativa** | `T-404` — OTel Collector + backends (Jaeger/Loki/Prometheus) (em revisão (PR)) |
+| **Task ativa** | `T-406` — Sanitização/redação de PII na borda do Collector (em revisão (PR)) |
 
 ---
 
 ## 🟢 Última entrega (mergeada)
 
-**`T-201` — Load Balancer de entrada (NGINX) (entregue via [PR #17](https://github.com/mclovin137/Horus/pull/17), mergeada em `main`).** Roteia por prefixo aos 3 serviços + orquestrador e **repassa `traceparent`** (RF-005/RNF-006/RF-029); `resolver`+variável. `nginx -t` ok (config+docs; ativação em T-801). **CI verde.**
+**`T-404` — OTel Collector + backends (entregue via [PR #18](https://github.com/mclovin137/Horus/pull/18), mergeada em `main`).** Endurece o pipeline do T-003: `health_check` no Collector, healthchecks/`depends_on` no compose, **Grafana** (`:3000`) com datasources provisionados (Prometheus/Loki/Jaeger) + doc `README.md`. `compose config` + `otelcol validate` ok. **CI verde.**
 
-> 🔄 **Em revisão:** **`T-404`** — OTel Collector + backends (RF-031/RF-H-014): endurece o pipeline do T-003 — extensão `health_check` (`:13133`) no Collector, `healthcheck`/ordenação por `depends_on` no compose, e **Grafana** (`:3000`) com datasources provisionados (Prometheus/Loki/Jaeger) + doc de validação `deploy/telemetry/README.md`. Validado: `docker compose config` ok e `otelcol validate` ok.
+> 🔄 **Em revisão:** **`T-406`** — Redação de PII na borda do Collector (RNF-010/RNF-H-002, CONTRACT §6): processor `transform/pii` (OTTL) nas pipelines de traces e logs — remove chaves proibidas (`cpf`/`documento`/`email`/`nome_paciente`/`cartao`/`prontuario.conteudo`) e mascara e-mail/CPF/cartão; 2ª camada (a 1ª é na origem, T-401). Doc `PII-REDACTION.md`. Validado: `otelcol validate` exit 0.
 
 ## ▶️ Próxima ação
 
-Caminho crítico: **`T-405`** (validar correlação ponta a ponta: request→query→log→mensagem→worker no mesmo `trace_id`) — depende de T-401..404; destrava **`T-501`**/**`T-502`** (serviço Horus + modelo de correlação). Em paralelo: Fase 3 **`T-303`** (worker Rust) e Fase 2 **`T-202`** (API FastAPI de carga). Restam **`T-403`** (instrumentar o worker) e **`T-507`** (visualização da SAGA).
+Caminho crítico: **`T-405`** (validar correlação ponta a ponta no mesmo `trace_id`) — **melhor após `T-801`** (serviços containerizados) para validação reprodutível em CI; destrava **`T-501`**/**`T-502`** (serviço Horus + modelo de correlação). Desbloqueadas agora: Fase 3 **`T-303`** (worker Rust) e Fase 2 **`T-202`** (API FastAPI de carga). Restam **`T-403`** (instrumentar o worker) e **`T-507`** (visualização da SAGA).
 
 > ⚠️ **Nota técnica (vale p/ T-103/104):** entidades Panache geram id via **sequência `<tabela>_seq`** (PooledLo, INCREMENT 50) — as migrações Flyway devem criar a sequência (não usar coluna IDENTITY), senão `INSERT` falha em `nextval`.
 
@@ -33,7 +33,8 @@ Caminho crítico: **`T-405`** (validar correlação ponta a ponta: request→que
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
-| 2026-06-27 | `T-404` | OTel Collector + backends (RF-031/RF-H-014): `health_check` no Collector, healthchecks/`depends_on` no compose, Grafana com datasources provisionados (Prometheus/Loki/Jaeger), doc `telemetry/README.md`; `compose config` + `otelcol validate` ok | `task/T-404-otel-collector-backends` | [#18](https://github.com/mclovin137/Horus/pull/18) | 🔄 Em revisão (PR) |
+| 2026-06-27 | `T-406` | Redação de PII na borda do Collector (RNF-010/RNF-H-002): processor `transform/pii` (OTTL) em traces+logs — remove chaves proibidas e mascara e-mail/CPF/cartão (2ª camada; origem = T-401), doc `PII-REDACTION.md`; `otelcol validate` ok | `task/T-406-pii-redaction` | [#19](https://github.com/mclovin137/Horus/pull/19) | 🔄 Em revisão (PR) |
+| 2026-06-27 | `T-404` | OTel Collector + backends (RF-031/RF-H-014): `health_check` no Collector, healthchecks/`depends_on` no compose, Grafana com datasources provisionados (Prometheus/Loki/Jaeger), doc `telemetry/README.md`; `compose config` + `otelcol validate` ok | `task/T-404-otel-collector-backends` | [#18](https://github.com/mclovin137/Horus/pull/18) | ✅ Entregue |
 | 2026-06-27 | `T-201` | Load Balancer de entrada (NGINX): roteamento por prefixo aos 3 serviços + orquestrador, passthrough de `traceparent`, `resolver`+variável; `nginx -t` ok (config+docs; ativação em T-801) | `task/T-201-load-balancer` | [#17](https://github.com/mclovin137/Horus/pull/17) | ✅ Entregue |
 | 2026-06-27 | `T-302` | Publicação de relatório por fluxo (RF-021): SAGA solicita o relatório da NF após conclusão (best-effort); `InvoiceClient.solicitarRelatorio`, teste atualizado | `task/T-302-saga-report-publication` | [#16](https://github.com/mclovin137/Horus/pull/16) | ✅ Entregue |
 | 2026-06-27 | `T-301` | RabbitMQ + contrato da mensagem de relatório (RF-021/RNF-011): `RelatorioMensagem` + publisher no invoice, `POST /notas/{id}/relatorio`, teste in-memory, doc `report-message.md` | `task/T-301-rabbitmq-report-contract` | [#15](https://github.com/mclovin137/Horus/pull/15) | ✅ Entregue |
