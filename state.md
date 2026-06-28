@@ -7,21 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-28 |
-| **Branch atual** | `task/T-303-rust-worker` |
-| **Fase do roadmap** | Fase 3 — Mensageria e worker Rust (caminho crítico → T-403/T-405) |
-| **Task ativa** | `T-303` — Worker Rust de relatórios (em revisão (PR)) |
+| **Branch atual** | `task/T-403-worker-otel-amqp` |
+| **Fase do roadmap** | Fase 4 — Telemetria base (OTel) (caminho crítico → T-405) |
+| **Task ativa** | `T-403` — OTel no worker + propagação HTTP→AMQP (em revisão (PR)) |
 
 ---
 
 ## 🟢 Última entrega (mergeada)
 
-**`T-402` — Instrumentação OTel da borda (entregue via [PR #32](https://github.com/mclovin137/Horus/pull/32), mergeada em `main`).** `telemetry.py` + FastAPI instrumentada (gated) + Locust injeta W3C `traceparent` + LB access log JSON. `pytest` verde (21/21). **CI + ai-review verdes.**
+**`T-303` — Worker Rust de relatórios (entregue via [PR #33](https://github.com/mclovin137/Horus/pull/33), mergeada em `main`).** Crate `worker/` (lapin+lettre+serde) consome `relatorios`/`nota-fiscal`, gera relatório e envia e-mail; idempotência por `id`; job de CI `build-worker`. **CI + ai-review verdes.**
 
-> 🔄 **Em revisão:** **`T-303`** — Worker Rust de relatórios (RF-022..024/RNF-012): crate `worker/` (tokio+lapin+lettre+serde+tracing) que consome a fila ligada à exchange `relatorios` (routing `nota-fiscal`), gera o relatório e envia e-mail; porta `EmailSender` (SMTP via lettre + stub de log padrão), idempotência por `id`, ack/nack. Job de CI `build-worker` (fmt+clippy+test). ⚠️ **Verificação local bloqueada por falta de `gcc`** (linker C) — validação pelo CI. Lógica pura coberta por testes unitários.
+> 🔄 **Em revisão:** **`T-403`** — OTel no worker + propagação HTTP→AMQP (RF-029/RF-H-004): `telemetry.rs` (provider+recurso canônico `report-worker`/`medrec`, exportador **OTLP/HTTP** sem gRPC/protoc, bridge `tracing→OTel`, propagador W3C global); `extrair_contexto` lê `traceparent` dos **headers AMQP** e o `main` abre o span de processamento como **filho** do publicador (preserva `trace_id` na fronteira HTTP→AMQP). Verificado em **container `rust:1-slim`**: `cargo test` (12), `fmt --check`, `clippy -D warnings` limpos.
 
 ## ▶️ Próxima ação
 
-Validar T-303 pelo **CI `build-worker`** (rustup instalado nesta sessão; falta `gcc` local — `sudo apt-get install -y build-essential` para compilar localmente). Em seguida, caminho crítico: **`T-403`** (OTel no worker + fronteira HTTP→AMQP, RF-H-004) → **`T-405`** (validação de correlação ponta a ponta) → Fase 5 core (T-502..505) → Fase 7 restante (T-702/T-703) e Fase 6 `T-606`.
+Caminho crítico: **`T-405`** (validar correlação ponta a ponta — request→query→log→mensagem→worker no mesmo `trace_id`; RF-H-004) — agora possível pois T-401/402/403/404 ✅. T-405 é principalmente validação/documentação (precisa do ambiente compose de pé). Depois Fase 5 core: **`T-502`** (modelo de correlação) → **`T-503/504/505`** (ciclo de vida) → Fase 7 (`T-702` waterfall) e Fase 6 `T-606` (anomalias). 💡 Verificação de Rust local agora via Docker (`rust:1-slim`) — contorna a ausência de `gcc` no host.
 
 > ⚙️ **Pendência sua (agora relevante p/ IA):** a IA real (T-601+) exige a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** e `horus.ai.enabled=true`. Sem isso, o Horus roda com o `StubLlmEngine` (placeholder) — não bloqueia build/CI.
 
@@ -35,7 +35,8 @@ Validar T-303 pelo **CI `build-worker`** (rustup instalado nesta sessão; falta 
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
-| 2026-06-28 | `T-303` | Worker Rust de relatórios (RF-022..024/RNF-012): crate `worker/` (tokio+lapin+lettre+serde+tracing) consome exchange `relatorios`/`nota-fiscal`, gera relatório e envia e-mail; `EmailSender` (SMTP + stub de log), idempotência por `id`, ack/nack; job de CI `build-worker` (fmt+clippy+test); validação via CI (sem `gcc` local) | `task/T-303-rust-worker` | [#33](https://github.com/mclovin137/Horus/pull/33) | 🔄 Em revisão (PR) |
+| 2026-06-28 | `T-403` | OTel no worker + propagação HTTP→AMQP (RF-029/RF-H-004): `telemetry.rs` (provider+recurso `report-worker`/`medrec`, OTLP/HTTP sem protoc, bridge tracing→OTel, propagador W3C); `extrair_contexto` lê `traceparent` dos headers AMQP e o span de processamento vira filho do publicador; verificado em container `rust:1-slim` (test 12, fmt, clippy) | `task/T-403-worker-otel-amqp` | (a abrir) | 🔄 Em revisão (PR) |
+| 2026-06-28 | `T-303` | Worker Rust de relatórios (RF-022..024/RNF-012): crate `worker/` (tokio+lapin+lettre+serde+tracing) consome exchange `relatorios`/`nota-fiscal`, gera relatório e envia e-mail; `EmailSender` (SMTP + stub de log), idempotência por `id`, ack/nack; job de CI `build-worker` (fmt+clippy+test); validação via CI | `task/T-303-rust-worker` | [#33](https://github.com/mclovin137/Horus/pull/33) | ✅ Entregue |
 | 2026-06-28 | `T-402` | Instrumentação OTel da borda (RF-029): `telemetry.py` (provider+recurso canônico `loadtest-api`/`medrec`+OTLP), FastAPI instrumentada (gated `HORUS_OTEL_ENABLED`), Locust injeta W3C `traceparent` (`events.init`+`RequestsInstrumentor`), LB access log JSON com `traceparent`; testes offline (exporter em memória); `pytest` verde (21/21) | `task/T-402-otel-loadtest-edge` | [#32](https://github.com/mclovin137/Horus/pull/32) | ✅ Entregue |
 | 2026-06-28 | `T-203` | Cenários Locust (RF-004/RNF-016): `app/locustfile.py` (usuários por domínio + SAGA, fluxos encadeados, fração de falhas) + `LocustRunner` (`locust --headless`, start/stop) selecionável por `HORUS_LOADTEST_RUNNER`; +4 correções do review por IA; testes offline isolam import de `locust`/gevent em subprocesso; `pytest` verde (18/18) | `task/T-203-locust-scenarios` | [#31](https://github.com/mclovin137/Horus/pull/31) | ✅ Entregue |
 | 2026-06-28 | `T-202` | API FastAPI de controle de teste de carga (RF-001..003): `POST /load-tests`, `GET /load-tests/{id}`, `POST /load-tests/{id}/stop` (+`GET /load-tests`/`/health`); Pydantic + `LoadTestManager` (porta `LoadRunner` no-op→Locust em T-203); job de CI Python `build-loadtest` (uv+pytest); `pytest` verde (10/10) | `task/T-202-fastapi-control-api` | [#30](https://github.com/mclovin137/Horus/pull/30) | ✅ Entregue |
