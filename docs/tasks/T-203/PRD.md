@@ -6,7 +6,7 @@
 | **Fase do roadmap** | `Fase 2 — Entrada e teste de carga` |
 | **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-203-locust-scenarios` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | [#31](https://github.com/mclovin137/Horus/pull/31) |
 | **Depende de** | `T-202` (API de controle) |
 | **Requisitos atendidos** | `RF-004`, `RNF-016` |
 | **ADRs relacionados** | — |
