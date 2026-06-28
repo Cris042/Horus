@@ -38,6 +38,10 @@
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.version>3.37.0</quarkus.platform.version>
 
+        <!-- Quarkus LangChain4j (extensão Anthropic/Claude — ADR-0011, T-601).
+             Versionada à parte do BOM Quarkus (quarkiverse); confirmar compat ao subir. -->
+        <quarkus-langchain4j.version>1.1.0</quarkus-langchain4j.version>
+
         <compiler-plugin.version>3.13.0</compiler-plugin.version>
         <surefire-plugin.version>3.5.1</surefire-plugin.version>
     </properties>
