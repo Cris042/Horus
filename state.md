@@ -7,20 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-27 |
-| **Branch atual** | `main` |
-| **Fase do roadmap** | Fase 3 — Mensageria e worker |
-| **Task ativa** | — (próxima: `T-303` worker Rust, ou `T-404`/`T-405`) |
+| **Branch atual** | `task/T-201-load-balancer` |
+| **Fase do roadmap** | Fase 2 — Entrada e carga |
+| **Task ativa** | `T-201` — Load Balancer de entrada (NGINX) (em revisão (PR)) |
 
 ---
 
 ## 🟢 Última entrega (mergeada)
 
-**`T-302` — publicação de relatório por fluxo (entregue via [PR #16](https://github.com/mclovin137/Horus/pull/16), mergeada em `main`).**
-- Ao concluir a SAGA `pagar→emitir NF` (T-107), o `saga-orchestrator` solicita o relatório da NF (`POST /notas/{id}/relatorio`) como passo final **best-effort** (falha não compensa). Fluxo `pagar → emitir → solicitar relatório` no mesmo `trace_id` (RF-021). **CI verde.**
+**`T-302` — publicação de relatório por fluxo (entregue via [PR #16](https://github.com/mclovin137/Horus/pull/16), mergeada em `main`).** SAGA solicita o relatório da NF após conclusão (best-effort); fluxo `pagar → emitir → relatório` no mesmo `trace_id` (RF-021). **CI verde.**
+
+> 🔄 **Em revisão:** **`T-201`** — Load Balancer de entrada (NGINX, RF-005/RNF-006): `deploy/lb/nginx.conf` roteia por prefixo aos 3 serviços + orquestrador e **repassa `traceparent`** sem encerrar o trace (RF-029); `resolver`+variável (resiliente a restart/escala). Sintaxe validada (`nginx -t` ok). Só config+docs — **ativação no compose vem em T-801** (serviços containerizados).
 
 ## ▶️ Próxima ação
 
-Fase 3: **`T-303`** (worker Rust: consumir do RabbitMQ, gerar relatório, enviar e-mail — RF-022..024, componente **novo, não-Java, "G"**). Caminho crítico de telemetria: **`T-404`** (Collector/backends — config aprofundada) e **`T-405`** (correlação ponta a ponta por `trace_id`). Restam ainda **`T-402`** (FastAPI/LB) e **`T-403`** (instrumentar o worker, HTTP→AMQP) e **`T-507`** (visualização da SAGA — RF-H-016).
+Fase 3: **`T-303`** (worker Rust: consumir do RabbitMQ, gerar relatório, enviar e-mail — RF-022..024; componente **novo, não-Java**, exige lane de CI Rust). Fase 2: **`T-202`** (API FastAPI de controle de carga). Caminho crítico de telemetria: **`T-404`**/**`T-405`** (Collector + correlação ponta a ponta). Restam **`T-403`** (instrumentar o worker) e **`T-507`** (visualização da SAGA).
 
 > ⚠️ **Nota técnica (vale p/ T-103/104):** entidades Panache geram id via **sequência `<tabela>_seq`** (PooledLo, INCREMENT 50) — as migrações Flyway devem criar a sequência (não usar coluna IDENTITY), senão `INSERT` falha em `nextval`.
 
@@ -32,6 +33,7 @@ Fase 3: **`T-303`** (worker Rust: consumir do RabbitMQ, gerar relatório, enviar
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
+| 2026-06-27 | `T-201` | Load Balancer de entrada (NGINX): roteamento por prefixo aos 3 serviços + orquestrador, passthrough de `traceparent`, `resolver`+variável; `nginx -t` ok (config+docs; ativação em T-801) | `task/T-201-load-balancer` | [#17](https://github.com/mclovin137/Horus/pull/17) | 🔄 Em revisão (PR) |
 | 2026-06-27 | `T-302` | Publicação de relatório por fluxo (RF-021): SAGA solicita o relatório da NF após conclusão (best-effort); `InvoiceClient.solicitarRelatorio`, teste atualizado | `task/T-302-saga-report-publication` | [#16](https://github.com/mclovin137/Horus/pull/16) | ✅ Entregue |
 | 2026-06-27 | `T-301` | RabbitMQ + contrato da mensagem de relatório (RF-021/RNF-011): `RelatorioMensagem` + publisher no invoice, `POST /notas/{id}/relatorio`, teste in-memory, doc `report-message.md` | `task/T-301-rabbitmq-report-contract` | [#15](https://github.com/mclovin137/Horus/pull/15) | ✅ Entregue |
 | 2026-06-27 | `T-106` | Isolamento de persistência (RNF-002/003): credenciais segregadas por serviço (compose + datasources), healthcheck por `$POSTGRES_USER`, doc `db-isolation.md` | `task/T-106-db-isolation` | [#14](https://github.com/mclovin137/Horus/pull/14) | ✅ Entregue |
