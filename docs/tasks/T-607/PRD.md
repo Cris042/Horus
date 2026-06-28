@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-607` |
 | **Fase do roadmap** | `Fase 6 — IA (resumo, RCA, anomalias)` |
-| **Status** | `Em revisão (PR)` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-607-nl-query-agent` |
 | **PR** | `#26` |
 | **Depende de** | `T-602` (e T-601/T-501) |

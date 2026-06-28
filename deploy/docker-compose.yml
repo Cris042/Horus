@@ -1,13 +1,13 @@
 # Horus — docker-compose de DESENVOLVIMENTO (T-003, RF-032)
 #
 # Sobe a infraestrutura local do sistema observado + backends de telemetria:
-#   - PostgreSQL ×3 (um por serviço de domínio): prontuario_db, payment_db, invoice_db
+#   - PostgreSQL ×4: prontuario_db, payment_db, invoice_db, saga_db
 #   - RabbitMQ 4.0 (com management) — mensageria restrita a relatórios (ADR-0004)
 #   - OpenTelemetry Collector (contrib) — único ponto de ingestão OTLP (ADR-0010)
 #   - Jaeger 2 (traces), Loki 3 (logs), Prometheus 3 (métricas)
 #
 # Uso: `make up` / `make down` (na raiz do repo). As aplicações (Quarkus/Rust/Python)
-# ainda NÃO entram aqui — chegam nas Fases 1+. Este compose entrega só a infra.
+# ainda NÃO entram aqui — entram em T-801, quando houver imagens Docker.
 #
 # ⚠️ Versões fixadas para reprodutibilidade (ver lib.md). Confirme/ajuste ao evoluir.
 # ⚠️ Credenciais abaixo são de DEV (não-secretas, locais). Nunca usar em prod.

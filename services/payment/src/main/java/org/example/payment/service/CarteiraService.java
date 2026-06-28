@@ -1,6 +1,7 @@
 package org.example.payment.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.persistence.LockModeType;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
 import org.example.payment.domain.Carteira;
@@ -37,11 +38,34 @@ public class CarteiraService {
      */
     @Transactional
     public Movimentacao movimentar(Long carteiraId, TipoMovimentacao tipo, BigDecimal valor, String descricao) {
-        Carteira c = buscar(carteiraId);
+        return aplicarPorId(carteiraId, tipo, valor, descricao);
+    }
+
+    /**
+     * Carrega a carteira com **lock de escrita** (`SELECT … FOR UPDATE`) e aplica a movimentação.
+     *
+     * <p><b>Concorrência (T-108).</b> O saldo é estado mutável compartilhado: dois débitos
+     * simultâneos na mesma carteira poderiam causar *lost update* (ou saldo negativo). O lock
+     * pessimista **serializa** as transações que tocam a mesma linha de carteira — isolando o
+     * estado mutável no nível do banco. Como há uma única linha por operação, não há risco de
+     * deadlock por ordem de aquisição.
+     */
+    @Transactional
+    public Movimentacao aplicarPorId(Long carteiraId, TipoMovimentacao tipo, BigDecimal valor, String descricao) {
+        Carteira c = Carteira.findById(carteiraId, LockModeType.PESSIMISTIC_WRITE);
+        if (c == null) {
+            throw new NotFoundException("Carteira " + carteiraId + " não encontrada");
+        }
         return aplicar(c, tipo, valor, descricao);
     }
 
-    /** Aplica a movimentação a uma carteira já carregada (reuso interno por {@code PagamentoService}). */
+    /**
+     * Aplica a movimentação a uma carteira já carregada e bloqueada.
+     *
+     * <p>Deve ser chamado dentro de uma transação que tenha carregado a carteira com
+     * {@link LockModeType#PESSIMISTIC_WRITE} (ver {@link #aplicarPorId}); do contrário a
+     * proteção de concorrência sobre o saldo não vale.
+     */
     @Transactional
     public Movimentacao aplicar(Carteira c, TipoMovimentacao tipo, BigDecimal valor, String descricao) {
         BigDecimal novoSaldo = tipo == TipoMovimentacao.ENTRADA

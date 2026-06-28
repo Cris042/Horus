@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-105` |
 | **Fase do roadmap** | Fase 1 — Microsserviços de domínio |
-| **Status** | `Em revisão (PR)` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-105-flyway-migrations` |
 | **PR** | [#12](https://github.com/mclovin137/Horus/pull/12) |
 | **Depende de** | `T-101` (scaffold) |

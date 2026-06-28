@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-605` |
 | **Fase do roadmap** | `Fase 6 — IA (resumo, RCA, anomalias)` |
-| **Status** | `Em revisão (PR)` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-605-rca-agent` |
 | **PR** | `#25` |
 | **Depende de** | `T-602` (e T-601/T-501) |

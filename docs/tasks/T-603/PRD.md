@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-603` |
 | **Fase do roadmap** | `Fase 6 — IA (resumo, RCA, anomalias)` |
-| **Status** | `Em revisão (PR)` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-603-summarizer-agent` |
 | **PR** | `#23` |
 | **Depende de** | `T-602` (e T-601/T-501) |

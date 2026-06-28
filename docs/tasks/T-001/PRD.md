@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-001` |
 | **Fase do roadmap** | Fase 0 — Fundação |
-| **Status** | `Planejada` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-001-estrutura-monorepo` |
 | **PR** | [`#1`](https://github.com/mclovin137/Horus/pull/1) |
 | **Depende de** | — |

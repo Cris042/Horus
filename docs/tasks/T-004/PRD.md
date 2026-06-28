@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-004` |
 | **Fase do roadmap** | Fase 0 — Fundação |
-| **Status** | `Em revisão (PR)` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-004-ci-build` |
 | **PR** | [#4](https://github.com/mclovin137/Horus/pull/4) |
 | **Depende de** | `T-002` |

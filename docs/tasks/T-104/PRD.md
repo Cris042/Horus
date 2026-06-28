@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-104` |
 | **Fase do roadmap** | Fase 1 — Microsserviços de domínio |
-| **Status** | `Em revisão (PR)` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-104-invoice-domain` |
 | **PR** | [#10](https://github.com/mclovin137/Horus/pull/10) |
 | **Depende de** | `T-101` (scaffold) |

@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-101` |
 | **Fase do roadmap** | Fase 1 — Microsserviços de domínio |
-| **Status** | `Em revisão (PR)` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-101-scaffold-services` |
 | **PR** | [#7](https://github.com/mclovin137/Horus/pull/7) |
 | **Depende de** | `T-002` (build/parent), `T-003` (infra dev), `T-005` (contrato de telemetria) |

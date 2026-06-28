@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-501` |
 | **Fase do roadmap** | `Fase 5 — Horus core` |
-| **Status** | `Em revisão (PR)` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-501-horus-query-adapters` |
 | **PR** | `#20` |
 | **Depende de** | `T-404` |

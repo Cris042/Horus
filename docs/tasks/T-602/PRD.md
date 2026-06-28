@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-602` |
 | **Fase do roadmap** | `Fase 6 — IA (resumo, RCA, anomalias)` |
-| **Status** | `Em revisão (PR)` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-602-context-assembler` |
 | **PR** | `#22` |
 | **Depende de** | `T-501`, `T-406` (T-502 enriquece depois) |

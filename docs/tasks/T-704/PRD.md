@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-704` |
 | **Fase do roadmap** | `Fase 7 — Painel / Experiência` |
-| **Status** | `Em revisão (PR)` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-704-horus-rbac` |
 | **PR** | [#29](https://github.com/mclovin137/Horus/pull/29) |
 | **Depende de** | `T-701` (painel) |

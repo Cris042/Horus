@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-701` |
 | **Fase do roadmap** | `Fase 7 — Painel / Experiência` |
-| **Status** | `Em revisão (PR)` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-701-horus-panel` |
 | **PR** | [#28](https://github.com/mclovin137/Horus/pull/28) |
 | **Depende de** | `T-603` (resumo de IA), `T-604/605` (explain/RCA), `T-607` (ask), `T-501` (query) |
