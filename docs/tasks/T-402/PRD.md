@@ -6,7 +6,7 @@
 | **Fase do roadmap** | `Fase 4 — Telemetria base (OpenTelemetry)` |
 | **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-402-otel-loadtest-edge` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | [#32](https://github.com/mclovin137/Horus/pull/32) |
 | **Depende de** | `T-203` (cenários Locust), `T-201` (LB) |
 | **Requisitos atendidos** | `RF-029` |
 | **ADRs relacionados** | `ADR-0007` (propagação de contexto) |
