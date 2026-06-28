@@ -6,7 +6,7 @@
 | **Fase do roadmap** | `Fase 4 — Telemetria base (OpenTelemetry)` |
 | **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-403-worker-otel-amqp` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | [#34](https://github.com/mclovin137/Horus/pull/34) |
 | **Depende de** | `T-303` (worker Rust) |
 | **Requisitos atendidos** | `RF-029`, `RF-H-004` |
 | **ADRs relacionados** | `ADR-0007` (propagação de contexto) |
