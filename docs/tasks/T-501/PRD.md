@@ -6,7 +6,7 @@
 | **Fase do roadmap** | `Fase 5 — Horus core` |
 | **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-501-horus-query-adapters` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | `#20` |
 | **Depende de** | `T-404` |
 | **Requisitos atendidos** | `RF-H-014` |
 | **ADRs relacionados** | `ADR-0009`, `ADR-0010` |
