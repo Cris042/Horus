@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-301` |
 | **Fase do roadmap** | Fase 3 — Mensageria e worker |
-| **Status** | `Em revisão (PR)` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-301-rabbitmq-report-contract` |
 | **PR** | [#15](https://github.com/mclovin137/Horus/pull/15) |
 | **Depende de** | `T-101` |

@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-302` |
 | **Fase do roadmap** | Fase 3 — Mensageria e worker |
-| **Status** | `Em revisão (PR)` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-302-saga-report-publication` |
 | **PR** | [#16](https://github.com/mclovin137/Horus/pull/16) |
 | **Depende de** | `T-301` |

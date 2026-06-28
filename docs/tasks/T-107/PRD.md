@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-107` |
 | **Fase do roadmap** | Fase 1 — Microsserviços de domínio |
-| **Status** | `Em revisão (PR)` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-107-saga-orchestrator` |
 | **PR** | [#13](https://github.com/mclovin137/Horus/pull/13) |
 | **Depende de** | `T-102`, `T-103`, `T-104` |

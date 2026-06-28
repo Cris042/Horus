@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-002` |
 | **Fase do roadmap** | Fase 0 — Fundação |
-| **Status** | `Em progresso` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-002-bootstrap-quarkus` |
 | **PR** | [`#3`](https://github.com/mclovin137/Horus/pull/3) |
 | **Depende de** | `T-001` |

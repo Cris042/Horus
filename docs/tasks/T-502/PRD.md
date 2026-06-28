@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-502` |
 | **Fase do roadmap** | `Fase 5 — Horus core` |
-| **Status** | `Em revisão (PR)` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-502-correlation-model` |
 | **PR** | [#35](https://github.com/mclovin137/Horus/pull/35) |
 | **Depende de** | `T-501` (camada de consulta), `T-403` (propagação ponta a ponta) |

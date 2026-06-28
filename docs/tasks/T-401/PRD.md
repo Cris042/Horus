@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-401` |
 | **Fase do roadmap** | Fase 4 — Telemetria |
-| **Status** | `Em revisão (PR)` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-401-otel-services` |
 | **PR** | [#11](https://github.com/mclovin137/Horus/pull/11) |
 | **Depende de** | `T-102`/`T-103`/`T-104` (domínio), `T-003` (Collector), `T-005` (contrato) |

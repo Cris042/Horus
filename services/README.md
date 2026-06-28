@@ -1,12 +1,15 @@
 # services/ — Microsserviços de domínio
 
-Camada de **domínio** do sistema observado: três microsserviços em **Quarkus (Java 25)**, cada um dono do seu próprio banco PostgreSQL. São o que gera o tráfego e a telemetria que o **Horus** observa.
+Camada de **domínio** do sistema observado: três microsserviços em **Quarkus (Java 25)**,
+cada um dono do seu próprio banco PostgreSQL, mais um orquestrador de SAGA para o fluxo
+cross-service. São o que gera o tráfego e a telemetria que o **Horus** observa.
 
 | Serviço | Pasta | Papel | Banco |
 |---|---|---|---|
 | Prontuário | [`prontuario/`](prontuario/) | Registros e consultas médicas | `prontuario_db` |
 | Payment | [`payment/`](payment/) | Carteira, movimentações, estornos | `payment_db` |
 | Invoice | [`invoice/`](invoice/) | Emissão de nota fiscal simulada | `invoice_db` |
+| SAGA Orchestrator | [`saga-orchestrator/`](saga-orchestrator/) | Orquestra pagar → emitir NF, com compensações | `saga_db` |
 
 ## Convenções comuns
 
