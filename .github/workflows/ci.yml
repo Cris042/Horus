@@ -76,3 +76,32 @@ jobs:
 
       - name: Testes (pytest)
         run: .venv/bin/python -m pytest -q
+
+  build-worker:
+    name: Build, test & lint (Rust / worker)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: worker
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust (stable) + cache
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache de build (cargo)
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: worker
+
+      - name: Formatação (rustfmt)
+        run: cargo fmt --check
+
+      - name: Lint (clippy)
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: Build + testes
+        run: cargo test

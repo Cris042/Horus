@@ -7,9 +7,24 @@ Worker **assíncrono** em **Rust**, de responsabilidade limitada: consome solici
 
 ## Responsabilidades
 
-- **Consumir** mensagens de relatório do RabbitMQ.
-- **Gerar** o relatório solicitado.
-- **Enviar e-mail** com o resultado.
+- **Consumir** mensagens de relatório do RabbitMQ (exchange `relatorios`, routing key `nota-fiscal`). ✅ T-303.
+- **Gerar** o relatório solicitado. ✅ T-303.
+- **Enviar e-mail** com o resultado (`lettre`; stub de log quando sem `SMTP_HOST`). ✅ T-303.
+
+## Desenvolvimento
+
+> Requer toolchain Rust (`rustup`, stable) e um **linker C** (`build-essential`/`gcc`).
+
+```bash
+cd worker
+cargo test                 # lógica (parse, relatório, idempotência, e-mail) — offline
+cargo run                  # conecta no RabbitMQ e consome (usa as envs abaixo)
+```
+
+Configuração por ambiente (defaults = compose de dev):
+`AMQP_URL` (`amqp://horus:horus@localhost:5672/%2f`), `RELATORIOS_EXCHANGE` (`relatorios`),
+`RELATORIOS_QUEUE` (`relatorios.worker`), `RELATORIOS_ROUTING_KEY` (`nota-fiscal`),
+`SMTP_HOST` (sem ela → e-mails apenas registrados), `EMAIL_FROM`, `EMAIL_TO`.
 
 ## Observabilidade
 
