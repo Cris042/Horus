@@ -6,7 +6,7 @@
 | **Fase do roadmap** | `Fase 1 — Domínio (hardening)` |
 | **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-108-payment-concurrency` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | [#36](https://github.com/mclovin137/Horus/pull/36) |
 | **Depende de** | `T-103` (domínio Payment) |
 | **Requisitos atendidos** | `RNF-002` (integridade), reforço de `RF-012/013/014` |
 | **ADRs relacionados** | `ADR-0002` (sem auth no domínio — N/A), `ADR-0005` |
