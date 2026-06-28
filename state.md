@@ -7,21 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-28 |
-| **Branch atual** | `task/T-502-correlation-model` |
+| **Branch atual** | `task/T-503-request-lifecycle-api` |
 | **Fase do roadmap** | Fase 5 — Horus core (correlação + ciclo de vida) |
-| **Task ativa** | `T-502` — Modelo de correlação por `trace_id` (em revisão (PR)) |
+| **Task ativa** | `T-503` — API do ciclo de vida da request (em progresso) |
 
 ---
 
 ## 🟢 Última entrega (mergeada)
 
-**`T-403` — OTel no worker + propagação HTTP→AMQP (entregue via [PR #34](https://github.com/mclovin137/Horus/pull/34), mergeada em `main`).** `telemetry.rs` (OTLP/HTTP + bridge tracing→OTel + W3C); `extrair_contexto` lê `traceparent` dos headers AMQP → span filho do publicador. Verificado em container `rust:1-slim` (test/fmt/clippy). **Fase 4 (telemetria) completa.** **CI + ai-review verdes.**
+**`T-502` — Modelo de correlação por `trace_id` (entregue via [PR #35](https://github.com/mclovin137/Horus/pull/35), mergeada em `main`).** `CorrelationModel` + `CorrelationService` costuram trace (spans por serviço) + logs + fronteira de mensageria (`report-worker`/publish/relatorios) + contagem de erros num `RequestCorrelation`; `GET /horus/correlation/trace/{id}`. Verificado com `./mvnw -pl horus test`. **Base do ciclo de vida (T-503/504/505) pronta.**
 
-> 🔄 **Em revisão:** **`T-502`** — Modelo de correlação por `trace_id` (RF-H-001/002/004): `correlation/CorrelationModel` + `CorrelationService` costuram trace (spans por serviço) + logs + fronteira de mensageria (`report-worker`/publish/relatorios) + contagem de erros num `RequestCorrelation`; `GET /horus/correlation/trace/{id}`. Construído sobre as portas T-501, testado com mocks. `mvn -pl horus test` verde (35/35, 3 novos).
+> ▶️ **Em progresso:** **`T-503`** — API do ciclo de vida da request (RF-H-001/011): `RequestLifecycleService` + `GET /horus/lifecycle/requests/{traceId}` projetam o trace em waterfall/timeline com `offsetMicros`, `depth`, categoria (`http`/`database`/`messaging`/`worker`/`internal`) e duração total por janela temporal. Construído sobre T-501/T-502; `./mvnw -pl horus test` verde (38/38).
 
 ## ▶️ Próxima ação
 
-Fase 5 core: **`T-503/504`** (APIs de ciclo de vida — waterfall de spans da request / statement de query sanitizado) e **`T-505`** (agregação de logs de erro correlacionados) — todos sobre o modelo T-502. Depois **`T-506`** (mapa de serviços) / **`T-507`** (visualização de SAGA) e Fase 7 **`T-702`** (waterfall UI). **`T-405`** (validação ponta a ponta com stack real) e **`T-606`** (anomalias, dep T-505) ficam para quando o ambiente estiver de pé / após T-505. 💡 Rust verificável localmente via Docker (`rust:1-slim`).
+Fase 5 core: concluir **`T-503`** (abrir PR da API waterfall da request), depois seguir para **`T-504`** (API do ciclo de vida da query — statement sanitizado, duração, banco) e **`T-505`** (agregação de logs de erro correlacionados). Na sequência entram **`T-506`** (mapa de serviços) / **`T-507`** (visualização de SAGA) e Fase 7 **`T-702`** (waterfall UI). **`T-405`** (validação ponta a ponta com stack real) e **`T-606`** (anomalias, dep T-505) ficam para quando o ambiente estiver de pé / após T-505.
 
 > ⚙️ **Pendência sua (agora relevante p/ IA):** a IA real (T-601+) exige a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** e `horus.ai.enabled=true`. Sem isso, o Horus roda com o `StubLlmEngine` (placeholder) — não bloqueia build/CI.
 
@@ -35,8 +35,9 @@ Fase 5 core: **`T-503/504`** (APIs de ciclo de vida — waterfall de spans da re
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
+| 2026-06-28 | `T-503` | API do ciclo de vida da request (RF-H-001/011) em andamento: `RequestLifecycleService` + `GET /horus/lifecycle/requests/{traceId}` projetam trace em waterfall/timeline com `offsetMicros`, `depth`, categorias e duração total por janela temporal; `./mvnw -pl horus test` verde (38/38) | `task/T-503-request-lifecycle-api` | — | 🟡 Em progresso |
 | 2026-06-28 | `T-403` | OTel no worker + propagação HTTP→AMQP (RF-029/RF-H-004): `telemetry.rs` (provider+recurso `report-worker`/`medrec`, OTLP/HTTP sem protoc, bridge tracing→OTel, propagador W3C); `extrair_contexto` lê `traceparent` dos headers AMQP e o span de processamento vira filho do publicador; verificado em container `rust:1-slim` (test 12, fmt, clippy) | `task/T-403-worker-otel-amqp` | [#34](https://github.com/mclovin137/Horus/pull/34) | ✅ Entregue |
-| 2026-06-28 | `T-502` | Modelo de correlação por `trace_id` (RF-H-001/002/004): `CorrelationModel`+`CorrelationService` costuram spans-por-serviço + logs + fronteira mensageria/worker + erros num `RequestCorrelation`; `GET /horus/correlation/trace/{id}`; sobre portas T-501, testes mockados; `mvn -pl horus test` verde (35/35, 3 novos) | `task/T-502-correlation-model` | [#35](https://github.com/mclovin137/Horus/pull/35) | 🔄 Em revisão (PR) |
+| 2026-06-28 | `T-502` | Modelo de correlação por `trace_id` (RF-H-001/002/004): `CorrelationModel`+`CorrelationService` costuram spans-por-serviço + logs + fronteira mensageria/worker + erros num `RequestCorrelation`; `GET /horus/correlation/trace/{id}`; sobre portas T-501, testes mockados; mergeado em `main` via PR #35 | `task/T-502-correlation-model` | [#35](https://github.com/mclovin137/Horus/pull/35) | ✅ Entregue |
 | 2026-06-28 | `T-303` | Worker Rust de relatórios (RF-022..024/RNF-012): crate `worker/` (tokio+lapin+lettre+serde+tracing) consome exchange `relatorios`/`nota-fiscal`, gera relatório e envia e-mail; `EmailSender` (SMTP + stub de log), idempotência por `id`, ack/nack; job de CI `build-worker` (fmt+clippy+test); validação via CI | `task/T-303-rust-worker` | [#33](https://github.com/mclovin137/Horus/pull/33) | ✅ Entregue |
 | 2026-06-28 | `T-402` | Instrumentação OTel da borda (RF-029): `telemetry.py` (provider+recurso canônico `loadtest-api`/`medrec`+OTLP), FastAPI instrumentada (gated `HORUS_OTEL_ENABLED`), Locust injeta W3C `traceparent` (`events.init`+`RequestsInstrumentor`), LB access log JSON com `traceparent`; testes offline (exporter em memória); `pytest` verde (21/21) | `task/T-402-otel-loadtest-edge` | [#32](https://github.com/mclovin137/Horus/pull/32) | ✅ Entregue |
 | 2026-06-28 | `T-203` | Cenários Locust (RF-004/RNF-016): `app/locustfile.py` (usuários por domínio + SAGA, fluxos encadeados, fração de falhas) + `LocustRunner` (`locust --headless`, start/stop) selecionável por `HORUS_LOADTEST_RUNNER`; +4 correções do review por IA; testes offline isolam import de `locust`/gevent em subprocesso; `pytest` verde (18/18) | `task/T-203-locust-scenarios` | [#31](https://github.com/mclovin137/Horus/pull/31) | ✅ Entregue |

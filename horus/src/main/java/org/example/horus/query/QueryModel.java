@@ -20,8 +20,25 @@ public final class QueryModel {
     public record TraceResult(String traceId, int spanCount, List<SpanRef> spans) {
     }
 
-    /** Referência enxuta a um span (sem atributos crus — PII fica fora, ver CONTRACT §6). */
-    public record SpanRef(String spanId, String operation, String serviceName, long durationMicros) {
+    /**
+     * Referência enxuta a um span (sem atributos crus — PII fica fora, ver CONTRACT §6).
+     *
+     * <p>Os campos de waterfall ({@code startTimeMicros}, {@code parentSpanId}, {@code kind})
+     * são opcionais para manter compatibilidade com testes/fatias anteriores que só precisam
+     * de identificação, operação, serviço e duração.
+     */
+    public record SpanRef(
+            String spanId,
+            String operation,
+            String serviceName,
+            long durationMicros,
+            long startTimeMicros,
+            String parentSpanId,
+            String kind) {
+
+        public SpanRef(String spanId, String operation, String serviceName, long durationMicros) {
+            this(spanId, operation, serviceName, durationMicros, 0L, null, null);
+        }
     }
 
     /** Linha de log correlacionada (rótulos de stream + linha). */
