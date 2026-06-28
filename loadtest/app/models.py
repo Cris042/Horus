@@ -5,7 +5,12 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+# Cenários aceitos: "default" exercita todos os domínios; os demais selecionam um
+# único grupo de usuários do locustfile (T-203). Mantido em sincronia com
+# ``app.runner.SCENARIO_USERS``.
+VALID_SCENARIOS = frozenset({"default", "prontuario", "payment", "invoice", "saga"})
 
 
 class LoadTestStatus(str, Enum):
@@ -37,8 +42,20 @@ class LoadTestRequest(BaseModel):
         default=60, ge=1, le=86_400, description="Duração-alvo do cenário (s)."
     )
     scenario: str = Field(
-        default="default", description="Nome do cenário Locust a executar (T-203)."
+        default="default",
+        description="Cenário a executar: 'default' (todos) ou um domínio "
+        "(prontuario|payment|invoice|saga).",
     )
+
+    @field_validator("scenario")
+    @classmethod
+    def _known_scenario(cls, v: str) -> str:
+        normalized = v.strip().lower()
+        if normalized not in VALID_SCENARIOS:
+            raise ValueError(
+                f"cenário desconhecido: {v!r} (use um de {sorted(VALID_SCENARIOS)})"
+            )
+        return normalized
 
 
 class LoadTest(BaseModel):

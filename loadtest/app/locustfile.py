@@ -109,7 +109,10 @@ class InvoiceUser(HttpUser):
 
     @task(3)
     def emitir_nota(self) -> None:
-        simular_falha = random.random() < 0.2  # 20% de falhas → logs de erro p/ o Horus
+        # ~20% das emissões pedem falha simulada. O invoice responde 201 com status
+        # FALHA (não 5xx); marcamos explicitamente como falha do Locust para que o
+        # sinal de erro apareça nas estatísticas e reprocessamos a nota.
+        simular_falha = random.random() < 0.2
         with self.client.post(
             "/notas",
             json={
@@ -120,11 +123,14 @@ class InvoiceUser(HttpUser):
             name="POST /notas", catch_response=True,
         ) as resp:
             if resp.status_code in (200, 201):
-                nota_id = resp.json().get("id")
-                if simular_falha and nota_id is not None:
-                    self.client.post(
-                        f"/notas/{nota_id}/reprocessar", name="POST /notas/{id}/reprocessar"
-                    )
+                body = resp.json()
+                nota_id = body.get("id")
+                if body.get("status") == "FALHA":
+                    resp.failure("emissão simulada falhou (status=FALHA)")
+                    if nota_id is not None:
+                        self.client.post(
+                            f"/notas/{nota_id}/reprocessar", name="POST /notas/{id}/reprocessar"
+                        )
             elif resp.status_code >= 500:
                 resp.failure(f"emitir nota: {resp.status_code}")
 
@@ -139,12 +145,30 @@ class SagaUser(HttpUser):
     weight = 1
     wait_time = between(1.0, 3.0)
 
+    def on_start(self) -> None:
+        """Cria uma carteira própria com saldo para a SAGA debitar.
+
+        Sem isto, um `carteiraId` aleatório levaria a SAGA a 404/compensação em vez
+        de exercitar o caminho feliz pagar→emitir.
+        """
+        self.carteira_id: int | None = None
+        resp = self.client.post(
+            "/carteiras",
+            json={"titularId": f"saga-{_ref()}", "saldoInicial": 100000.00},
+            name="POST /carteiras (saga setup)",
+        )
+        if resp.status_code in (200, 201):
+            self.carteira_id = resp.json().get("id")
+
     @task
     def pagar_e_emitir(self) -> None:
+        if self.carteira_id is None:  # setup falhou; tenta recriar na próxima iteração
+            self.on_start()
+            return
         self.client.post(
             "/sagas/pagar-e-emitir",
             json={
-                "carteiraId": random.randint(1, 50),
+                "carteiraId": self.carteira_id,
                 "valor": round(random.uniform(20, 800), 2),
                 "simularFalhaNota": random.random() < 0.15,
             },

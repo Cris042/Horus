@@ -19,6 +19,7 @@
 | 4 | `loadtest/pyproject.toml` | Modificar | `locust` nas deps de dev (importável nos testes) | ✅ Concluído | 2026-06-28 |
 | 5 | `loadtest/tests/test_scenarios.py` | Criar | Testes offline (cenários, comando, ciclo de vida) | ✅ Concluído | 2026-06-28 |
 | 6 | `loadtest/README.md` | Modificar | Marcar T-203 + instruções de geração de carga | ✅ Concluído | 2026-06-28 |
+| 7 | `loadtest/app/models.py` | Modificar | Validar `scenario` (rejeita desconhecido → 422) — review IA P2 | ✅ Concluído | 2026-06-28 |
 
 **Legenda:** ⬜ Pendente · 🟡 Em progresso · ✅ Concluído
 
@@ -43,3 +44,4 @@
 | `2026-06-28` | `pyproject.toml` | `locust` em dev |
 | `2026-06-28` | `tests/test_scenarios.py` | Testes offline dos cenários e do runner |
 | `2026-06-28` | `README.md` | T-203 marcada + instruções |
+| `2026-06-28` | `runner.py`, `models.py`, `locustfile.py`, `tests/test_scenarios.py` | Correções do review por IA (P2): cenário no comando + validação, status no término do processo, carteira própria da SAGA, falha simulada de NF marcada como falha do Locust |

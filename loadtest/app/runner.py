@@ -14,19 +14,29 @@ import sys
 import threading
 from pathlib import Path
 
-from .models import LoadTest
+from .models import LoadTest, LoadTestStatus
 
 # Caminho do locustfile deste pacote.
 LOCUSTFILE = Path(__file__).with_name("locustfile.py")
+
+# Cenário → classe de usuário do locustfile (T-203). "default" roda todas.
+SCENARIO_USERS = {
+    "prontuario": "ProntuarioUser",
+    "payment": "PaymentUser",
+    "invoice": "InvoiceUser",
+    "saga": "SagaUser",
+}
 
 
 def build_command(test: LoadTest, *, locustfile: Path = LOCUSTFILE) -> list[str]:
     """Monta o comando ``locust --headless`` para o teste (sem executá-lo).
 
+    Honra ``config.scenario``: 'default' executa o locustfile inteiro; um domínio
+    seleciona a classe de usuário correspondente (argumento posicional do Locust).
     Isolado para ser testável de forma determinística e offline.
     """
     cfg = test.config
-    return [
+    cmd = [
         sys.executable,
         "-m",
         "locust",
@@ -45,6 +55,16 @@ def build_command(test: LoadTest, *, locustfile: Path = LOCUSTFILE) -> list[str]
         "--exit-code-on-error",
         "0",
     ]
+    scenario = (cfg.scenario or "default").lower()
+    if scenario != "default":
+        try:
+            cmd.append(SCENARIO_USERS[scenario])  # seleciona só esse grupo de usuários
+        except KeyError:
+            raise ValueError(
+                f"cenário desconhecido: {cfg.scenario!r} "
+                f"(use um de {sorted(SCENARIO_USERS)} ou 'default')"
+            )
+    return cmd
 
 
 class LocustRunner:
@@ -64,6 +84,23 @@ class LocustRunner:
         proc = subprocess.Popen(cmd)  # noqa: S603 (comando montado internamente)
         with self._lock:
             self._procs[test.id] = proc
+        # Acompanha o término natural (fim do --run-time ou erro) para refletir o
+        # estado no descritor — senão o teste ficaria 'running' para sempre.
+        threading.Thread(target=self._watch, args=(test, proc), daemon=True).start()
+
+    def _watch(self, test: LoadTest, proc: subprocess.Popen) -> None:
+        proc.wait()
+        with self._lock:
+            # Só conclui se ainda for este processo registrado; um stop() concorrente
+            # remove o registro e já marcou STOPPED — não sobrescrever.
+            if self._procs.get(test.id) is not proc:
+                return
+            self._procs.pop(test.id, None)
+            if test.status is LoadTestStatus.RUNNING:
+                test.status = (
+                    LoadTestStatus.COMPLETED if proc.returncode == 0 else LoadTestStatus.FAILED
+                )
+                test.stopped_at = LoadTest.now()
 
     def stop(self, test: LoadTest) -> None:
         with self._lock:

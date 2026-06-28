@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import subprocess
 import sys
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -65,6 +66,53 @@ def test_build_command_has_expected_flags() -> None:
     assert cmd[cmd.index("--run-time") + 1] == "90s"
     assert cmd[cmd.index("-H") + 1] == "http://load-balancer"
     assert cmd[cmd.index("-f") + 1].endswith("locustfile.py")
+
+
+def test_build_command_default_runs_all_users() -> None:
+    cmd = runner.build_command(_test())
+    # 'default' não seleciona nenhuma classe específica (roda o locustfile inteiro).
+    assert not any(name in cmd for name in runner.SCENARIO_USERS.values())
+
+
+def test_build_command_selects_scenario_user_class() -> None:
+    test = _test()
+    test.config.scenario = "invoice"
+    cmd = runner.build_command(test)
+    assert cmd[-1] == "InvoiceUser"
+
+
+def test_request_rejects_unknown_scenario() -> None:
+    with pytest.raises(ValueError):
+        LoadTestRequest(scenario="bogus")
+
+
+def test_runner_marks_completed_on_natural_exit(monkeypatch: pytest.MonkeyPatch) -> None:
+    import time
+
+    class ExitingProc:
+        returncode = 0
+
+        def __init__(self, cmd):
+            self._done = threading.Event()
+            threading.Timer(0.05, self._done.set).start()
+
+        def wait(self, timeout=None):
+            self._done.wait(timeout)
+            return 0
+
+        def poll(self):
+            return 0 if self._done.is_set() else None
+
+    monkeypatch.setattr(runner.subprocess, "Popen", lambda cmd: ExitingProc(cmd))
+
+    r = runner.LocustRunner()
+    test = _test()
+    r.start(test)
+    deadline = time.time() + 3
+    while test.status is LoadTestStatus.RUNNING and time.time() < deadline:
+        time.sleep(0.02)
+    assert test.status is LoadTestStatus.COMPLETED
+    assert test.stopped_at is not None
 
 
 def test_runner_available_detects_locust() -> None:
