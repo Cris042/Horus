@@ -1,0 +1,37 @@
+# Grafana — datasources provisionados (T-404, RF-031)
+#
+# Lente única de DEV sobre os três backends de telemetria. Provisionado no boot
+# (sem cliques manuais) via /etc/grafana/provisioning/datasources. Hostnames são
+# os nomes de serviço do docker-compose na rede `horus`.
+
+apiVersion: 1
+
+datasources:
+  # Métricas — Prometheus (recebe via remote_write do Collector)
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+
+  # Logs — Loki (recebe via OTLP HTTP do Collector)
+  - name: Loki
+    uid: loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    jsonData:
+      # Correlação log→trace: extrai trace_id e linka ao datasource Jaeger (T-405)
+      derivedFields:
+        - name: TraceID
+          matcherRegex: '"trace_id":"(\w+)"'
+          url: '$${__value.raw}'
+          datasourceUid: jaeger
+
+  # Traces — Jaeger (datasource nativo do core do Grafana)
+  - name: Jaeger
+    uid: jaeger
+    type: jaeger
+    access: proxy
+    url: http://jaeger:16686

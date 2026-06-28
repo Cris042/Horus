@@ -7,21 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-27 |
-| **Branch atual** | `task/T-201-load-balancer` |
-| **Fase do roadmap** | Fase 2 — Entrada e carga |
-| **Task ativa** | `T-201` — Load Balancer de entrada (NGINX) (em revisão (PR)) |
+| **Branch atual** | `task/T-404-otel-collector-backends` |
+| **Fase do roadmap** | Fase 4 — Telemetria e correlação |
+| **Task ativa** | `T-404` — OTel Collector + backends (Jaeger/Loki/Prometheus) (em revisão (PR)) |
 
 ---
 
 ## 🟢 Última entrega (mergeada)
 
-**`T-302` — publicação de relatório por fluxo (entregue via [PR #16](https://github.com/mclovin137/Horus/pull/16), mergeada em `main`).** SAGA solicita o relatório da NF após conclusão (best-effort); fluxo `pagar → emitir → relatório` no mesmo `trace_id` (RF-021). **CI verde.**
+**`T-201` — Load Balancer de entrada (NGINX) (entregue via [PR #17](https://github.com/mclovin137/Horus/pull/17), mergeada em `main`).** Roteia por prefixo aos 3 serviços + orquestrador e **repassa `traceparent`** (RF-005/RNF-006/RF-029); `resolver`+variável. `nginx -t` ok (config+docs; ativação em T-801). **CI verde.**
 
-> 🔄 **Em revisão:** **`T-201`** — Load Balancer de entrada (NGINX, RF-005/RNF-006): `deploy/lb/nginx.conf` roteia por prefixo aos 3 serviços + orquestrador e **repassa `traceparent`** sem encerrar o trace (RF-029); `resolver`+variável (resiliente a restart/escala). Sintaxe validada (`nginx -t` ok). Só config+docs — **ativação no compose vem em T-801** (serviços containerizados).
+> 🔄 **Em revisão:** **`T-404`** — OTel Collector + backends (RF-031/RF-H-014): endurece o pipeline do T-003 — extensão `health_check` (`:13133`) no Collector, `healthcheck`/ordenação por `depends_on` no compose, e **Grafana** (`:3000`) com datasources provisionados (Prometheus/Loki/Jaeger) + doc de validação `deploy/telemetry/README.md`. Validado: `docker compose config` ok e `otelcol validate` ok.
 
 ## ▶️ Próxima ação
 
-Fase 3: **`T-303`** (worker Rust: consumir do RabbitMQ, gerar relatório, enviar e-mail — RF-022..024; componente **novo, não-Java**, exige lane de CI Rust). Fase 2: **`T-202`** (API FastAPI de controle de carga). Caminho crítico de telemetria: **`T-404`**/**`T-405`** (Collector + correlação ponta a ponta). Restam **`T-403`** (instrumentar o worker) e **`T-507`** (visualização da SAGA).
+Caminho crítico: **`T-405`** (validar correlação ponta a ponta: request→query→log→mensagem→worker no mesmo `trace_id`) — depende de T-401..404; destrava **`T-501`**/**`T-502`** (serviço Horus + modelo de correlação). Em paralelo: Fase 3 **`T-303`** (worker Rust) e Fase 2 **`T-202`** (API FastAPI de carga). Restam **`T-403`** (instrumentar o worker) e **`T-507`** (visualização da SAGA).
 
 > ⚠️ **Nota técnica (vale p/ T-103/104):** entidades Panache geram id via **sequência `<tabela>_seq`** (PooledLo, INCREMENT 50) — as migrações Flyway devem criar a sequência (não usar coluna IDENTITY), senão `INSERT` falha em `nextval`.
 
@@ -33,7 +33,8 @@ Fase 3: **`T-303`** (worker Rust: consumir do RabbitMQ, gerar relatório, enviar
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
-| 2026-06-27 | `T-201` | Load Balancer de entrada (NGINX): roteamento por prefixo aos 3 serviços + orquestrador, passthrough de `traceparent`, `resolver`+variável; `nginx -t` ok (config+docs; ativação em T-801) | `task/T-201-load-balancer` | [#17](https://github.com/mclovin137/Horus/pull/17) | 🔄 Em revisão (PR) |
+| 2026-06-27 | `T-404` | OTel Collector + backends (RF-031/RF-H-014): `health_check` no Collector, healthchecks/`depends_on` no compose, Grafana com datasources provisionados (Prometheus/Loki/Jaeger), doc `telemetry/README.md`; `compose config` + `otelcol validate` ok | `task/T-404-otel-collector-backends` | (PR a abrir) | 🔄 Em revisão (PR) |
+| 2026-06-27 | `T-201` | Load Balancer de entrada (NGINX): roteamento por prefixo aos 3 serviços + orquestrador, passthrough de `traceparent`, `resolver`+variável; `nginx -t` ok (config+docs; ativação em T-801) | `task/T-201-load-balancer` | [#17](https://github.com/mclovin137/Horus/pull/17) | ✅ Entregue |
 | 2026-06-27 | `T-302` | Publicação de relatório por fluxo (RF-021): SAGA solicita o relatório da NF após conclusão (best-effort); `InvoiceClient.solicitarRelatorio`, teste atualizado | `task/T-302-saga-report-publication` | [#16](https://github.com/mclovin137/Horus/pull/16) | ✅ Entregue |
 | 2026-06-27 | `T-301` | RabbitMQ + contrato da mensagem de relatório (RF-021/RNF-011): `RelatorioMensagem` + publisher no invoice, `POST /notas/{id}/relatorio`, teste in-memory, doc `report-message.md` | `task/T-301-rabbitmq-report-contract` | [#15](https://github.com/mclovin137/Horus/pull/15) | ✅ Entregue |
 | 2026-06-27 | `T-106` | Isolamento de persistência (RNF-002/003): credenciais segregadas por serviço (compose + datasources), healthcheck por `$POSTGRES_USER`, doc `db-isolation.md` | `task/T-106-db-isolation` | [#14](https://github.com/mclovin137/Horus/pull/14) | ✅ Entregue |
