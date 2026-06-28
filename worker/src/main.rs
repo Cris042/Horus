@@ -48,10 +48,7 @@ fn build_processor(cfg: &Config) -> Processor {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    tracing_subscriber::fmt()
-        .json()
-        .with_target(false)
-        .init();
+    tracing_subscriber::fmt().json().with_target(false).init();
 
     let cfg = Config::from_env();
     let mut processor = build_processor(&cfg);

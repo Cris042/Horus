@@ -13,12 +13,7 @@ pub trait EmailSender {
 }
 
 /// Monta o e-mail (sem enviar) — isolado para teste determinístico.
-pub fn montar_email(
-    from: &str,
-    to: &str,
-    msg: &RelatorioMensagem,
-    corpo: &str,
-) -> Result<Message> {
+pub fn montar_email(from: &str, to: &str, msg: &RelatorioMensagem, corpo: &str) -> Result<Message> {
     let from_mb: Mailbox = from.parse()?;
     let to_mb: Mailbox = to.parse()?;
     let email = Message::builder()
@@ -53,7 +48,11 @@ pub struct SmtpSender {
 impl SmtpSender {
     pub fn new(host: &str, from: String, to: String) -> Result<Self> {
         let transport = SmtpTransport::builder_dangerous(host).build();
-        Ok(Self { transport, from, to })
+        Ok(Self {
+            transport,
+            from,
+            to,
+        })
     }
 }
 
@@ -83,7 +82,8 @@ mod tests {
 
     #[test]
     fn monta_email_com_enderecos_validos() {
-        let email = montar_email("horus@medrec.local", "ops@medrec.local", &msg(), "corpo").unwrap();
+        let email =
+            montar_email("horus@medrec.local", "ops@medrec.local", &msg(), "corpo").unwrap();
         // Serializa o envelope; deve conter assunto e destinatário.
         let raw = String::from_utf8(email.formatted()).unwrap();
         assert!(raw.contains("Subject:"));
