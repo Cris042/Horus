@@ -7,21 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-28 |
-| **Branch atual** | `task/T-403-worker-otel-amqp` |
-| **Fase do roadmap** | Fase 4 — Telemetria base (OTel) (caminho crítico → T-405) |
-| **Task ativa** | `T-403` — OTel no worker + propagação HTTP→AMQP (em revisão (PR)) |
+| **Branch atual** | `task/T-502-correlation-model` |
+| **Fase do roadmap** | Fase 5 — Horus core (correlação + ciclo de vida) |
+| **Task ativa** | `T-502` — Modelo de correlação por `trace_id` (em revisão (PR)) |
 
 ---
 
 ## 🟢 Última entrega (mergeada)
 
-**`T-303` — Worker Rust de relatórios (entregue via [PR #33](https://github.com/mclovin137/Horus/pull/33), mergeada em `main`).** Crate `worker/` (lapin+lettre+serde) consome `relatorios`/`nota-fiscal`, gera relatório e envia e-mail; idempotência por `id`; job de CI `build-worker`. **CI + ai-review verdes.**
+**`T-403` — OTel no worker + propagação HTTP→AMQP (entregue via [PR #34](https://github.com/mclovin137/Horus/pull/34), mergeada em `main`).** `telemetry.rs` (OTLP/HTTP + bridge tracing→OTel + W3C); `extrair_contexto` lê `traceparent` dos headers AMQP → span filho do publicador. Verificado em container `rust:1-slim` (test/fmt/clippy). **Fase 4 (telemetria) completa.** **CI + ai-review verdes.**
 
-> 🔄 **Em revisão:** **`T-403`** — OTel no worker + propagação HTTP→AMQP (RF-029/RF-H-004): `telemetry.rs` (provider+recurso canônico `report-worker`/`medrec`, exportador **OTLP/HTTP** sem gRPC/protoc, bridge `tracing→OTel`, propagador W3C global); `extrair_contexto` lê `traceparent` dos **headers AMQP** e o `main` abre o span de processamento como **filho** do publicador (preserva `trace_id` na fronteira HTTP→AMQP). Verificado em **container `rust:1-slim`**: `cargo test` (12), `fmt --check`, `clippy -D warnings` limpos.
+> 🔄 **Em revisão:** **`T-502`** — Modelo de correlação por `trace_id` (RF-H-001/002/004): `correlation/CorrelationModel` + `CorrelationService` costuram trace (spans por serviço) + logs + fronteira de mensageria (`report-worker`/publish/relatorios) + contagem de erros num `RequestCorrelation`; `GET /horus/correlation/trace/{id}`. Construído sobre as portas T-501, testado com mocks. `mvn -pl horus test` verde (35/35, 3 novos).
 
 ## ▶️ Próxima ação
 
-Caminho crítico: **`T-405`** (validar correlação ponta a ponta — request→query→log→mensagem→worker no mesmo `trace_id`; RF-H-004) — agora possível pois T-401/402/403/404 ✅. T-405 é principalmente validação/documentação (precisa do ambiente compose de pé). Depois Fase 5 core: **`T-502`** (modelo de correlação) → **`T-503/504/505`** (ciclo de vida) → Fase 7 (`T-702` waterfall) e Fase 6 `T-606` (anomalias). 💡 Verificação de Rust local agora via Docker (`rust:1-slim`) — contorna a ausência de `gcc` no host.
+Fase 5 core: **`T-503/504`** (APIs de ciclo de vida — waterfall de spans da request / statement de query sanitizado) e **`T-505`** (agregação de logs de erro correlacionados) — todos sobre o modelo T-502. Depois **`T-506`** (mapa de serviços) / **`T-507`** (visualização de SAGA) e Fase 7 **`T-702`** (waterfall UI). **`T-405`** (validação ponta a ponta com stack real) e **`T-606`** (anomalias, dep T-505) ficam para quando o ambiente estiver de pé / após T-505. 💡 Rust verificável localmente via Docker (`rust:1-slim`).
 
 > ⚙️ **Pendência sua (agora relevante p/ IA):** a IA real (T-601+) exige a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** e `horus.ai.enabled=true`. Sem isso, o Horus roda com o `StubLlmEngine` (placeholder) — não bloqueia build/CI.
 
@@ -35,7 +35,8 @@ Caminho crítico: **`T-405`** (validar correlação ponta a ponta — request→
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
-| 2026-06-28 | `T-403` | OTel no worker + propagação HTTP→AMQP (RF-029/RF-H-004): `telemetry.rs` (provider+recurso `report-worker`/`medrec`, OTLP/HTTP sem protoc, bridge tracing→OTel, propagador W3C); `extrair_contexto` lê `traceparent` dos headers AMQP e o span de processamento vira filho do publicador; verificado em container `rust:1-slim` (test 12, fmt, clippy) | `task/T-403-worker-otel-amqp` | [#34](https://github.com/mclovin137/Horus/pull/34) | 🔄 Em revisão (PR) |
+| 2026-06-28 | `T-403` | OTel no worker + propagação HTTP→AMQP (RF-029/RF-H-004): `telemetry.rs` (provider+recurso `report-worker`/`medrec`, OTLP/HTTP sem protoc, bridge tracing→OTel, propagador W3C); `extrair_contexto` lê `traceparent` dos headers AMQP e o span de processamento vira filho do publicador; verificado em container `rust:1-slim` (test 12, fmt, clippy) | `task/T-403-worker-otel-amqp` | [#34](https://github.com/mclovin137/Horus/pull/34) | ✅ Entregue |
+| 2026-06-28 | `T-502` | Modelo de correlação por `trace_id` (RF-H-001/002/004): `CorrelationModel`+`CorrelationService` costuram spans-por-serviço + logs + fronteira mensageria/worker + erros num `RequestCorrelation`; `GET /horus/correlation/trace/{id}`; sobre portas T-501, testes mockados; `mvn -pl horus test` verde (35/35, 3 novos) | `task/T-502-correlation-model` | [#35](https://github.com/mclovin137/Horus/pull/35) | 🔄 Em revisão (PR) |
 | 2026-06-28 | `T-303` | Worker Rust de relatórios (RF-022..024/RNF-012): crate `worker/` (tokio+lapin+lettre+serde+tracing) consome exchange `relatorios`/`nota-fiscal`, gera relatório e envia e-mail; `EmailSender` (SMTP + stub de log), idempotência por `id`, ack/nack; job de CI `build-worker` (fmt+clippy+test); validação via CI | `task/T-303-rust-worker` | [#33](https://github.com/mclovin137/Horus/pull/33) | ✅ Entregue |
 | 2026-06-28 | `T-402` | Instrumentação OTel da borda (RF-029): `telemetry.py` (provider+recurso canônico `loadtest-api`/`medrec`+OTLP), FastAPI instrumentada (gated `HORUS_OTEL_ENABLED`), Locust injeta W3C `traceparent` (`events.init`+`RequestsInstrumentor`), LB access log JSON com `traceparent`; testes offline (exporter em memória); `pytest` verde (21/21) | `task/T-402-otel-loadtest-edge` | [#32](https://github.com/mclovin137/Horus/pull/32) | ✅ Entregue |
 | 2026-06-28 | `T-203` | Cenários Locust (RF-004/RNF-016): `app/locustfile.py` (usuários por domínio + SAGA, fluxos encadeados, fração de falhas) + `LocustRunner` (`locust --headless`, start/stop) selecionável por `HORUS_LOADTEST_RUNNER`; +4 correções do review por IA; testes offline isolam import de `locust`/gevent em subprocesso; `pytest` verde (18/18) | `task/T-203-locust-scenarios` | [#31](https://github.com/mclovin137/Horus/pull/31) | ✅ Entregue |
