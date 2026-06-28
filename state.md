@@ -7,21 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-28 |
-| **Branch atual** | `task/T-402-otel-loadtest-edge` |
-| **Fase do roadmap** | Fase 4 — Telemetria base (OTel) (caminho crítico → T-405) |
-| **Task ativa** | `T-402` — Instrumentação OTel da borda (FastAPI/Locust + LB) (em revisão (PR)) |
+| **Branch atual** | `task/T-303-rust-worker` |
+| **Fase do roadmap** | Fase 3 — Mensageria e worker Rust (caminho crítico → T-403/T-405) |
+| **Task ativa** | `T-303` — Worker Rust de relatórios (em revisão (PR)) |
 
 ---
 
 ## 🟢 Última entrega (mergeada)
 
-**`T-203` — Cenários Locust (entregue via [PR #31](https://github.com/mclovin137/Horus/pull/31), mergeada em `main`).** `locustfile.py` (usuários por domínio + SAGA) + `LocustRunner`; corrigidos 4 P2 do review por IA (cenário no comando+validação, status no término, carteira da SAGA, falha simulada de NF). `pytest` verde (18/18). **CI + ai-review verdes.**
+**`T-402` — Instrumentação OTel da borda (entregue via [PR #32](https://github.com/mclovin137/Horus/pull/32), mergeada em `main`).** `telemetry.py` + FastAPI instrumentada (gated) + Locust injeta W3C `traceparent` + LB access log JSON. `pytest` verde (21/21). **CI + ai-review verdes.**
 
-> 🔄 **Em revisão:** **`T-402`** — Instrumentação OTel da borda (RF-029): `app/telemetry.py` (`TracerProvider` + recurso canônico `loadtest-api`/`medrec` + OTLP/HTTP); FastAPI instrumentada (gated `HORUS_OTEL_ENABLED`); Locust injeta **W3C `traceparent`** nas chamadas (`events.init` + `RequestsInstrumentor`); LB com access log JSON contendo `traceparent`. Testes offline (exporter em memória): recurso, span de servidor, injeção W3C. `pytest` verde (21/21).
+> 🔄 **Em revisão:** **`T-303`** — Worker Rust de relatórios (RF-022..024/RNF-012): crate `worker/` (tokio+lapin+lettre+serde+tracing) que consome a fila ligada à exchange `relatorios` (routing `nota-fiscal`), gera o relatório e envia e-mail; porta `EmailSender` (SMTP via lettre + stub de log padrão), idempotência por `id`, ack/nack. Job de CI `build-worker` (fmt+clippy+test). ⚠️ **Verificação local bloqueada por falta de `gcc`** (linker C) — validação pelo CI. Lógica pura coberta por testes unitários.
 
 ## ▶️ Próxima ação
 
-Caminho crítico (**T-405** correlação ponta a ponta) — falta **`T-403`** (OTel no worker Rust + fronteira HTTP→AMQP, RF-H-004), que depende de **`T-303`** (worker Rust). ⚠️ **Toolchain Rust não está instalado** no ambiente (`cargo`/`rustc` ausentes) — T-303/403 exigem instalar rustup antes (ou rodar só no CI). Com T-401/402/404 ✅ e T-403 pendente, **T-405** ainda aguarda o worker. Fase 5 core (T-502..505) e Fase 7 restante (T-702/T-703) seguem bloqueadas por isso.
+Validar T-303 pelo **CI `build-worker`** (rustup instalado nesta sessão; falta `gcc` local — `sudo apt-get install -y build-essential` para compilar localmente). Em seguida, caminho crítico: **`T-403`** (OTel no worker + fronteira HTTP→AMQP, RF-H-004) → **`T-405`** (validação de correlação ponta a ponta) → Fase 5 core (T-502..505) → Fase 7 restante (T-702/T-703) e Fase 6 `T-606`.
 
 > ⚙️ **Pendência sua (agora relevante p/ IA):** a IA real (T-601+) exige a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** e `horus.ai.enabled=true`. Sem isso, o Horus roda com o `StubLlmEngine` (placeholder) — não bloqueia build/CI.
 
@@ -35,7 +35,8 @@ Caminho crítico (**T-405** correlação ponta a ponta) — falta **`T-403`** (O
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
-| 2026-06-28 | `T-402` | Instrumentação OTel da borda (RF-029): `telemetry.py` (provider+recurso canônico `loadtest-api`/`medrec`+OTLP), FastAPI instrumentada (gated `HORUS_OTEL_ENABLED`), Locust injeta W3C `traceparent` (`events.init`+`RequestsInstrumentor`), LB access log JSON com `traceparent`; testes offline (exporter em memória); `pytest` verde (21/21) | `task/T-402-otel-loadtest-edge` | [#32](https://github.com/mclovin137/Horus/pull/32) | 🔄 Em revisão (PR) |
+| 2026-06-28 | `T-303` | Worker Rust de relatórios (RF-022..024/RNF-012): crate `worker/` (tokio+lapin+lettre+serde+tracing) consome exchange `relatorios`/`nota-fiscal`, gera relatório e envia e-mail; `EmailSender` (SMTP + stub de log), idempotência por `id`, ack/nack; job de CI `build-worker` (fmt+clippy+test); validação via CI (sem `gcc` local) | `task/T-303-rust-worker` | (a abrir) | 🔄 Em revisão (PR) |
+| 2026-06-28 | `T-402` | Instrumentação OTel da borda (RF-029): `telemetry.py` (provider+recurso canônico `loadtest-api`/`medrec`+OTLP), FastAPI instrumentada (gated `HORUS_OTEL_ENABLED`), Locust injeta W3C `traceparent` (`events.init`+`RequestsInstrumentor`), LB access log JSON com `traceparent`; testes offline (exporter em memória); `pytest` verde (21/21) | `task/T-402-otel-loadtest-edge` | [#32](https://github.com/mclovin137/Horus/pull/32) | ✅ Entregue |
 | 2026-06-28 | `T-203` | Cenários Locust (RF-004/RNF-016): `app/locustfile.py` (usuários por domínio + SAGA, fluxos encadeados, fração de falhas) + `LocustRunner` (`locust --headless`, start/stop) selecionável por `HORUS_LOADTEST_RUNNER`; +4 correções do review por IA; testes offline isolam import de `locust`/gevent em subprocesso; `pytest` verde (18/18) | `task/T-203-locust-scenarios` | [#31](https://github.com/mclovin137/Horus/pull/31) | ✅ Entregue |
 | 2026-06-28 | `T-202` | API FastAPI de controle de teste de carga (RF-001..003): `POST /load-tests`, `GET /load-tests/{id}`, `POST /load-tests/{id}/stop` (+`GET /load-tests`/`/health`); Pydantic + `LoadTestManager` (porta `LoadRunner` no-op→Locust em T-203); job de CI Python `build-loadtest` (uv+pytest); `pytest` verde (10/10) | `task/T-202-fastapi-control-api` | [#30](https://github.com/mclovin137/Horus/pull/30) | ✅ Entregue |
 | 2026-06-28 | `T-704` | RBAC do Horus (RNF-H-010, 1ª fatia): `HorusRole`×`Capability` (matriz de `ROLES.md`), `HorusRbacFilter` autoriza por papel via cabeçalho `X-Horus-Role`; públicos isentos; off por padrão (`horus.rbac.enabled=false`); OIDC/JWT em fatia seguinte; `mvn -pl horus test` verde (32/32, 6 novos) | `task/T-704-horus-rbac` | [#29](https://github.com/mclovin137/Horus/pull/29) | ✅ Entregue |
