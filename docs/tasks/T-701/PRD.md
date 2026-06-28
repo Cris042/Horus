@@ -6,7 +6,7 @@
 | **Fase do roadmap** | `Fase 7 — Painel / Experiência` |
 | **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-701-horus-panel` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | [#28](https://github.com/mclovin137/Horus/pull/28) |
 | **Depende de** | `T-603` (resumo de IA), `T-604/605` (explain/RCA), `T-607` (ask), `T-501` (query) |
 | **Requisitos atendidos** | `RF-H-012` |
 | **ADRs relacionados** | `ADR-0011` (camada de IA) |
