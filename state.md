@@ -7,21 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-28 |
-| **Branch atual** | `task/T-704-horus-rbac` |
-| **Fase do roadmap** | Fase 7 — Painel / Experiência |
-| **Task ativa** | `T-704` — RBAC do Horus (em revisão (PR)) |
+| **Branch atual** | `task/T-202-fastapi-control-api` |
+| **Fase do roadmap** | Fase 2 — Entrada e teste de carga (rumo ao caminho crítico T-402→T-405) |
+| **Task ativa** | `T-202` — API FastAPI de controle de teste de carga (em revisão (PR)) |
 
 ---
 
 ## 🟢 Última entrega (mergeada)
 
-**`T-701` — Painel Horus (entregue via [PR #28](https://github.com/mclovin137/Horus/pull/28), mergeada em `main`).** API `GET /horus/panel/overview` (saúde IA+cache+backends+capacidades) + página estática `horus-panel.html`. `mvn -pl horus test` verde (26/26). **CI verde.**
+**`T-704` — RBAC do Horus (entregue via [PR #29](https://github.com/mclovin137/Horus/pull/29), mergeada em `main`).** Modelo `HorusRole`×`Capability` + `HorusRbacFilter` (cabeçalho `X-Horus-Role`), off por padrão. `mvn -pl horus test` verde (32/32). **CI verde.**
 
-> 🔄 **Em revisão:** **`T-704`** — RBAC do Horus (RNF-H-010, 1ª fatia): modelo `HorusRole`×`Capability` (matriz de `ROLES.md`), `HorusRbacFilter` (`ContainerRequestFilter`) que autoriza por papel via cabeçalho `X-Horus-Role`; públicos (`/q/health`, `/horus/info`) isentos; **desligado por padrão** (`horus.rbac.enabled=false`) — não afeta build/CI. Auth real (OIDC/JWT) e escopo por serviço do `DEVELOPER` ficam para fatias seguintes. `mvn -pl horus test` verde (32/32, 6 novos).
+> 🔄 **Em revisão:** **`T-202`** — API FastAPI de controle de teste de carga (RF-001..003): `POST /load-tests` (inicia), `GET /load-tests/{id}` (consulta), `POST /load-tests/{id}/stop` (interrompe) + `GET /load-tests`/`/health`; modelos Pydantic, `LoadTestManager` thread-safe com porta `LoadRunner` (no-op; Locust pluga em T-203). Primeiro código Python real do monorepo → adicionado job de CI `build-loadtest` (uv + pytest). `pytest` verde (10/10).
 
 ## ▶️ Próxima ação
 
-Fase 7 restante: **`T-702`** (waterfall do ciclo de vida — RF-H-011, depende de T-503/504/505 — **bloqueada**) e **`T-703`** (alertas — depende de T-606 — **bloqueada**). Gargalo: a Fase 5 core (T-502..505) depende de **`T-405`** (validação de correlação ponta a ponta), que por sua vez precisa de **`T-402`** (FastAPI/LB) e **`T-403`** (worker Rust) — ou seja, das tasks de outras linguagens **`T-202/203`** (FastAPI) e **`T-303`** (worker Rust), ainda em scaffolding. Próximo trabalho cleanly-unblocked de maior alavancagem: **`T-202`** (FastAPI) ou **`T-303`** (worker Rust). Telemetria pendente: **`T-402`**/**`T-403`**.
+Continuar a destravar o caminho crítico (**T-405** correlação ponta a ponta): **`T-203`** (cenários Locust — depende de T-202, agora em PR) e **`T-303`** (worker Rust — depende de T-301 ✓). Depois **`T-402`** (OTel/propagação na borda FastAPI/LB) e **`T-403`** (OTel worker), que liberam **`T-405`** → Fase 5 core (T-502..505) → Fase 7 restante (T-702/T-703). Fase 7 hoje bloqueada: **`T-702`** (waterfall, dep T-503/504/505), **`T-703`** (alertas, dep T-606).
 
 > ⚙️ **Pendência sua (agora relevante p/ IA):** a IA real (T-601+) exige a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** e `horus.ai.enabled=true`. Sem isso, o Horus roda com o `StubLlmEngine` (placeholder) — não bloqueia build/CI.
 
@@ -35,7 +35,8 @@ Fase 7 restante: **`T-702`** (waterfall do ciclo de vida — RF-H-011, depende d
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
-| 2026-06-28 | `T-704` | RBAC do Horus (RNF-H-010, 1ª fatia): `HorusRole`×`Capability` (matriz de `ROLES.md`), `HorusRbacFilter` autoriza por papel via cabeçalho `X-Horus-Role`; públicos isentos; off por padrão (`horus.rbac.enabled=false`); OIDC/JWT em fatia seguinte; `mvn -pl horus test` verde (32/32, 6 novos) | `task/T-704-horus-rbac` | [#29](https://github.com/mclovin137/Horus/pull/29) | 🔄 Em revisão (PR) |
+| 2026-06-28 | `T-202` | API FastAPI de controle de teste de carga (RF-001..003): `POST /load-tests`, `GET /load-tests/{id}`, `POST /load-tests/{id}/stop` (+`GET /load-tests`/`/health`); Pydantic + `LoadTestManager` (porta `LoadRunner` no-op→Locust em T-203); job de CI Python `build-loadtest` (uv+pytest); `pytest` verde (10/10) | `task/T-202-fastapi-control-api` | [#30](https://github.com/mclovin137/Horus/pull/30) | 🔄 Em revisão (PR) |
+| 2026-06-28 | `T-704` | RBAC do Horus (RNF-H-010, 1ª fatia): `HorusRole`×`Capability` (matriz de `ROLES.md`), `HorusRbacFilter` autoriza por papel via cabeçalho `X-Horus-Role`; públicos isentos; off por padrão (`horus.rbac.enabled=false`); OIDC/JWT em fatia seguinte; `mvn -pl horus test` verde (32/32, 6 novos) | `task/T-704-horus-rbac` | [#29](https://github.com/mclovin137/Horus/pull/29) | ✅ Entregue |
 | 2026-06-28 | `T-701` | Painel Horus (RF-H-012, 1ª fatia): API `GET /horus/panel/overview` (saúde IA+cache+backends+capacidades) + página estática `horus-panel.html` (saúde, ask, busca por trace explain/RCA, capacidades); waterfall (T-702) e busca avançada nas fatias seguintes; `mvn -pl horus test` verde (26/26, 2 novos) | `task/T-701-horus-panel` | [#28](https://github.com/mclovin137/Horus/pull/28) | ✅ Entregue |
 | 2026-06-28 | `T-608` | Salvaguardas de custo/latência (RNF-H-003/004): cache de respostas do LLM via CDI decorator `CachingLlmEngine` + `LlmResponseCache` (LRU, on/off), `GET /horus/ai/cache/stats`; consolida seleção de modelo (`ModelTier`) + orçamento (T-602); `mvn -pl horus test` verde (24/24, hit verificado) | `task/T-608-llm-cache` | [#27](https://github.com/mclovin137/Horus/pull/27) | 🔄 Em revisão (PR) |
 | 2026-06-28 | `T-607` | Agente NL Query "pergunte ao Horus" (RF-H-010, 1ª fatia): `NlQueryAgent` responde NL fundamentado na telemetria (camada BALANCED), `POST /horus/ai/ask`; planejamento autônomo (tool-calling) é fatia seguinte; `mvn -pl horus test` verde (20/20) | `task/T-607-nl-query-agent` | [#26](https://github.com/mclovin137/Horus/pull/26) | 🔄 Em revisão (PR) |

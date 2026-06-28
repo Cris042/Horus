@@ -2,9 +2,9 @@ name: CI
 
 # Build + test + lint por componente do monorepo Horus (Fase 0 / T-004).
 #
-# Hoje só o módulo Java `horus/` é compilável. O worker (Rust, `worker/`) e o
-# load test (Python, `loadtest/`) ainda são scaffolding (ver seus READMEs); seus
-# jobs entram quando ganharem código real (T-303 e T-203, respectivamente).
+# Módulos com código real: Java `horus/` e o load test Python `loadtest/` (API de
+# controle, T-202). O worker (Rust, `worker/`) ainda é scaffolding (ver seu README);
+# seu job entra quando ganhar código real (T-303).
 #
 # Este pipeline NÃO depende de segredos (ao contrário do AI review): ele sempre
 # roda e gateia os PRs com build/test reais. Usa o Maven Wrapper (`./mvnw`,
@@ -55,3 +55,24 @@ jobs:
           name: surefire-reports
           path: '**/target/surefire-reports/**'
           if-no-files-found: ignore
+
+  build-loadtest:
+    name: Build & test (Python / loadtest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: loadtest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup uv (gerencia Python + deps reproduzíveis)
+        uses: astral-sh/setup-uv@v5
+
+      - name: Criar venv (Python 3.13) + instalar deps de dev
+        run: |
+          uv venv --python 3.13 .venv
+          uv pip install -e ".[dev]" --python .venv
+
+      - name: Testes (pytest)
+        run: .venv/bin/python -m pytest -q
