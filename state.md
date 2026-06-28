@@ -7,21 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-28 |
-| **Branch atual** | `task/T-701-horus-panel` |
+| **Branch atual** | `task/T-704-horus-rbac` |
 | **Fase do roadmap** | Fase 7 — Painel / Experiência |
-| **Task ativa** | `T-701` — Painel Horus: saúde + resumo de IA + busca (em revisão (PR)) |
+| **Task ativa** | `T-704` — RBAC do Horus (em revisão (PR)) |
 
 ---
 
 ## 🟢 Última entrega (mergeada)
 
-**`T-607` — Agente NL Query "pergunte ao Horus" (entregue via [PR #26](https://github.com/mclovin137/Horus/pull/26), mergeada em `main`).** `NlQueryAgent` responde NL fundamentado na telemetria (camada BALANCED); `POST /horus/ai/ask`. `mvn -pl horus test` verde (20/20). **CI verde.**
+**`T-701` — Painel Horus (entregue via [PR #28](https://github.com/mclovin137/Horus/pull/28), mergeada em `main`).** API `GET /horus/panel/overview` (saúde IA+cache+backends+capacidades) + página estática `horus-panel.html`. `mvn -pl horus test` verde (26/26). **CI verde.**
 
-> 🔄 **Em revisão:** **`T-701`** — Painel Horus (RF-H-012, 1ª fatia): API de agregação `GET /horus/panel/overview` (saúde do motor de IA + cache + backends configurados + pontos de entrada das capacidades) e página estática `horus-panel.html` (cartões de saúde, "pergunte ao Horus", busca por trace com explain/RCA, lista de capacidades). Waterfall do ciclo de vida (T-702) e busca avançada (sobre T-503..505) ficam nas fatias seguintes. `mvn -pl horus test` verde (26/26, 2 novos).
+> 🔄 **Em revisão:** **`T-704`** — RBAC do Horus (RNF-H-010, 1ª fatia): modelo `HorusRole`×`Capability` (matriz de `ROLES.md`), `HorusRbacFilter` (`ContainerRequestFilter`) que autoriza por papel via cabeçalho `X-Horus-Role`; públicos (`/q/health`, `/horus/info`) isentos; **desligado por padrão** (`horus.rbac.enabled=false`) — não afeta build/CI. Auth real (OIDC/JWT) e escopo por serviço do `DEVELOPER` ficam para fatias seguintes. `mvn -pl horus test` verde (32/32, 6 novos).
 
 ## ▶️ Próxima ação
 
-Fase 7 restante: **`T-702`** (waterfall do ciclo de vida — RF-H-011, depende de T-503/504/505) e **`T-704`** (RBAC do painel — depende de T-701). Fase 6 restante: **`T-606`** (anomalias) depende de **`T-505`** (agregação de erros, ainda não feita). Caminho crítico: **`T-502`** (correlação por `trace_id`) — melhor após `T-801`. Desbloqueadas: Fase 3 **`T-303`** (worker Rust), Fase 2 **`T-202`** (FastAPI). Telemetria pendente: **`T-402`**/**`T-403`**.
+Fase 7 restante: **`T-702`** (waterfall do ciclo de vida — RF-H-011, depende de T-503/504/505 — **bloqueada**) e **`T-703`** (alertas — depende de T-606 — **bloqueada**). Gargalo: a Fase 5 core (T-502..505) depende de **`T-405`** (validação de correlação ponta a ponta), que por sua vez precisa de **`T-402`** (FastAPI/LB) e **`T-403`** (worker Rust) — ou seja, das tasks de outras linguagens **`T-202/203`** (FastAPI) e **`T-303`** (worker Rust), ainda em scaffolding. Próximo trabalho cleanly-unblocked de maior alavancagem: **`T-202`** (FastAPI) ou **`T-303`** (worker Rust). Telemetria pendente: **`T-402`**/**`T-403`**.
 
 > ⚙️ **Pendência sua (agora relevante p/ IA):** a IA real (T-601+) exige a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** e `horus.ai.enabled=true`. Sem isso, o Horus roda com o `StubLlmEngine` (placeholder) — não bloqueia build/CI.
 
@@ -35,7 +35,8 @@ Fase 7 restante: **`T-702`** (waterfall do ciclo de vida — RF-H-011, depende d
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
-| 2026-06-28 | `T-701` | Painel Horus (RF-H-012, 1ª fatia): API `GET /horus/panel/overview` (saúde IA+cache+backends+capacidades) + página estática `horus-panel.html` (saúde, ask, busca por trace explain/RCA, capacidades); waterfall (T-702) e busca avançada nas fatias seguintes; `mvn -pl horus test` verde (26/26, 2 novos) | `task/T-701-horus-panel` | [#28](https://github.com/mclovin137/Horus/pull/28) | 🔄 Em revisão (PR) |
+| 2026-06-28 | `T-704` | RBAC do Horus (RNF-H-010, 1ª fatia): `HorusRole`×`Capability` (matriz de `ROLES.md`), `HorusRbacFilter` autoriza por papel via cabeçalho `X-Horus-Role`; públicos isentos; off por padrão (`horus.rbac.enabled=false`); OIDC/JWT em fatia seguinte; `mvn -pl horus test` verde (32/32, 6 novos) | `task/T-704-horus-rbac` | [#29](https://github.com/mclovin137/Horus/pull/29) | 🔄 Em revisão (PR) |
+| 2026-06-28 | `T-701` | Painel Horus (RF-H-012, 1ª fatia): API `GET /horus/panel/overview` (saúde IA+cache+backends+capacidades) + página estática `horus-panel.html` (saúde, ask, busca por trace explain/RCA, capacidades); waterfall (T-702) e busca avançada nas fatias seguintes; `mvn -pl horus test` verde (26/26, 2 novos) | `task/T-701-horus-panel` | [#28](https://github.com/mclovin137/Horus/pull/28) | ✅ Entregue |
 | 2026-06-28 | `T-608` | Salvaguardas de custo/latência (RNF-H-003/004): cache de respostas do LLM via CDI decorator `CachingLlmEngine` + `LlmResponseCache` (LRU, on/off), `GET /horus/ai/cache/stats`; consolida seleção de modelo (`ModelTier`) + orçamento (T-602); `mvn -pl horus test` verde (24/24, hit verificado) | `task/T-608-llm-cache` | [#27](https://github.com/mclovin137/Horus/pull/27) | 🔄 Em revisão (PR) |
 | 2026-06-28 | `T-607` | Agente NL Query "pergunte ao Horus" (RF-H-010, 1ª fatia): `NlQueryAgent` responde NL fundamentado na telemetria (camada BALANCED), `POST /horus/ai/ask`; planejamento autônomo (tool-calling) é fatia seguinte; `mvn -pl horus test` verde (20/20) | `task/T-607-nl-query-agent` | [#26](https://github.com/mclovin137/Horus/pull/26) | 🔄 Em revisão (PR) |
 | 2026-06-28 | `T-605` | Agente Root-Cause Analyst (RF-H-007): `RootCauseAnalyst` faz RCA dos 3 sinais (`assembleForIncident` trace+logs+métricas) com causa provável+passos, camada DEEP/Opus; `GET /horus/ai/rca/trace/{id}`; `mvn -pl horus test` verde (17/17) | `task/T-605-rca-agent` | [#25](https://github.com/mclovin137/Horus/pull/25) | 🔄 Em revisão (PR) |
