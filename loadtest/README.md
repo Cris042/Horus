@@ -7,8 +7,21 @@ Gerador e **controlador** de teste de carga do sistema observado. Dispara tráfe
 
 ## Responsabilidades
 
-- **API de controle:** `POST /load-tests`, `GET /load-tests/{id}`, `POST /load-tests/{id}/stop` (RF-001..003).
-- **Cenários Locust:** usuários virtuais e requisições concorrentes (RF-004).
+- **API de controle:** `POST /load-tests`, `GET /load-tests/{id}`, `POST /load-tests/{id}/stop` (RF-001..003). ✅ T-202.
+- **Cenários Locust:** usuários virtuais e requisições concorrentes (RF-004). ⬜ T-203.
+
+## Desenvolvimento
+
+```bash
+cd loadtest
+uv venv --python 3.13 .venv
+uv pip install -e ".[dev]" --python .venv
+.venv/bin/python -m pytest -q              # testes
+.venv/bin/uvicorn app.main:app --reload    # subir a API (http://localhost:8000/docs)
+```
+
+A geração real de carga (Locust) é plugada em T-203 pelo *runner* (`app/manager.py`);
+nesta fatia o controlador gerencia o ciclo de vida dos testes com um runner no-op.
 
 ## Observabilidade
 
