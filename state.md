@@ -7,21 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-27 |
-| **Branch atual** | `task/T-406-pii-redaction` |
-| **Fase do roadmap** | Fase 4 — Telemetria e correlação |
-| **Task ativa** | `T-406` — Sanitização/redação de PII na borda do Collector (em revisão (PR)) |
+| **Branch atual** | `task/T-501-horus-query-adapters` |
+| **Fase do roadmap** | Fase 5 — Horus core |
+| **Task ativa** | `T-501` — Serviço Horus: adaptadores de consulta aos backends (em revisão (PR)) |
 
 ---
 
 ## 🟢 Última entrega (mergeada)
 
-**`T-404` — OTel Collector + backends (entregue via [PR #18](https://github.com/mclovin137/Horus/pull/18), mergeada em `main`).** Endurece o pipeline do T-003: `health_check` no Collector, healthchecks/`depends_on` no compose, **Grafana** (`:3000`) com datasources provisionados (Prometheus/Loki/Jaeger) + doc `README.md`. `compose config` + `otelcol validate` ok. **CI verde.**
+**`T-406` — Redação de PII na borda do Collector (entregue via [PR #19](https://github.com/mclovin137/Horus/pull/19), mergeada em `main`).** Processor `transform/pii` (OTTL) em traces+logs: remove chaves proibidas e mascara e-mail/CPF/cartão (2ª camada; origem = T-401). Doc `PII-REDACTION.md`. `otelcol validate` exit 0. **CI verde.** *(Fase 4 de telemetria concluída exceto T-402/T-403, que dependem de componentes Python/Rust ainda não construídos.)*
 
-> 🔄 **Em revisão:** **`T-406`** — Redação de PII na borda do Collector (RNF-010/RNF-H-002, CONTRACT §6): processor `transform/pii` (OTTL) nas pipelines de traces e logs — remove chaves proibidas (`cpf`/`documento`/`email`/`nome_paciente`/`cartao`/`prontuario.conteudo`) e mascara e-mail/CPF/cartão; 2ª camada (a 1ª é na origem, T-401). Doc `PII-REDACTION.md`. Validado: `otelcol validate` exit 0.
+> 🔄 **Em revisão:** **`T-501`** (1ª fatia) — Serviço Horus: camada de consulta (read-side) aos backends. Portas `TraceQueryPort`/`LogQueryPort`/`MetricQueryPort` + adapters REST-client (Jaeger/Loki/Prometheus, parsing `JsonNode`) + API `GET /horus/query/{traces,logs,metrics}`; testes `@QuarkusTest` com portas mockadas. `./mvnw -pl horus test` verde (6/6). Receptor OTLP próprio e correlação (T-502) ficam para fatias seguintes.
 
 ## ▶️ Próxima ação
 
-Caminho crítico: **`T-405`** (validar correlação ponta a ponta no mesmo `trace_id`) — **melhor após `T-801`** (serviços containerizados) para validação reprodutível em CI; destrava **`T-501`**/**`T-502`** (serviço Horus + modelo de correlação). Desbloqueadas agora: Fase 3 **`T-303`** (worker Rust) e Fase 2 **`T-202`** (API FastAPI de carga). Restam **`T-403`** (instrumentar o worker) e **`T-507`** (visualização da SAGA).
+**`T-502`** (modelo de correlação por `trace_id`: costurar request↔query↔log↔mensagem↔worker) — depende de `T-405`, melhor após `T-801` (stack reprodutível). Em paralelo, desbloqueadas: **`T-601`** (LangChain4j/Anthropic, depende só de T-501), Fase 3 **`T-303`** (worker Rust), Fase 2 **`T-202`** (API FastAPI de carga). Pendentes de telemetria: **`T-402`**/**`T-403`** (instrumentar FastAPI/LB e worker).
 
 > ⚠️ **Nota técnica (vale p/ T-103/104):** entidades Panache geram id via **sequência `<tabela>_seq`** (PooledLo, INCREMENT 50) — as migrações Flyway devem criar a sequência (não usar coluna IDENTITY), senão `INSERT` falha em `nextval`.
 
@@ -33,7 +33,8 @@ Caminho crítico: **`T-405`** (validar correlação ponta a ponta no mesmo `trac
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
-| 2026-06-27 | `T-406` | Redação de PII na borda do Collector (RNF-010/RNF-H-002): processor `transform/pii` (OTTL) em traces+logs — remove chaves proibidas e mascara e-mail/CPF/cartão (2ª camada; origem = T-401), doc `PII-REDACTION.md`; `otelcol validate` ok | `task/T-406-pii-redaction` | [#19](https://github.com/mclovin137/Horus/pull/19) | 🔄 Em revisão (PR) |
+| 2026-06-27 | `T-501` | Serviço Horus (1ª fatia): camada de consulta aos backends — portas Trace/Log/Metric + adapters REST-client (Jaeger/Loki/Prometheus), API `GET /horus/query/*`, testes com portas mockadas; `mvn -pl horus test` verde (6/6) | `task/T-501-horus-query-adapters` | (PR a abrir) | 🔄 Em revisão (PR) |
+| 2026-06-27 | `T-406` | Redação de PII na borda do Collector (RNF-010/RNF-H-002): processor `transform/pii` (OTTL) em traces+logs — remove chaves proibidas e mascara e-mail/CPF/cartão (2ª camada; origem = T-401), doc `PII-REDACTION.md`; `otelcol validate` ok | `task/T-406-pii-redaction` | [#19](https://github.com/mclovin137/Horus/pull/19) | ✅ Entregue |
 | 2026-06-27 | `T-404` | OTel Collector + backends (RF-031/RF-H-014): `health_check` no Collector, healthchecks/`depends_on` no compose, Grafana com datasources provisionados (Prometheus/Loki/Jaeger), doc `telemetry/README.md`; `compose config` + `otelcol validate` ok | `task/T-404-otel-collector-backends` | [#18](https://github.com/mclovin137/Horus/pull/18) | ✅ Entregue |
 | 2026-06-27 | `T-201` | Load Balancer de entrada (NGINX): roteamento por prefixo aos 3 serviços + orquestrador, passthrough de `traceparent`, `resolver`+variável; `nginx -t` ok (config+docs; ativação em T-801) | `task/T-201-load-balancer` | [#17](https://github.com/mclovin137/Horus/pull/17) | ✅ Entregue |
 | 2026-06-27 | `T-302` | Publicação de relatório por fluxo (RF-021): SAGA solicita o relatório da NF após conclusão (best-effort); `InvoiceClient.solicitarRelatorio`, teste atualizado | `task/T-302-saga-report-publication` | [#16](https://github.com/mclovin137/Horus/pull/16) | ✅ Entregue |
