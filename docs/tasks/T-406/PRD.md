@@ -6,7 +6,7 @@
 | **Fase do roadmap** | `Fase 4 — Telemetria e correlação` |
 | **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-406-pii-redaction` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | `#19` |
 | **Depende de** | `T-404` |
 | **Requisitos atendidos** | `RNF-010`, `RNF-H-002` |
 | **ADRs relacionados** | `ADR-0009`, `ADR-0010` |
