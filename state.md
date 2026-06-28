@@ -7,21 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-28 |
-| **Branch atual** | `task/T-602-context-assembler` |
+| **Branch atual** | `task/T-603-summarizer-agent` |
 | **Fase do roadmap** | Fase 6 — IA (resumo, RCA, anomalias) |
-| **Task ativa** | `T-602` — Montador de contexto da IA (telemetria→prompt c/ orçamento) (em revisão (PR)) |
+| **Task ativa** | `T-603` — Agente Summarizer (resumo de estado sob demanda + agendado) (em revisão (PR)) |
 
 ---
 
 ## 🟢 Última entrega (mergeada)
 
-**`T-601` — Camada de IA do Horus (ADR-0011, entregue via [PR #21](https://github.com/mclovin137/Horus/pull/21), mergeada em `main`).** Porta desacoplada `LlmEngine` + `ModelTier` (Haiku/Sonnet/Opus), `StubLlmEngine` default (CI sem chave) e `LangChain4jLlmEngine` (`quarkus-langchain4j-anthropic` 1.1.0). Extensão validada sob Quarkus 3.37 + JDK 25 (8/8). **CI verde.**
+**`T-602` — Montador de contexto da IA (entregue via [PR #22](https://github.com/mclovin137/Horus/pull/22), mergeada em `main`).** `ContextAssembler` (trace+logs+métricas→prompt) com `TokenBudget` (orçamento+truncamento) e `PromptSanitizer` (PII na fronteira). `mvn -pl horus test` verde (11/11). **CI verde.**
 
-> 🔄 **Em revisão:** **`T-602`** (1ª fatia) — Montador de contexto da IA (RNF-H-003/006): `ContextAssembler` transforma trace+logs+métricas (portas do T-501) em prompt **compacto, sanitizado e com orçamento de tokens** (`TokenBudget` ~4 chars/tok, trunca por linha; `PromptSanitizer` mascara e-mail/CPF/cartão na fronteira do prompt). `assembleForTrace(traceId)` + `assemble(sinais)` (usável pelo T-502). `mvn -pl horus test` verde (11/11, 3 novos).
+> 🔄 **Em revisão:** **`T-603`** (1ª fatia) — Agente **Summarizer** (RF-H-005): `StateSummarizer` resume o estado em linguagem natural combinando `ContextAssembler` (T-602) + `LlmEngine` (T-601, camada FAST/Haiku). **Sob demanda:** `GET /horus/ai/summary/trace/{traceId}`. **Agendado:** `ScheduledStateSummary` (`@Scheduled`, cron `off` por padrão, best-effort). `mvn -pl horus test` verde (13/13, 2 novos). Primeiro caso de uso de IA ponta a ponta.
 
 ## ▶️ Próxima ação
 
-Fase 6 (com T-602): **`T-603`** (agente Summarizer — resumo de estado, RF-H-005) e **`T-604`** (Trace Explainer, RF-H-006) / **`T-605`** (RCA, RF-H-007) — todos sobre `LlmEngine` + `ContextAssembler`. Caminho crítico: **`T-502`** (correlação por `trace_id`) — melhor após `T-801`. Desbloqueadas: Fase 3 **`T-303`** (worker Rust), Fase 2 **`T-202`** (FastAPI). Telemetria pendente: **`T-402`**/**`T-403`**.
+Fase 6: **`T-604`** (Trace Explainer, RF-H-006) e **`T-605`** (RCA correlacionando 3 sinais, RF-H-007) — sobre o mesmo par `LlmEngine`+`ContextAssembler`. Depois **`T-701`** (painel: saúde + resumo de IA + busca). Caminho crítico: **`T-502`** (correlação por `trace_id`) — melhor após `T-801`. Desbloqueadas: Fase 3 **`T-303`** (worker Rust), Fase 2 **`T-202`** (FastAPI). Telemetria pendente: **`T-402`**/**`T-403`**.
 
 > ⚙️ **Pendência sua (agora relevante p/ IA):** a IA real (T-601+) exige a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** e `horus.ai.enabled=true`. Sem isso, o Horus roda com o `StubLlmEngine` (placeholder) — não bloqueia build/CI.
 
@@ -35,6 +35,7 @@ Fase 6 (com T-602): **`T-603`** (agente Summarizer — resumo de estado, RF-H-00
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
+| 2026-06-28 | `T-603` | Agente Summarizer (RF-H-005, 1ª fatia): `StateSummarizer` (contexto T-602 + `LlmEngine` FAST) resume estado em NL; sob demanda `GET /horus/ai/summary/trace/{id}` + agendado `ScheduledStateSummary` (cron off default); `mvn -pl horus test` verde (13/13) | `task/T-603-summarizer-agent` | [#23](https://github.com/mclovin137/Horus/pull/23) | 🔄 Em revisão (PR) |
 | 2026-06-28 | `T-602` | Montador de contexto da IA (RNF-H-003/006, 1ª fatia): `ContextAssembler` (trace+logs+métricas→prompt) com `TokenBudget` (orçamento+truncamento) e `PromptSanitizer` (PII na fronteira); `assembleForTrace` + `assemble(sinais)`; `mvn -pl horus test` verde (11/11) | `task/T-602-context-assembler` | [#22](https://github.com/mclovin137/Horus/pull/22) | 🔄 Em revisão (PR) |
 | 2026-06-28 | `T-601` | Camada de IA (ADR-0011, 1ª fatia): porta desacoplada `LlmEngine` + `ModelTier` (Haiku/Sonnet/Opus), `StubLlmEngine` (default, sem chave) e `LangChain4jLlmEngine` (`quarkus-langchain4j-anthropic` 1.1.0, flag de build), API `/horus/ai/*`; extensão validada sob Quarkus 3.37 + JDK 25, `mvn -pl horus test` verde (8/8) | `task/T-601-llm-anthropic-integration` | [#21](https://github.com/mclovin137/Horus/pull/21) | 🔄 Em revisão (PR) |
 | 2026-06-27 | `T-501` | Serviço Horus (1ª fatia): camada de consulta aos backends — portas Trace/Log/Metric + adapters REST-client (Jaeger/Loki/Prometheus), API `GET /horus/query/*`, testes com portas mockadas; `mvn -pl horus test` verde (6/6) | `task/T-501-horus-query-adapters` | [#20](https://github.com/mclovin137/Horus/pull/20) | ✅ Entregue |
