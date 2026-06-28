@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Horus — Painel</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; font-family: system-ui, sans-serif; background: #0e1116; color: #e6edf3; }
+    header { padding: 1rem 1.5rem; border-bottom: 1px solid #232a33; display: flex; align-items: baseline; gap: .75rem; }
+    header h1 { margin: 0; font-size: 1.25rem; }
+    header .eye { font-size: 1.4rem; }
+    main { padding: 1.5rem; display: grid; gap: 1.25rem; max-width: 880px; }
+    .card { background: #161b22; border: 1px solid #232a33; border-radius: 10px; padding: 1rem 1.25rem; }
+    .card h2 { margin: 0 0 .75rem; font-size: .95rem; text-transform: uppercase; letter-spacing: .05em; color: #8b98a5; }
+    .pill { display: inline-block; padding: .15rem .6rem; border-radius: 999px; font-size: .8rem; font-weight: 600; }
+    .pill.live { background: #133929; color: #3fb950; }
+    .pill.stub { background: #3d2d12; color: #d29922; }
+    .kv { display: grid; grid-template-columns: max-content 1fr; gap: .25rem 1rem; font-size: .9rem; }
+    .kv span:nth-child(odd) { color: #8b98a5; }
+    code { background: #0e1116; padding: .1rem .35rem; border-radius: 5px; font-size: .85rem; }
+    .ask { display: flex; gap: .5rem; }
+    .ask input { flex: 1; background: #0e1116; border: 1px solid #232a33; color: #e6edf3; border-radius: 8px; padding: .55rem .75rem; }
+    .ask button, .search button { background: #238636; color: #fff; border: 0; border-radius: 8px; padding: .55rem 1rem; cursor: pointer; }
+    pre { white-space: pre-wrap; background: #0e1116; border-radius: 8px; padding: .75rem; font-size: .85rem; }
+    .muted { color: #8b98a5; font-size: .85rem; }
+  </style>
+</head>
+<body>
+  <header><span class="eye">𓂀</span><h1>Horus</h1><span class="muted">observabilidade aumentada por IA</span></header>
+  <main>
+    <div class="card">
+      <h2>Saúde</h2>
+      <div id="health">carregando…</div>
+    </div>
+
+    <div class="card">
+      <h2>Pergunte ao Horus</h2>
+      <div class="ask">
+        <input id="q" placeholder="ex.: qual o serviço mais lento neste trace?"/>
+        <input id="trace" placeholder="traceId (opcional)" style="max-width: 220px"/>
+        <button onclick="ask()">Perguntar</button>
+      </div>
+      <pre id="answer" class="muted">A resposta aparecerá aqui.</pre>
+    </div>
+
+    <div class="card">
+      <h2>Buscar por trace</h2>
+      <div class="ask search">
+        <input id="searchTrace" placeholder="traceId"/>
+        <button onclick="explain()">Explicar trace</button>
+        <button onclick="rca()">RCA</button>
+      </div>
+      <pre id="searchOut" class="muted">Use um traceId para explicar o caminho da request ou rodar a RCA.</pre>
+    </div>
+
+    <div class="card">
+      <h2>Capacidades</h2>
+      <div id="endpoints" class="muted">carregando…</div>
+    </div>
+  </main>
+
+  <script>
+    async function j(url, opts) { const r = await fetch(url, opts); return r.json(); }
+
+    async function loadOverview() {
+      try {
+        const o = await j('/horus/panel/overview');
+        const ai = o.ai;
+        document.getElementById('health').innerHTML =
+          `<div class="kv">` +
+          `<span>IA</span><span><span class="pill ${ai.live ? 'live' : 'stub'}">${ai.mode}</span></span>` +
+          `<span>Cache</span><span>${ai.cache.enabled ? 'on' : 'off'} · ${ai.cache.size} itens · ${ai.cache.hits} hits / ${ai.cache.misses} misses</span>` +
+          `<span>Jaeger</span><span><code>${o.backends.jaeger}</code></span>` +
+          `<span>Loki</span><span><code>${o.backends.loki}</code></span>` +
+          `<span>Prometheus</span><span><code>${o.backends.prometheus}</code></span>` +
+          `</div>`;
+        document.getElementById('endpoints').innerHTML =
+          Object.entries(o.endpoints).map(([k, v]) => `<div><code>${v}</code></div>`).join('');
+      } catch (e) {
+        document.getElementById('health').textContent = 'falha ao carregar: ' + e;
+      }
+    }
+
+    async function ask() {
+      const question = document.getElementById('q').value;
+      const traceId = document.getElementById('trace').value || null;
+      document.getElementById('answer').textContent = 'pensando…';
+      const a = await j('/horus/ai/ask', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, traceId })
+      });
+      document.getElementById('answer').textContent = `[${a.modelId} · ${a.live ? 'live' : 'stub'}]\n${a.answer}`;
+    }
+
+    async function explain() {
+      const t = document.getElementById('searchTrace').value;
+      document.getElementById('searchOut').textContent = 'explicando…';
+      const e = await j(`/horus/ai/explain/trace/${encodeURIComponent(t)}`);
+      document.getElementById('searchOut').textContent = `[${e.modelId} · ${e.live ? 'live' : 'stub'}]\n${e.explanation}`;
+    }
+
+    async function rca() {
+      const t = document.getElementById('searchTrace').value;
+      document.getElementById('searchOut').textContent = 'analisando…';
+      const r = await j(`/horus/ai/rca/trace/${encodeURIComponent(t)}`);
+      document.getElementById('searchOut').textContent = `[${r.modelId} · ${r.live ? 'live' : 'stub'}]\n${r.analysis}`;
+    }
+
+    loadOverview();
+  </script>
+</body>
+</html>
