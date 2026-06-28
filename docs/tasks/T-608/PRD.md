@@ -6,7 +6,7 @@
 | **Fase do roadmap** | `Fase 6 — IA (resumo, RCA, anomalias)` |
 | **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-608-llm-cache` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | `#27` |
 | **Depende de** | `T-603`, `T-604`, `T-605`, `T-607` |
 | **Requisitos atendidos** | `RNF-H-003`, `RNF-H-004` |
 | **ADRs relacionados** | `ADR-0011` |
