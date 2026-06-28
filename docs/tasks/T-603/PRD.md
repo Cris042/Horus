@@ -6,7 +6,7 @@
 | **Fase do roadmap** | `Fase 6 — IA (resumo, RCA, anomalias)` |
 | **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-603-summarizer-agent` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | `#23` |
 | **Depende de** | `T-602` (e T-601/T-501) |
 | **Requisitos atendidos** | `RF-H-005` |
 | **ADRs relacionados** | `ADR-0011` |
