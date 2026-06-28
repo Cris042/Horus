@@ -7,21 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-28 |
-| **Branch atual** | `task/T-604-trace-explainer` |
+| **Branch atual** | `task/T-605-rca-agent` |
 | **Fase do roadmap** | Fase 6 — IA (resumo, RCA, anomalias) |
-| **Task ativa** | `T-604` — Agente Trace Explainer (explica um trace em linguagem natural) (em revisão (PR)) |
+| **Task ativa** | `T-605` — Agente Root-Cause Analyst (RCA correlacionando 3 sinais) (em revisão (PR)) |
 
 ---
 
 ## 🟢 Última entrega (mergeada)
 
-**`T-603` — Agente Summarizer (entregue via [PR #23](https://github.com/mclovin137/Horus/pull/23), mergeada em `main`).** `StateSummarizer` resume o estado em NL (contexto T-602 + `LlmEngine` FAST); sob demanda `GET /horus/ai/summary/trace/{id}` + agendado `ScheduledStateSummary` (cron off default). `mvn -pl horus test` verde (13/13). **CI verde.**
+**`T-604` — Agente Trace Explainer (entregue via [PR #24](https://github.com/mclovin137/Horus/pull/24), mergeada em `main`).** `TraceExplainer` narra o caminho da request (contexto T-602 + `LlmEngine` BALANCED/Sonnet); `GET /horus/ai/explain/trace/{id}`. `mvn -pl horus test` verde (15/15). **CI verde.**
 
-> 🔄 **Em revisão:** **`T-604`** — Agente **Trace Explainer** (RF-H-006): `TraceExplainer` narra o caminho da request (serviços, tempo, gargalo) combinando `ContextAssembler` (T-602) + `LlmEngine` (T-601, camada BALANCED/Sonnet). `GET /horus/ai/explain/trace/{traceId}`. `mvn -pl horus test` verde (15/15, 2 novos).
+> 🔄 **Em revisão:** **`T-605`** — Agente **Root-Cause Analyst** (RF-H-007): `RootCauseAnalyst` faz RCA correlacionando os **3 sinais** (trace+logs+métricas via novo `ContextAssembler.assembleForIncident`) e propõe causa provável + próximos passos; camada **DEEP/Opus**. `GET /horus/ai/rca/trace/{traceId}?promql=`. `mvn -pl horus test` verde (17/17, 2 novos). *(Os 3 agentes-núcleo de IA — resumo/explicação/RCA — entregues.)*
 
 ## ▶️ Próxima ação
 
-Fase 6: **`T-605`** (RCA correlacionando 3 sinais, RF-H-007, camada DEEP/Opus) e **`T-607`** (NL Query, RF-H-010) — mesmo par `LlmEngine`+`ContextAssembler`. Depois **`T-701`** (painel: saúde + resumo de IA + busca). Caminho crítico: **`T-502`** (correlação por `trace_id`) — melhor após `T-801`. Desbloqueadas: Fase 3 **`T-303`** (worker Rust), Fase 2 **`T-202`** (FastAPI). Telemetria pendente: **`T-402`**/**`T-403`**.
+Fase 6: **`T-607`** (NL Query — "pergunte ao Horus", RF-H-010) e **`T-606`** (detecção/clusterização de anomalias) — mesmo par `LlmEngine`+`ContextAssembler`. Depois **`T-701`** (painel: saúde + resumo de IA + busca). Caminho crítico: **`T-502`** (correlação por `trace_id`) — melhor após `T-801`. Desbloqueadas: Fase 3 **`T-303`** (worker Rust), Fase 2 **`T-202`** (FastAPI). Telemetria pendente: **`T-402`**/**`T-403`**.
 
 > ⚙️ **Pendência sua (agora relevante p/ IA):** a IA real (T-601+) exige a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** e `horus.ai.enabled=true`. Sem isso, o Horus roda com o `StubLlmEngine` (placeholder) — não bloqueia build/CI.
 
@@ -35,6 +35,7 @@ Fase 6: **`T-605`** (RCA correlacionando 3 sinais, RF-H-007, camada DEEP/Opus) e
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
+| 2026-06-28 | `T-605` | Agente Root-Cause Analyst (RF-H-007): `RootCauseAnalyst` faz RCA dos 3 sinais (`assembleForIncident` trace+logs+métricas) com causa provável+passos, camada DEEP/Opus; `GET /horus/ai/rca/trace/{id}`; `mvn -pl horus test` verde (17/17) | `task/T-605-rca-agent` | [#25](https://github.com/mclovin137/Horus/pull/25) | 🔄 Em revisão (PR) |
 | 2026-06-28 | `T-604` | Agente Trace Explainer (RF-H-006): `TraceExplainer` narra o caminho da request (contexto T-602 + `LlmEngine` BALANCED/Sonnet); `GET /horus/ai/explain/trace/{id}`; `mvn -pl horus test` verde (15/15) | `task/T-604-trace-explainer` | [#24](https://github.com/mclovin137/Horus/pull/24) | 🔄 Em revisão (PR) |
 | 2026-06-28 | `T-603` | Agente Summarizer (RF-H-005, 1ª fatia): `StateSummarizer` (contexto T-602 + `LlmEngine` FAST) resume estado em NL; sob demanda `GET /horus/ai/summary/trace/{id}` + agendado `ScheduledStateSummary` (cron off default); `mvn -pl horus test` verde (13/13) | `task/T-603-summarizer-agent` | [#23](https://github.com/mclovin137/Horus/pull/23) | 🔄 Em revisão (PR) |
 | 2026-06-28 | `T-602` | Montador de contexto da IA (RNF-H-003/006, 1ª fatia): `ContextAssembler` (trace+logs+métricas→prompt) com `TokenBudget` (orçamento+truncamento) e `PromptSanitizer` (PII na fronteira); `assembleForTrace` + `assemble(sinais)`; `mvn -pl horus test` verde (11/11) | `task/T-602-context-assembler` | [#22](https://github.com/mclovin137/Horus/pull/22) | 🔄 Em revisão (PR) |

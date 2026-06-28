@@ -50,6 +50,18 @@ public class ContextAssembler {
     }
 
     /**
+     * Monta o contexto de um <b>incidente</b>: os <b>três</b> sinais correlacionados — trace +
+     * logs + métricas (PromQL) — base da RCA (T-605, RF-H-007).
+     */
+    public PromptContext assembleForIncident(String traceId, String promQl, int logLimit) {
+        Optional<TraceResult> trace = traces.findTrace(traceId);
+        List<LogLine> traceLogs = logs.findByTraceId(traceId, logLimit);
+        List<MetricSample> samples = promQl == null || promQl.isBlank()
+                ? List.of() : metrics.instantQuery(promQl);
+        return assemble(trace.orElse(null), traceLogs, samples);
+    }
+
+    /**
      * Monta o contexto a partir de sinais já obtidos (usável pelo modelo de correlação,
      * T-502, e direto em testes). Qualquer argumento pode ser nulo/vazio.
      */
