@@ -4,14 +4,15 @@
 //! `nota-fiscal`), gera o relatório e envia o e-mail. Fica **fora** do caminho síncrono
 //! de negócio (ADR-0005) e não acessa bancos de domínio.
 //!
-//! A propagação/continuação do trace HTTP→AMQP (extrair `traceparent` dos headers) é a
-//! task **T-403**; aqui o foco é o fluxo consumir→gerar→enviar.
+//! A continuação do trace HTTP→AMQP (extrai o `traceparent` dos headers da mensagem e abre
+//! o span de processamento como filho) é feita via `telemetry` (T-403, RF-H-004).
 
 mod config;
 mod consumer;
 mod email;
 mod message;
 mod report;
+mod telemetry;
 
 use anyhow::Result;
 use futures_lite::StreamExt;
@@ -21,6 +22,7 @@ use lapin::options::{
 };
 use lapin::types::FieldTable;
 use lapin::{Connection, ConnectionProperties, ExchangeKind};
+use tracing_opentelemetry::OpenTelemetrySpanExt;
 
 use crate::config::Config;
 use crate::consumer::Processor;
@@ -48,7 +50,7 @@ fn build_processor(cfg: &Config) -> Processor {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    tracing_subscriber::fmt().json().with_target(false).init();
+    let provider = telemetry::init()?;
 
     let cfg = Config::from_env();
     let mut processor = build_processor(&cfg);
@@ -106,6 +108,15 @@ async fn main() -> Result<()> {
 
     while let Some(delivery) = consumer.next().await {
         let delivery = delivery?;
+
+        // Span de processamento que CONTINUA o trace do publicador (HTTP→AMQP, RF-H-004):
+        // extrai o contexto W3C dos headers AMQP e o define como pai do span.
+        let span = tracing::info_span!("processar_relatorio", messaging.system = "rabbitmq");
+        if let Some(headers) = delivery.properties.headers() {
+            span.set_parent(telemetry::extrair_contexto(headers));
+        }
+        let _guard = span.enter();
+
         match processor.parse_e_processar(&delivery.data) {
             Ok(_) => delivery.ack(BasicAckOptions::default()).await?,
             Err(e) => {
@@ -120,5 +131,6 @@ async fn main() -> Result<()> {
         }
     }
 
+    provider.shutdown()?;
     Ok(())
 }
