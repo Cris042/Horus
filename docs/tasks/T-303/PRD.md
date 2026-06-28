@@ -6,7 +6,7 @@
 | **Fase do roadmap** | `Fase 3 — Mensageria e worker Rust` |
 | **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-303-rust-worker` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | [#33](https://github.com/mclovin137/Horus/pull/33) |
 | **Depende de** | `T-301` (contrato da mensagem) |
 | **Requisitos atendidos** | `RF-022`, `RF-023`, `RF-024`, `RNF-012` |
 | **ADRs relacionados** | `ADR-0004` (RabbitMQ restrito a relatórios), `ADR-0005` (worker isolado) |
