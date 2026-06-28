@@ -30,6 +30,11 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-smallrye-health</artifactId>
         </dependency>
+        <!-- Agendador (resumo de estado agendado — T-603, RF-H-005) -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-scheduler</artifactId>
+        </dependency>
         <!-- CDI -->
         <dependency>
             <groupId>io.quarkus</groupId>
