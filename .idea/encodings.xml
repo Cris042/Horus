@@ -3,5 +3,15 @@
   <component name="Encoding">
     <file url="file://$PROJECT_DIR$/horus/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/horus/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/invoice/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/invoice/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/payment/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/payment/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/prontuario/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/prontuario/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/saga-orchestrator/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/services/saga-orchestrator/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/resources" charset="UTF-8" />
   </component>
 </project>

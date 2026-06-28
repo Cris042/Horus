@@ -50,8 +50,40 @@ public class JaegerTraceAdapter implements TraceQueryPort {
                     span.path("spanID").asText(""),
                     span.path("operationName").asText(""),
                     serviceName,
-                    span.path("duration").asLong(0)));
+                    span.path("duration").asLong(0),
+                    span.path("startTime").asLong(0),
+                    parentSpanId(span),
+                    spanKind(span)));
         }
         return Optional.of(new TraceResult(trace.path("traceID").asText(traceId), spans.size(), spans));
+    }
+
+    private static String parentSpanId(JsonNode span) {
+        JsonNode refs = span.path("references");
+        if (!refs.isArray()) {
+            return null;
+        }
+        for (JsonNode ref : refs) {
+            if ("CHILD_OF".equalsIgnoreCase(ref.path("refType").asText())) {
+                String spanId = ref.path("spanID").asText("");
+                return spanId.isBlank() ? null : spanId;
+            }
+        }
+        return null;
+    }
+
+    private static String spanKind(JsonNode span) {
+        JsonNode tags = span.path("tags");
+        if (!tags.isArray()) {
+            return null;
+        }
+        for (JsonNode tag : tags) {
+            if (!"span.kind".equals(tag.path("key").asText())) {
+                continue;
+            }
+            String kind = tag.path("value").asText("");
+            return kind.isBlank() ? null : kind.toLowerCase();
+        }
+        return null;
     }
 }

@@ -7,21 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-28 |
-| **Branch atual** | `task/T-108-payment-concurrency` |
-| **Fase do roadmap** | Fase 1 — Domínio (hardening de concorrência) |
-| **Task ativa** | `T-108` — Concorrência no Payment (lock do saldo) (em revisão (PR)) |
-
----
+| **Branch atual** | `task/T-503-request-lifecycle-api` |
+| **Fase do roadmap** | Fase 5 — Horus core (correlação + ciclo de vida) |
+| **Task ativa** | `T-503` — API do ciclo de vida da request (em progresso) |
 
 ## 🟢 Última entrega (mergeada)
+
 
 **`T-502` — Modelo de correlação por `trace_id` (entregue via [PR #35](https://github.com/mclovin137/Horus/pull/35), mergeada em `main`).** `CorrelationService` costura spans-por-serviço + logs + fronteira mensageria/worker + erros num `RequestCorrelation`; `GET /horus/correlation/trace/{id}`. `mvn -pl horus test` verde (35/35). **CI + ai-review verdes.**
 
 > 🔄 **Em revisão:** **`T-108`** (hardening de T-103) — Concorrência no Payment: o saldo da carteira (estado mutável compartilhado) agora é alterado sob **lock pessimista** (`SELECT … FOR UPDATE` via `aplicarPorId`), serializando débitos concorrentes na mesma carteira — sem *lost update* nem saldo negativo. `aprovar`/`estornar` debitam pela carteira bloqueada. Teste de concorrência (20 threads, Testcontainers). `mvn -pl services/payment test` verde (7/7, 2 novos). **CI + AI Code Review verdes no PR #36.**
 
+
 ## ▶️ Próxima ação
 
-Fase 5 core: **`T-503/504`** (APIs de ciclo de vida — waterfall de spans da request / statement de query sanitizado) e **`T-505`** (agregação de logs de erro correlacionados) — todos sobre o modelo T-502. Depois **`T-506`** (mapa de serviços) / **`T-507`** (visualização de SAGA) e Fase 7 **`T-702`** (waterfall UI). **`T-405`** (validação ponta a ponta com stack real) e **`T-606`** (anomalias, dep T-505) ficam para quando o ambiente estiver de pé / após T-505. 💡 Rust verificável localmente via Docker (`rust:1-slim`).
+Fase 5 core: concluir **`T-503`** (abrir PR da API waterfall da request), depois seguir para **`T-504`** (API do ciclo de vida da query — statement sanitizado, duração, banco) e **`T-505`** (agregação de logs de erro correlacionados). Na sequência entram **`T-506`** (mapa de serviços) / **`T-507`** (visualização de SAGA) e Fase 7 **`T-702`** (waterfall UI). **`T-405`** (validação ponta a ponta com stack real) e **`T-606`** (anomalias, dep T-505) ficam para quando o ambiente estiver de pé / após T-505.
 
 > ⚙️ **Pendência sua (agora relevante p/ IA):** a IA real (T-601+) exige a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** e `horus.ai.enabled=true`. Sem isso, o Horus roda com o `StubLlmEngine` (placeholder) — não bloqueia build/CI.
 
@@ -35,6 +35,7 @@ Fase 5 core: **`T-503/504`** (APIs de ciclo de vida — waterfall de spans da re
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
+| 2026-06-28 | `T-503` | API do ciclo de vida da request (RF-H-001/011) em andamento: `RequestLifecycleService` + `GET /horus/lifecycle/requests/{traceId}` projetam trace em waterfall/timeline com `offsetMicros`, `depth`, categorias e duração total por janela temporal; `./mvnw -pl horus test` verde (38/38) | `task/T-503-request-lifecycle-api` | — | 🟡 Em progresso |
 | 2026-06-28 | `T-403` | OTel no worker + propagação HTTP→AMQP (RF-029/RF-H-004): `telemetry.rs` (provider+recurso `report-worker`/`medrec`, OTLP/HTTP sem protoc, bridge tracing→OTel, propagador W3C); `extrair_contexto` lê `traceparent` dos headers AMQP e o span de processamento vira filho do publicador; verificado em container `rust:1-slim` (test 12, fmt, clippy) | `task/T-403-worker-otel-amqp` | [#34](https://github.com/mclovin137/Horus/pull/34) | ✅ Entregue |
 | 2026-06-28 | `T-502` | Modelo de correlação por `trace_id` (RF-H-001/002/004): `CorrelationModel`+`CorrelationService` costuram spans-por-serviço + logs + fronteira mensageria/worker + erros num `RequestCorrelation`; `GET /horus/correlation/trace/{id}`; sobre portas T-501, testes mockados; `mvn -pl horus test` verde (35/35, 3 novos) | `task/T-502-correlation-model` | [#35](https://github.com/mclovin137/Horus/pull/35) | ✅ Entregue |
 | 2026-06-28 | `T-108` | Concorrência no Payment (hardening T-103): saldo da carteira sob lock pessimista (`PESSIMISTIC_WRITE`/`aplicarPorId`); aprovar/estornar pela carteira bloqueada; sem lost update nem saldo negativo; teste de concorrência (20 threads, Testcontainers); `mvn -pl services/payment test` verde (7/7, 2 novos); CI + AI Code Review verdes | `task/T-108-payment-concurrency` | [#36](https://github.com/mclovin137/Horus/pull/36) | 🔄 Em revisão (PR) |
