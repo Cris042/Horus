@@ -6,7 +6,7 @@
 | **Fase do roadmap** | `Fase 7 — Painel / Experiência` |
 | **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-704-horus-rbac` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | [#29](https://github.com/mclovin137/Horus/pull/29) |
 | **Depende de** | `T-701` (painel) |
 | **Requisitos atendidos** | `RNF-H-010` |
 | **ADRs relacionados** | `ADR-0002` (sem auth no domínio), `ADR-0008` |
