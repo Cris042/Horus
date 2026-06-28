@@ -26,6 +26,43 @@ processors:
     limit_percentage: 80
     spike_limit_percentage: 25
 
+  # Redação de PII na BORDA (T-406, RNF-010/RNF-H-002, CONTRACT §6).
+  # Segunda camada de defesa em profundidade: a 1ª é na ORIGEM (serviços, T-401 —
+  # SQL parametrizado, sem valores crus). Aqui reforçamos sobre spans e logs:
+  #  (a) removemos chaves proibidas de atributos;
+  #  (b) mascaramos e-mail / CPF / cartão que vazem em valores ou no corpo do log.
+  # `error_mode: ignore` => uma falha de OTTL nunca derruba o sinal.
+  transform/pii:
+    error_mode: ignore
+    trace_statements:
+      - context: span
+        statements:
+          - delete_key(attributes, "cpf")
+          - delete_key(attributes, "documento")
+          - delete_key(attributes, "email")
+          - delete_key(attributes, "nome_paciente")
+          - delete_key(attributes, "cartao")
+          - delete_key(attributes, "prontuario.conteudo")
+          # e-mail -> ***@*** | CPF (com/sem pontuação) -> *** | cartão (13-19 díg.) -> ***
+          - replace_all_patterns(attributes, "value", "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}", "***@***")
+          - replace_all_patterns(attributes, "value", "\\b\\d{3}\\.?\\d{3}\\.?\\d{3}-?\\d{2}\\b", "***")
+          - replace_all_patterns(attributes, "value", "\\b\\d{13,19}\\b", "***")
+    log_statements:
+      - context: log
+        statements:
+          - delete_key(attributes, "cpf")
+          - delete_key(attributes, "documento")
+          - delete_key(attributes, "email")
+          - delete_key(attributes, "nome_paciente")
+          - delete_key(attributes, "cartao")
+          - delete_key(attributes, "prontuario.conteudo")
+          - replace_all_patterns(attributes, "value", "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}", "***@***")
+          - replace_all_patterns(attributes, "value", "\\b\\d{3}\\.?\\d{3}\\.?\\d{3}-?\\d{2}\\b", "***")
+          - replace_all_patterns(attributes, "value", "\\b\\d{13,19}\\b", "***")
+          # corpo do log (Quarkus emite linha JSON como string)
+          - replace_pattern(body, "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}", "***@***") where IsString(body)
+          - replace_pattern(body, "\\b\\d{3}\\.?\\d{3}\\.?\\d{3}-?\\d{2}\\b", "***") where IsString(body)
+
 exporters:
   # Traces → Jaeger (via OTLP nativo do Jaeger 2)
   otlp/jaeger:
@@ -48,11 +85,11 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [memory_limiter, batch]
+      processors: [memory_limiter, transform/pii, batch]
       exporters: [otlp/jaeger]
     logs:
       receivers: [otlp]
-      processors: [memory_limiter, batch]
+      processors: [memory_limiter, transform/pii, batch]
       exporters: [otlphttp/loki]
     metrics:
       receivers: [otlp]
