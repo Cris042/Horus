@@ -36,10 +36,24 @@ HORUS_LOADTEST_RUNNER=locust .venv/bin/uvicorn app.main:app
 
 Padrão (sem a env var): runner **no-op** — a API de controle é testável sem rede/Locust.
 
-## Observabilidade
+## Observabilidade (OTel — T-402, RF-029) ✅
 
-Instrumentada com OpenTelemetry; **inicia o contexto de tracing** que é propagado ponta a ponta a partir da borda (T-402, RF-029).
+Instrumentada com OpenTelemetry: **inicia o contexto de tracing** e o propaga ponta a ponta
+(**W3C Trace Context**) a partir da borda. Recurso canônico do contrato (T-005):
+`service.name=loadtest-api`, `service.namespace=medrec`.
+
+- **Locust** (borda): no `events.init`, instrumenta o cliente `requests` → injeta
+  `traceparent` em cada chamada ao Load Balancer. **Ligado por padrão**; desligue com
+  `HORUS_OTEL_ENABLED=false`.
+- **API FastAPI**: instrumentada quando `HORUS_OTEL_ENABLED=true` (padrão **desligado** p/
+  testes/dev sem Collector).
+- Endpoint OTLP via env padrão do OTel: `OTEL_EXPORTER_OTLP_ENDPOINT` (ex.: o Collector do compose).
+
+```bash
+HORUS_OTEL_ENABLED=true OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318 \
+  .venv/bin/uvicorn app.main:app
+```
 
 ## Tasks
 
-`T-202` (API de controle) · `T-203` (cenários) · `T-402` (OTel + propagação).
+`T-202` (API de controle) ✅ · `T-203` (cenários) ✅ · `T-402` (OTel + propagação) ✅.

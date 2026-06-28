@@ -14,10 +14,29 @@ Execução (headless), normalmente disparada pelo controlador (T-202):
 
 from __future__ import annotations
 
+import os
 import random
 import uuid
 
-from locust import HttpUser, between, task
+from locust import HttpUser, between, events, task
+
+
+@events.init.add_listener
+def _init_telemetry(environment, **_kwargs) -> None:
+    """Inicia a telemetria da borda quando o Locust sobe (T-402, RF-029).
+
+    Instrumenta o cliente ``requests`` do Locust para **injetar W3C `traceparent`** em
+    cada chamada — é aqui que o trace nasce e é propagado ponta a ponta. Habilitado por
+    padrão; defina ``HORUS_OTEL_ENABLED=false`` para desligar.
+    """
+    if os.getenv("HORUS_OTEL_ENABLED", "true").lower() != "true":
+        return
+    from opentelemetry.instrumentation.requests import RequestsInstrumentor
+
+    from app.telemetry import configure_telemetry
+
+    configure_telemetry()
+    RequestsInstrumentor().instrument()
 
 
 def _ref() -> str:

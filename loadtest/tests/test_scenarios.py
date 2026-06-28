@@ -124,6 +124,8 @@ def test_runner_start_and_stop_manage_process(monkeypatch: pytest.MonkeyPatch) -
     started: dict[str, object] = {}
 
     class FakeProc:
+        returncode = 0
+
         def __init__(self, cmd):
             started["cmd"] = cmd
             self._alive = True

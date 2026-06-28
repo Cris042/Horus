@@ -46,7 +46,25 @@ app = FastAPI(
     summary="Dispara, consulta e interrompe testes de carga (RF-001..003).",
 )
 
+
+def _maybe_instrument(application: FastAPI) -> None:
+    """Instrumenta a app com OTel quando habilitado por ambiente (T-402, RF-029).
+
+    Desligado por padrão para manter os testes/dev sem dependência de Collector;
+    o ambiente containerizado define ``HORUS_OTEL_ENABLED=true``.
+    """
+    if os.getenv("HORUS_OTEL_ENABLED", "false").lower() != "true":
+        return
+    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+
+    from .telemetry import configure_telemetry
+
+    configure_telemetry()
+    FastAPIInstrumentor.instrument_app(application)
+
+
 manager = LoadTestManager(_select_runner())
+_maybe_instrument(app)
 
 
 @app.get("/health", tags=["meta"])

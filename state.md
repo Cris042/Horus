@@ -7,21 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-28 |
-| **Branch atual** | `task/T-203-locust-scenarios` |
-| **Fase do roadmap** | Fase 2 — Entrada e teste de carga (rumo ao caminho crítico T-402→T-405) |
-| **Task ativa** | `T-203` — Cenários Locust (geração de carga) (em revisão (PR)) |
+| **Branch atual** | `task/T-402-otel-loadtest-edge` |
+| **Fase do roadmap** | Fase 4 — Telemetria base (OTel) (caminho crítico → T-405) |
+| **Task ativa** | `T-402` — Instrumentação OTel da borda (FastAPI/Locust + LB) (em revisão (PR)) |
 
 ---
 
 ## 🟢 Última entrega (mergeada)
 
-**`T-202` — API FastAPI de controle de teste de carga (entregue via [PR #30](https://github.com/mclovin137/Horus/pull/30), mergeada em `main`).** Endpoints RF-001..003 + `LoadTestManager` (porta `LoadRunner`); novo job de CI Python `build-loadtest`. `pytest` verde (10/10). **CI verde.**
+**`T-203` — Cenários Locust (entregue via [PR #31](https://github.com/mclovin137/Horus/pull/31), mergeada em `main`).** `locustfile.py` (usuários por domínio + SAGA) + `LocustRunner`; corrigidos 4 P2 do review por IA (cenário no comando+validação, status no término, carteira da SAGA, falha simulada de NF). `pytest` verde (18/18). **CI + ai-review verdes.**
 
-> 🔄 **Em revisão:** **`T-203`** — Cenários Locust (RF-004/RNF-016): `app/locustfile.py` com `HttpUser`s por domínio (Prontuário/Payment/Invoice) + SAGA, fluxos encadeados e fração de falhas (logs de erro p/ o Horus); `LocustRunner` (porta `LoadRunner`) que monta `locust --headless` e gerencia o processo; seleção por env `HORUS_LOADTEST_RUNNER=locust` (padrão no-op). Testes offline isolam o import de `locust` (gevent monkey-patch) num subprocesso p/ não travar o `TestClient`. `pytest` verde (14/14).
+> 🔄 **Em revisão:** **`T-402`** — Instrumentação OTel da borda (RF-029): `app/telemetry.py` (`TracerProvider` + recurso canônico `loadtest-api`/`medrec` + OTLP/HTTP); FastAPI instrumentada (gated `HORUS_OTEL_ENABLED`); Locust injeta **W3C `traceparent`** nas chamadas (`events.init` + `RequestsInstrumentor`); LB com access log JSON contendo `traceparent`. Testes offline (exporter em memória): recurso, span de servidor, injeção W3C. `pytest` verde (21/21).
 
 ## ▶️ Próxima ação
 
-Continuar a destravar o caminho crítico (**T-405** correlação ponta a ponta): **`T-303`** (worker Rust — depende de T-301 ✓). Depois **`T-402`** (OTel/propagação na borda FastAPI/LB — agora que T-202/203 existem) e **`T-403`** (OTel worker), que liberam **`T-405`** → Fase 5 core (T-502..505) → Fase 7 restante (T-702/T-703). Fase 7 hoje bloqueada: **`T-702`** (waterfall, dep T-503/504/505), **`T-703`** (alertas, dep T-606).
+Caminho crítico (**T-405** correlação ponta a ponta) — falta **`T-403`** (OTel no worker Rust + fronteira HTTP→AMQP, RF-H-004), que depende de **`T-303`** (worker Rust). ⚠️ **Toolchain Rust não está instalado** no ambiente (`cargo`/`rustc` ausentes) — T-303/403 exigem instalar rustup antes (ou rodar só no CI). Com T-401/402/404 ✅ e T-403 pendente, **T-405** ainda aguarda o worker. Fase 5 core (T-502..505) e Fase 7 restante (T-702/T-703) seguem bloqueadas por isso.
 
 > ⚙️ **Pendência sua (agora relevante p/ IA):** a IA real (T-601+) exige a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** e `horus.ai.enabled=true`. Sem isso, o Horus roda com o `StubLlmEngine` (placeholder) — não bloqueia build/CI.
 
@@ -35,7 +35,8 @@ Continuar a destravar o caminho crítico (**T-405** correlação ponta a ponta):
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
-| 2026-06-28 | `T-203` | Cenários Locust (RF-004/RNF-016): `app/locustfile.py` (usuários por domínio + SAGA, fluxos encadeados, fração de falhas) + `LocustRunner` (`locust --headless`, start/stop) selecionável por `HORUS_LOADTEST_RUNNER`; testes offline isolam import de `locust`/gevent em subprocesso; `pytest` verde (14/14) | `task/T-203-locust-scenarios` | [#31](https://github.com/mclovin137/Horus/pull/31) | 🔄 Em revisão (PR) |
+| 2026-06-28 | `T-402` | Instrumentação OTel da borda (RF-029): `telemetry.py` (provider+recurso canônico `loadtest-api`/`medrec`+OTLP), FastAPI instrumentada (gated `HORUS_OTEL_ENABLED`), Locust injeta W3C `traceparent` (`events.init`+`RequestsInstrumentor`), LB access log JSON com `traceparent`; testes offline (exporter em memória); `pytest` verde (21/21) | `task/T-402-otel-loadtest-edge` | [#32](https://github.com/mclovin137/Horus/pull/32) | 🔄 Em revisão (PR) |
+| 2026-06-28 | `T-203` | Cenários Locust (RF-004/RNF-016): `app/locustfile.py` (usuários por domínio + SAGA, fluxos encadeados, fração de falhas) + `LocustRunner` (`locust --headless`, start/stop) selecionável por `HORUS_LOADTEST_RUNNER`; +4 correções do review por IA; testes offline isolam import de `locust`/gevent em subprocesso; `pytest` verde (18/18) | `task/T-203-locust-scenarios` | [#31](https://github.com/mclovin137/Horus/pull/31) | ✅ Entregue |
 | 2026-06-28 | `T-202` | API FastAPI de controle de teste de carga (RF-001..003): `POST /load-tests`, `GET /load-tests/{id}`, `POST /load-tests/{id}/stop` (+`GET /load-tests`/`/health`); Pydantic + `LoadTestManager` (porta `LoadRunner` no-op→Locust em T-203); job de CI Python `build-loadtest` (uv+pytest); `pytest` verde (10/10) | `task/T-202-fastapi-control-api` | [#30](https://github.com/mclovin137/Horus/pull/30) | ✅ Entregue |
 | 2026-06-28 | `T-704` | RBAC do Horus (RNF-H-010, 1ª fatia): `HorusRole`×`Capability` (matriz de `ROLES.md`), `HorusRbacFilter` autoriza por papel via cabeçalho `X-Horus-Role`; públicos isentos; off por padrão (`horus.rbac.enabled=false`); OIDC/JWT em fatia seguinte; `mvn -pl horus test` verde (32/32, 6 novos) | `task/T-704-horus-rbac` | [#29](https://github.com/mclovin137/Horus/pull/29) | ✅ Entregue |
 | 2026-06-28 | `T-701` | Painel Horus (RF-H-012, 1ª fatia): API `GET /horus/panel/overview` (saúde IA+cache+backends+capacidades) + página estática `horus-panel.html` (saúde, ask, busca por trace explain/RCA, capacidades); waterfall (T-702) e busca avançada nas fatias seguintes; `mvn -pl horus test` verde (26/26, 2 novos) | `task/T-701-horus-panel` | [#28](https://github.com/mclovin137/Horus/pull/28) | ✅ Entregue |
