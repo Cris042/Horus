@@ -13,14 +13,32 @@ em T-402; os cenários Locust em T-203.
 
 from __future__ import annotations
 
+import os
+
 from fastapi import FastAPI, HTTPException, status
 
 from .manager import (
     InvalidStateTransition,
+    LoadRunner,
     LoadTestManager,
     LoadTestNotFound,
+    NoopRunner,
 )
 from .models import LoadTest, LoadTestRequest
+
+
+def _select_runner() -> LoadRunner:
+    """Escolhe o runner por ambiente: ``locust`` gera carga real; padrão é no-op.
+
+    O padrão no-op mantém a API testável sem dependências de rede; defina
+    ``HORUS_LOADTEST_RUNNER=locust`` para gerar carga de fato (T-203).
+    """
+    if os.getenv("HORUS_LOADTEST_RUNNER", "noop").lower() == "locust":
+        from .runner import LocustRunner
+
+        return LocustRunner()
+    return NoopRunner()
+
 
 app = FastAPI(
     title="Horus — API de controle de teste de carga",
@@ -28,7 +46,7 @@ app = FastAPI(
     summary="Dispara, consulta e interrompe testes de carga (RF-001..003).",
 )
 
-manager = LoadTestManager()
+manager = LoadTestManager(_select_runner())
 
 
 @app.get("/health", tags=["meta"])

@@ -8,7 +8,7 @@ Gerador e **controlador** de teste de carga do sistema observado. Dispara tráfe
 ## Responsabilidades
 
 - **API de controle:** `POST /load-tests`, `GET /load-tests/{id}`, `POST /load-tests/{id}/stop` (RF-001..003). ✅ T-202.
-- **Cenários Locust:** usuários virtuais e requisições concorrentes (RF-004). ⬜ T-203.
+- **Cenários Locust:** usuários virtuais e requisições concorrentes (RF-004). ✅ T-203.
 
 ## Desenvolvimento
 
@@ -20,8 +20,21 @@ uv pip install -e ".[dev]" --python .venv
 .venv/bin/uvicorn app.main:app --reload    # subir a API (http://localhost:8000/docs)
 ```
 
-A geração real de carga (Locust) é plugada em T-203 pelo *runner* (`app/manager.py`);
-nesta fatia o controlador gerencia o ciclo de vida dos testes com um runner no-op.
+### Geração de carga (Locust — T-203)
+
+Os cenários vivem em [`app/locustfile.py`](app/locustfile.py): usuários virtuais por domínio
+(Prontuário, Payment, Invoice) + SAGA, encadeando chamadas dependentes contra o **Load
+Balancer**. O controlador (T-202) dispara a carga quando o runner Locust está selecionado:
+
+```bash
+# Via controlador: a API passa a usar o runner Locust real
+HORUS_LOADTEST_RUNNER=locust .venv/bin/uvicorn app.main:app
+
+# Ou diretamente (headless):
+.venv/bin/locust -f app/locustfile.py --headless -u 50 -r 5 --run-time 60s -H http://load-balancer
+```
+
+Padrão (sem a env var): runner **no-op** — a API de controle é testável sem rede/Locust.
 
 ## Observabilidade
 
