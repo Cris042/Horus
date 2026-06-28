@@ -6,7 +6,7 @@
 | **Fase do roadmap** | `Fase 6 — IA (resumo, RCA, anomalias)` |
 | **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-602-context-assembler` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | `#22` |
 | **Depende de** | `T-501`, `T-406` (T-502 enriquece depois) |
 | **Requisitos atendidos** | `RNF-H-003`, `RNF-H-006` |
 | **ADRs relacionados** | `ADR-0011`, `ADR-0009` |
