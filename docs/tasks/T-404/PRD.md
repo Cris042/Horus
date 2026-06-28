@@ -6,7 +6,7 @@
 | **Fase do roadmap** | `Fase 4 — Telemetria e correlação` |
 | **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-404-otel-collector-backends` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | `#18` |
 | **Depende de** | `T-003` |
 | **Requisitos atendidos** | `RF-031`, `RF-H-014` |
 | **ADRs relacionados** | `ADR-0010` (OTel/Collector), `ADR-0009` (backends) |
