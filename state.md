@@ -7,21 +7,23 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-27 |
-| **Branch atual** | `task/T-501-horus-query-adapters` |
-| **Fase do roadmap** | Fase 5 — Horus core |
-| **Task ativa** | `T-501` — Serviço Horus: adaptadores de consulta aos backends (em revisão (PR)) |
+| **Branch atual** | `task/T-601-llm-anthropic-integration` |
+| **Fase do roadmap** | Fase 6 — IA (resumo, RCA, anomalias) |
+| **Task ativa** | `T-601` — Integração LangChain4j/Anthropic atrás de interface desacoplada (em revisão (PR)) |
 
 ---
 
 ## 🟢 Última entrega (mergeada)
 
-**`T-406` — Redação de PII na borda do Collector (entregue via [PR #19](https://github.com/mclovin137/Horus/pull/19), mergeada em `main`).** Processor `transform/pii` (OTTL) em traces+logs: remove chaves proibidas e mascara e-mail/CPF/cartão (2ª camada; origem = T-401). Doc `PII-REDACTION.md`. `otelcol validate` exit 0. **CI verde.** *(Fase 4 de telemetria concluída exceto T-402/T-403, que dependem de componentes Python/Rust ainda não construídos.)*
+**`T-501` — Serviço Horus: camada de consulta aos backends (entregue via [PR #20](https://github.com/mclovin137/Horus/pull/20), mergeada em `main`).** Portas Trace/Log/Metric + adapters REST-client (Jaeger/Loki/Prometheus) + API `GET /horus/query/*`; testes com portas mockadas. `mvn -pl horus test` verde (6/6). **CI verde.**
 
-> 🔄 **Em revisão:** **`T-501`** (1ª fatia) — Serviço Horus: camada de consulta (read-side) aos backends. Portas `TraceQueryPort`/`LogQueryPort`/`MetricQueryPort` + adapters REST-client (Jaeger/Loki/Prometheus, parsing `JsonNode`) + API `GET /horus/query/{traces,logs,metrics}`; testes `@QuarkusTest` com portas mockadas. `./mvnw -pl horus test` verde (6/6). Receptor OTLP próprio e correlação (T-502) ficam para fatias seguintes.
+> 🔄 **Em revisão:** **`T-601`** (1ª fatia) — Camada de IA do Horus (ADR-0011): porta desacoplada `LlmEngine` (+ DTOs e `ModelTier` Haiku/Sonnet/Opus→IDs), `StubLlmEngine` default (app sobe e CI roda **sem** `ANTHROPIC_API_KEY`) e `LangChain4jLlmEngine` (ativo com `horus.ai.enabled=true`, sobre `quarkus-langchain4j-anthropic` 1.1.0), API `GET/POST /horus/ai/*`. **Validado: extensão compila/testa sob Quarkus 3.37 + JDK 25** (`mvn -pl horus test` verde, 8/8). Roteamento por modelos nomeados e os agentes (Summarizer/RCA) ficam para fatias seguintes.
 
 ## ▶️ Próxima ação
 
-**`T-502`** (modelo de correlação por `trace_id`: costurar request↔query↔log↔mensagem↔worker) — depende de `T-405`, melhor após `T-801` (stack reprodutível). Em paralelo, desbloqueadas: **`T-601`** (LangChain4j/Anthropic, depende só de T-501), Fase 3 **`T-303`** (worker Rust), Fase 2 **`T-202`** (API FastAPI de carga). Pendentes de telemetria: **`T-402`**/**`T-403`** (instrumentar FastAPI/LB e worker).
+Fase 6: **`T-602`** (montador de contexto telemetria→prompt com orçamento de tokens; depende de T-501/T-406 — já entregues) → **`T-603`** (agente Summarizer) / **`T-605`** (RCA). Caminho crítico: **`T-502`** (correlação por `trace_id`) — melhor após `T-801`. Desbloqueadas: Fase 3 **`T-303`** (worker Rust), Fase 2 **`T-202`** (FastAPI). Telemetria pendente: **`T-402`**/**`T-403`**.
+
+> ⚙️ **Pendência sua (agora relevante p/ IA):** a IA real (T-601+) exige a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** e `horus.ai.enabled=true`. Sem isso, o Horus roda com o `StubLlmEngine` (placeholder) — não bloqueia build/CI.
 
 > ⚠️ **Nota técnica (vale p/ T-103/104):** entidades Panache geram id via **sequência `<tabela>_seq`** (PooledLo, INCREMENT 50) — as migrações Flyway devem criar a sequência (não usar coluna IDENTITY), senão `INSERT` falha em `nextval`.
 
@@ -33,7 +35,8 @@
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
-| 2026-06-27 | `T-501` | Serviço Horus (1ª fatia): camada de consulta aos backends — portas Trace/Log/Metric + adapters REST-client (Jaeger/Loki/Prometheus), API `GET /horus/query/*`, testes com portas mockadas; `mvn -pl horus test` verde (6/6) | `task/T-501-horus-query-adapters` | [#20](https://github.com/mclovin137/Horus/pull/20) | 🔄 Em revisão (PR) |
+| 2026-06-28 | `T-601` | Camada de IA (ADR-0011, 1ª fatia): porta desacoplada `LlmEngine` + `ModelTier` (Haiku/Sonnet/Opus), `StubLlmEngine` (default, sem chave) e `LangChain4jLlmEngine` (`quarkus-langchain4j-anthropic` 1.1.0, flag de build), API `/horus/ai/*`; extensão validada sob Quarkus 3.37 + JDK 25, `mvn -pl horus test` verde (8/8) | `task/T-601-llm-anthropic-integration` | [#21](https://github.com/mclovin137/Horus/pull/21) | 🔄 Em revisão (PR) |
+| 2026-06-27 | `T-501` | Serviço Horus (1ª fatia): camada de consulta aos backends — portas Trace/Log/Metric + adapters REST-client (Jaeger/Loki/Prometheus), API `GET /horus/query/*`, testes com portas mockadas; `mvn -pl horus test` verde (6/6) | `task/T-501-horus-query-adapters` | [#20](https://github.com/mclovin137/Horus/pull/20) | ✅ Entregue |
 | 2026-06-27 | `T-406` | Redação de PII na borda do Collector (RNF-010/RNF-H-002): processor `transform/pii` (OTTL) em traces+logs — remove chaves proibidas e mascara e-mail/CPF/cartão (2ª camada; origem = T-401), doc `PII-REDACTION.md`; `otelcol validate` ok | `task/T-406-pii-redaction` | [#19](https://github.com/mclovin137/Horus/pull/19) | ✅ Entregue |
 | 2026-06-27 | `T-404` | OTel Collector + backends (RF-031/RF-H-014): `health_check` no Collector, healthchecks/`depends_on` no compose, Grafana com datasources provisionados (Prometheus/Loki/Jaeger), doc `telemetry/README.md`; `compose config` + `otelcol validate` ok | `task/T-404-otel-collector-backends` | [#18](https://github.com/mclovin137/Horus/pull/18) | ✅ Entregue |
 | 2026-06-27 | `T-201` | Load Balancer de entrada (NGINX): roteamento por prefixo aos 3 serviços + orquestrador, passthrough de `traceparent`, `resolver`+variável; `nginx -t` ok (config+docs; ativação em T-801) | `task/T-201-load-balancer` | [#17](https://github.com/mclovin137/Horus/pull/17) | ✅ Entregue |

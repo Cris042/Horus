@@ -40,6 +40,13 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-rest-client-jackson</artifactId>
         </dependency>
+        <!-- Camada de IA: Quarkus LangChain4j (Anthropic/Claude) — ADR-0011, T-601.
+             Acesso ao LLM atrás da porta LlmEngine; ativo só com horus.ai.enabled=true. -->
+        <dependency>
+            <groupId>io.quarkiverse.langchain4j</groupId>
+            <artifactId>quarkus-langchain4j-anthropic</artifactId>
+            <version>${quarkus-langchain4j.version}</version>
+        </dependency>
 
         <!-- Testes -->
         <dependency>
