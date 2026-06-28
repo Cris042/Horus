@@ -6,7 +6,7 @@
 | **Fase do roadmap** | `Fase 6 — IA (resumo, RCA, anomalias)` |
 | **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-601-llm-anthropic-integration` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | `#21` |
 | **Depende de** | `T-501` |
 | **Requisitos atendidos** | `ADR-0011` (RF-H-005..010/013, RNF-H-003/004/006) |
 | **ADRs relacionados** | `ADR-0011` |
