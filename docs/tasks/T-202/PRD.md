@@ -6,7 +6,7 @@
 | **Fase do roadmap** | `Fase 2 — Entrada e teste de carga` |
 | **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-202-fastapi-control-api` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | [#30](https://github.com/mclovin137/Horus/pull/30) |
 | **Depende de** | `T-201` (Load Balancer) |
 | **Requisitos atendidos** | `RF-001`, `RF-002`, `RF-003` |
 | **ADRs relacionados** | — |
