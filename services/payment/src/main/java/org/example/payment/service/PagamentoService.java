@@ -34,7 +34,8 @@ public class PagamentoService {
     public Pagamento aprovar(Long pagamentoId) {
         Pagamento p = buscar(pagamentoId);
         exigirPendente(p, "aprovado");
-        carteiras.aplicar(p.carteira, TipoMovimentacao.SAIDA, p.valor, "Pagamento " + p.id);
+        // Débito sob lock pessimista da carteira (T-108) — serializa aprovações concorrentes.
+        carteiras.aplicarPorId(p.carteira.id, TipoMovimentacao.SAIDA, p.valor, "Pagamento " + p.id);
         p.status = StatusPagamento.APROVADO;
         p.processadoEm = OffsetDateTime.now();
         return p;
@@ -58,7 +59,7 @@ public class PagamentoService {
             throw new ConflitoPagamentoException(
                     "Pagamento " + pagamentoId + " não está aprovado; estado atual: " + p.status);
         }
-        carteiras.aplicar(p.carteira, TipoMovimentacao.ENTRADA, p.valor, "Estorno do pagamento " + p.id);
+        carteiras.aplicarPorId(p.carteira.id, TipoMovimentacao.ENTRADA, p.valor, "Estorno do pagamento " + p.id);
         p.status = StatusPagamento.ESTORNADO;
         p.processadoEm = OffsetDateTime.now();
         return p;
