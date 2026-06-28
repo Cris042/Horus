@@ -13,6 +13,11 @@ receivers:
       http:
         endpoint: 0.0.0.0:4318
 
+extensions:
+  # Endpoint de liveness do Collector (consumido pelo healthcheck do compose — T-404)
+  health_check:
+    endpoint: 0.0.0.0:13133
+
 processors:
   batch:
     timeout: 5s
@@ -39,6 +44,7 @@ exporters:
       insecure: true
 
 service:
+  extensions: [health_check]
   pipelines:
     traces:
       receivers: [otlp]
