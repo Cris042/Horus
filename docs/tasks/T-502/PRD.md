@@ -6,7 +6,7 @@
 | **Fase do roadmap** | `Fase 5 — Horus core` |
 | **Status** | `Em revisão (PR)` |
 | **Branch** | `task/T-502-correlation-model` |
-| **PR** | `#<n>` (preencher ao abrir) |
+| **PR** | [#35](https://github.com/mclovin137/Horus/pull/35) |
 | **Depende de** | `T-501` (camada de consulta), `T-403` (propagação ponta a ponta) |
 | **Requisitos atendidos** | `RF-H-001`, `RF-H-002`, `RF-H-004` |
 | **ADRs relacionados** | `ADR-0007`, `ADR-0008` |
