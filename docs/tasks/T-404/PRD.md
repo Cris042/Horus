@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-404` |
 | **Fase do roadmap** | `Fase 4 — Telemetria e correlação` |
-| **Status** | `Em revisão (PR)` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-404-otel-collector-backends` |
 | **PR** | `#18` |
 | **Depende de** | `T-003` |

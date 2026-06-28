@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-102` |
 | **Fase do roadmap** | Fase 1 — Microsserviços de domínio |
-| **Status** | `Em revisão (PR)` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-102-prontuario-domain` |
 | **PR** | [#8](https://github.com/mclovin137/Horus/pull/8) |
 | **Depende de** | `T-101` (scaffold) |

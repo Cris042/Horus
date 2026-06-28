@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-601` |
 | **Fase do roadmap** | `Fase 6 — IA (resumo, RCA, anomalias)` |
-| **Status** | `Em revisão (PR)` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-601-llm-anthropic-integration` |
 | **PR** | `#21` |
 | **Depende de** | `T-501` |

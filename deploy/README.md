@@ -21,21 +21,24 @@ make clean   # derruba e APAGA os volumes (dados dos bancos)
 | `postgres-prontuario` | `postgres:17.2` | `5432` | Banco `prontuario_db` |
 | `postgres-payment` | `postgres:17.2` | `5433` | Banco `payment_db` |
 | `postgres-invoice` | `postgres:17.2` | `5434` | Banco `invoice_db` |
+| `postgres-saga` | `postgres:17.2` | `5435` | Banco `saga_db` |
 | `rabbitmq` | `rabbitmq:4.0-management` | `5672`, `15672` (UI) | Mensageria de relatórios (ADR-0004) |
 | `otel-collector` | `otelcol-contrib:0.118` | `4317` (gRPC), `4318` (HTTP) | Ingestão OTLP única (ADR-0010) |
 | `jaeger` | `jaeger:2.2` | `16686` (UI) | Traces (RF-031) |
 | `loki` | `loki:3.4` | `3100` | Logs (RF-H-003) |
 | `prometheus` | `prometheus:v3.2` | `9090` (UI) | Métricas |
 
-**Credenciais de dev** (não-secretas, locais): Postgres e RabbitMQ usam `horus`/`horus`.
+**Credenciais de dev** (não-secretas, locais): cada Postgres usa credencial segregada do
+serviço (`*_svc`/`*_pw`); RabbitMQ usa `horus`/`horus`.
 
 ### Fluxo de telemetria
 
-As aplicações (Fases 1+) emitem **só via OTLP** para o Collector (`localhost:4317/4318`), que roteia:
+As aplicações instrumentadas emitem **só via OTLP** para o Collector (`localhost:4317/4318`), que roteia:
 traces → Jaeger, logs → Loki, métricas → Prometheus (remote_write). Configs em `deploy/telemetry/`.
 A redação/sanitização de borda (PII) é aprofundada em **T-404/T-406** — ver [`docs/telemetry/CONTRACT.md`](../docs/telemetry/CONTRACT.md).
 
-> As **aplicações** (Quarkus/Rust/Python) ainda **não** entram neste compose — chegam nas Fases 1+.
+> As **aplicações** (Quarkus/Rust/Python) ainda **não** entram neste compose — entram em `T-801`
+> com as imagens Docker dos executáveis e a rede comum de aplicação.
 > Este compose entrega apenas a infra de base.
 
 ## Outras entregas (futuras)

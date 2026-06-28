@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-201` |
 | **Fase do roadmap** | Fase 2 — Entrada e carga |
-| **Status** | `Em revisão (PR)` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-201-load-balancer` |
 | **PR** | [#17](https://github.com/mclovin137/Horus/pull/17) |
 | **Depende de** | `T-101` |

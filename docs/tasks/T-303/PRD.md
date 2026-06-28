@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-303` |
 | **Fase do roadmap** | `Fase 3 — Mensageria e worker Rust` |
-| **Status** | `Em revisão (PR)` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-303-rust-worker` |
 | **PR** | [#33](https://github.com/mclovin137/Horus/pull/33) |
 | **Depende de** | `T-301` (contrato da mensagem) |

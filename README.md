@@ -39,6 +39,7 @@ Diagrama completo e decisões: [`docs/PRD.md`](docs/PRD.md) · [`docs/adr/`](doc
 | API de carga | Python · FastAPI + Locust | Controlar e gerar teste de carga |
 | Entrada | NGINX ou Traefik | Load Balancer (sem API Gateway) |
 | Prontuário / Payment / Invoice | Quarkus (Java 25) | Microsserviços de domínio (banco próprio) |
+| SAGA Orchestrator | Quarkus (Java 25) | Fluxo pagar → emitir NF, com compensações |
 | Mensageria | RabbitMQ | Apenas solicitações de relatório |
 | Worker | Rust | Gerar relatório + enviar e-mail |
 | Telemetria | OpenTelemetry · Jaeger · Loki · Prometheus | Traces, logs e métricas |
@@ -56,10 +57,11 @@ Horus/
 ├── services/            # Microsserviços de domínio (Quarkus, banco por serviço)
 │   ├── prontuario/      #   Prontuário: registros e consultas médicas
 │   ├── payment/         #   Payment: carteira, movimentações, estornos
-│   └── invoice/         #   Invoice: emissão de NF simulada
+│   ├── invoice/         #   Invoice: emissão de NF simulada
+│   └── saga-orchestrator/ # SAGA pagar→emitir NF, com compensação
 ├── worker/              # Worker Rust: relatório + e-mail (consome RabbitMQ)
 ├── loadtest/            # API de carga (FastAPI + Locust)
-├── horus/               # Plataforma Horus (observabilidade com IA) — app Quarkus (bootstrap, T-002)
+├── horus/               # Plataforma Horus (core, IA e painel em Quarkus)
 ├── deploy/              # docker-compose (dev) e manifests Kubernetes
 ├── docs/                # PRD, ADRs, ROADMAP, WORKFLOW, ROLES e tasks/
 ├── scripts/             # Automações auxiliares
@@ -173,8 +175,11 @@ Resumo das decisões-chave (cada uma é um ADR em [`docs/adr/`](docs/adr/)):
 
 ## 🚦 Estado atual
 
-Projeto em **Fase 0 (Fundação)**, em andamento: monorepo (`T-001`) e bootstrap Quarkus do Horus (`T-002`) entregues.
-Veja sempre [`state.md`](state.md) para o estado mais recente e a próxima ação.
+Projeto avançou além da fundação: domínio, carga, worker, telemetria base, primeira fatia do
+Horus core, IA, painel e RBAC já foram implementados em PRs. A task ativa registrada em
+[`state.md`](state.md) é `T-108` — hardening de concorrência do Payment — em revisão de PR.
+As próximas fatias de produto são `T-503`/`T-504`/`T-505` (ciclo de vida de request/query e
+logs de erro), depois `T-506`/`T-507`, `T-702`, containerização/K8s e aceite final.
 
 ## Pré-requisitos de desenvolvimento
 
@@ -182,4 +187,5 @@ Veja sempre [`state.md`](state.md) para o estado mais recente e a próxima açã
 - Python 3.13 (API de carga), Rust 1.85+ (worker)
 - Docker + Docker Compose (infra local); Kubernetes (deploy)
 
-> O Horus já tem um **bootstrap Quarkus** em `horus/` (REST + health), entregue em `T-002`; os serviços de domínio, worker e loadtest ainda são scaffolding. Detalhes para contribuidores e para o Claude Code em [`CLAUDE.md`](CLAUDE.md).
+> Para status operacional, branch ativa e próxima ação, trate [`state.md`](state.md) como a fonte
+> principal. Detalhes para contribuidores e para o Claude Code ficam em [`CLAUDE.md`](CLAUDE.md).

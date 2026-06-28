@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-003` |
 | **Fase do roadmap** | Fase 0 — Fundação |
-| **Status** | `Em revisão (PR)` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-003-docker-compose-dev` |
 | **PR** | [#6](https://github.com/mclovin137/Horus/pull/6) |
 | **Depende de** | `T-001` |

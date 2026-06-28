@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Horus** is an **AI-augmented observability platform** — the "all-seeing eye" over a distributed system. Its primary goal is to capture the **full lifecycle of every request and every SQL query**, aggregate **all error logs**, and use **AI (Claude)** to summarize, in natural language, what is happening across the application (state summaries, trace explanations, root-cause analysis, anomaly detection).
 
-The **system being observed** is a medical-records microservices simulation (the reference workload): Python load test (FastAPI + Locust) → Load Balancer (NGINX/Traefik) → three Quarkus services (Prontuário, Payment, Invoice), each with its own PostgreSQL → RabbitMQ (reports only) → Rust report/email worker → OpenTelemetry/Jaeger → Docker/Kubernetes.
+The **system being observed** is a medical-records microservices simulation (the reference workload): Python load test (FastAPI + Locust) → Load Balancer (NGINX/Traefik) → three Quarkus services (Prontuário, Payment, Invoice), each with its own PostgreSQL → a Quarkus SAGA orchestrator with its own PostgreSQL → RabbitMQ (reports only) → Rust report/email worker → OpenTelemetry/Jaeger/Loki/Prometheus → Docker/Kubernetes.
 
 The design is fully documented in **`docs/`** and **`lib.md`** — read these before implementing:
 - `docs/PRD.md` — scope, functional (`RF-*`/`RF-H-*`) and non-functional (`RNF-*`/`RNF-H-*`) requirements, architecture diagram, acceptance criteria. `*-H-*` IDs are the Horus (AI observability) focus.
@@ -34,19 +34,21 @@ Two mandatory upkeep rules (see WORKFLOW.md / `docs/ROLES.md` §5):
 
 ## Current code status
 
-The Maven build is a parent/aggregator at the repo root (`pom.xml`, `packaging=pom`) with one module so far: **`horus/`** — the Quarkus bootstrap of the Horus platform (task `T-002`). It exposes a smoke endpoint `GET /horus/info` plus SmallRye health at `/q/health`, with a `@QuarkusTest` smoke test. No domain logic yet — the domain services (`services/`), worker (`worker/`) and load test (`loadtest/`) are still scaffolding (see their READMEs). Docs (above) lead the code.
+The Maven build is a parent/aggregator at the repo root (`pom.xml`, `packaging=pom`) with five Java modules: **`horus/`**, **`services/prontuario/`**, **`services/payment/`**, **`services/invoice/`**, and **`services/saga-orchestrator/`**. The domain services implement the medical-records, payment, invoice and SAGA flows with Flyway migrations, isolated PostgreSQL credentials and OpenTelemetry instrumentation. `loadtest/` contains the FastAPI controller + Locust scenarios, and `worker/` contains the Rust RabbitMQ report/email worker with OTel context extraction.
+
+Horus already has the first product slices: query adapters for Jaeger/Loki/Prometheus, `trace_id` correlation model, AI engine abstraction with Anthropic/stub modes, summary/explain/RCA/NL-query agents, LLM cache, an initial static panel and RBAC. The remaining product work is tracked in `state.md`: lifecycle APIs (`T-503`/`T-504`/`T-505`), service/SAGA visualizations, anomaly/error clustering, waterfall UI, alerting, containerization/K8s and final acceptance.
 
 ## Build & Run
 
-The root `pom.xml` is a parent/aggregator (Java 25, Quarkus BOM in `dependencyManagement`); the buildable app lives in the `horus/` module. A **Maven Wrapper is committed** (`./mvnw`, pinned to Maven 3.9.9 via `.mvn/wrapper/maven-wrapper.properties`), so builds are reproducible without a host `mvn` — prefer `./mvnw`. Build the whole tree from the root, or the module directly.
+The root `pom.xml` is a parent/aggregator (Java 25, Quarkus BOM in `dependencyManagement`). A **Maven Wrapper is committed** (`./mvnw`, pinned to Maven 3.9.9 via `.mvn/wrapper/maven-wrapper.properties`), so builds are reproducible without a host `mvn` — prefer `./mvnw`. Build the whole tree from the root, or a module directly.
 
 - Dev mode (live reload): `./mvnw -pl horus quarkus:dev`
-- Build + test: `./mvnw package` (root, all modules) or `./mvnw -pl horus -am package`
+- Build + test: `./mvnw verify` (root, all Java modules) or `./mvnw -pl horus -am verify`
 - Run packaged: `java -jar horus/target/quarkus-app/quarkus-run.jar`
 - Tests: JUnit 5 + REST Assured via Quarkus (`@QuarkusTest`); `./mvnw test`.
 - Smoke once running: `GET http://localhost:8080/horus/info`, `GET /q/health`.
 
-> **CI (T-004):** `.github/workflows/ci.yml` runs `./mvnw … verify` (JDK 25 + Maven cache) on every push to `main` and every PR — it gates the flow and **validated the T-002 bootstrap** (local + CI: Java 25.0.3 + Quarkus 3.20.0 → BUILD SUCCESS). The first `./mvnw` call downloads Maven 3.9.9; if a host `~/.m2` has root-owned dirs, point at a fresh repo with `-Dmaven.repo.local=<dir>`.
+> **CI (T-004+):** `.github/workflows/ci.yml` runs Java (`./mvnw … verify`), Python (`pytest`) and Rust (`cargo fmt`, `clippy`, `test`) on every push to `main` and every PR. The first `./mvnw` call downloads Maven 3.9.9; if a host `~/.m2` has root-owned dirs, point at a fresh repo with `-Dmaven.repo.local=<dir>`.
 
 ## Key constraints
 

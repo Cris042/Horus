@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-005` |
 | **Fase do roadmap** | Fase 0 — Fundação |
-| **Status** | `Em progresso` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-005-telemetry-conventions` |
 | **PR** | [#5](https://github.com/mclovin137/Horus/pull/5) |
 | **Depende de** | `T-001` |

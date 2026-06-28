@@ -5,13 +5,16 @@
 - **Stack:** Quarkus (Java 25) + Quarkus LangChain4j (Anthropic/Claude).
 - **Requisitos:** `RF-H-*`, `RNF-H-*`.
 
-> **Bootstrap entregue (T-002):** este módulo é um app Quarkus (Java 25) com `pom.xml` próprio herdando do parent na raiz. Hoje expõe `GET /horus/info` e health em `/q/health`; as extensões reais (OTLP, LangChain4j/Claude, Postgres) entram nas Fases 5-7.
+> **Estado atual:** o bootstrap T-002 já evoluiu para uma primeira fatia funcional do Horus:
+> adaptadores de consulta a Jaeger/Loki/Prometheus, modelo de correlação por `trace_id`,
+> camada de IA com stub/Anthropic, agentes de resumo/explicação/RCA/NL query, cache de LLM,
+> painel estático inicial e RBAC por papel. Veja `state.md` para a branch e próxima task.
 
 ## Responsabilidades (por fase)
 
-- **Core (Fase 5):** receptor/adaptadores OTLP → Jaeger/Tempo, Loki, Prometheus; correlação por `trace_id`; ciclo de vida de **request** e **query**; agregação de logs de erro; mapa de serviços; visualização de **SAGA**.
-- **IA (Fase 6):** Summarizer, Trace Explainer, Root-Cause Analyst, Anomaly Detector e NL Query — sobre contexto **sanitizado** e com orçamento de tokens.
-- **Painel e alertas (Fase 7):** dashboard próprio, waterfall do fluxo de vida, alertas com resumo de IA, RBAC.
+- **Core (Fase 5):** adaptadores de consulta e correlação por `trace_id` já existem; faltam as APIs detalhadas de ciclo de vida de **request** e **query**, agregação dedicada de logs de erro, mapa de serviços e visualização de **SAGA**.
+- **IA (Fase 6):** Summarizer, Trace Explainer, Root-Cause Analyst, NL Query, orçamento de tokens e cache já existem; falta Anomaly Detector + Error Clusterer (`T-606`) e uso real depende de `ANTHROPIC_API_KEY`.
+- **Painel e alertas (Fase 7):** dashboard inicial e RBAC já existem; faltam waterfall visual (`T-702`) e alertas com resumo de IA (`T-703`).
 
 ## Não-intrusividade
 

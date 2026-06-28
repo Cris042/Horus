@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-406` |
 | **Fase do roadmap** | `Fase 4 — Telemetria e correlação` |
-| **Status** | `Em revisão (PR)` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-406-pii-redaction` |
 | **PR** | `#19` |
 | **Depende de** | `T-404` |

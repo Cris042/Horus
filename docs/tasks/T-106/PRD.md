@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-106` |
 | **Fase do roadmap** | Fase 1 — Microsserviços de domínio |
-| **Status** | `Em revisão (PR)` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-106-db-isolation` |
 | **PR** | [#14](https://github.com/mclovin137/Horus/pull/14) |
 | **Depende de** | `T-105` |

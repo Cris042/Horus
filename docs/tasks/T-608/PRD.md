@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-608` |
 | **Fase do roadmap** | `Fase 6 — IA (resumo, RCA, anomalias)` |
-| **Status** | `Em revisão (PR)` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-608-llm-cache` |
 | **PR** | `#27` |
 | **Depende de** | `T-603`, `T-604`, `T-605`, `T-607` |

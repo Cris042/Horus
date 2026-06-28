@@ -4,7 +4,7 @@
 |---|---|
 | **Task** | `T-103` |
 | **Fase do roadmap** | Fase 1 — Microsserviços de domínio |
-| **Status** | `Em revisão (PR)` |
+| **Status** | `Entregue` |
 | **Branch** | `task/T-103-payment-domain` |
 | **PR** | [#9](https://github.com/mclovin137/Horus/pull/9) |
 | **Depende de** | `T-101` (scaffold) |
