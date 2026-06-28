@@ -8,18 +8,24 @@ dependencies = [
     "fastapi>=0.118,<0.119",
     "uvicorn>=0.34,<0.35",
     "pydantic>=2.11,<3",
+    # Telemetria OTel (T-402, RF-029): SDK + exportador OTLP + auto-instrumentação FastAPI.
+    "opentelemetry-sdk>=1.27",
+    "opentelemetry-exporter-otlp-proto-http>=1.27",
+    "opentelemetry-instrumentation-fastapi>=0.48b0",
 ]
 
 [project.optional-dependencies]
-# Geração de carga (Locust) chega em T-203; mantida fora das deps base por enquanto.
 load = [
     "locust>=2.32,<3",
     "httpx>=0.28,<0.29",
+    # Injeta W3C traceparent nas chamadas HTTP do Locust (borda do trace — T-402).
+    "opentelemetry-instrumentation-requests>=0.48b0",
 ]
 dev = [
     "pytest>=8.3,<9",
     "httpx>=0.28,<0.29",
     "locust>=2.32,<3",
+    "opentelemetry-instrumentation-requests>=0.48b0",
 ]
 
 [build-system]
