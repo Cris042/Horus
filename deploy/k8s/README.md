@@ -10,7 +10,23 @@ Workloads de **aplicação** do Horus para Kubernetes, organizados como base Kus
 | `config.yaml` | `ConfigMap horus-config` (endpoints OTLP/backends, `HORUS_ENV`) |
 | `secrets.example.yaml` | **Exemplo** de Secrets (credenciais de banco por serviço + `ANTHROPIC_API_KEY`) |
 | `apps/*.yaml` | `Deployment` + `Service` de cada executável |
+| `autoscaling/*-hpa.yaml` | `HorizontalPodAutoscaler` por componente (T-803) |
 | `kustomization.yaml` | Agrega tudo + transformer de tag de imagem |
+
+### Escala horizontal (T-803, RNF-005)
+
+Cada componente escalável tem um HPA (CPU) — escala **independente** por componente:
+
+| Componente | min → max | alvo CPU |
+|---|---|---|
+| `prontuario-service` / `payment-service` / `invoice-service` | 2 → 6 | 70% |
+| `saga-orchestrator` | 2 → 5 | 70% |
+| `horus` | 1 → 3 | 75% |
+| `report-worker` | 1 → 4 | 75% |
+
+Os Deployments geridos por HPA **não** fixam `replicas` (evita conflito Kustomize×HPA); o
+`loadtest` (controlador) mantém réplica fixa. Requer **metrics-server** no cluster. Escala
+por métricas customizadas (ex.: fila RabbitMQ via KEDA) é evolução futura.
 
 ### Topologia (ADR-0012 / T-804)
 

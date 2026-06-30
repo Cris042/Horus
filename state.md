@@ -7,21 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-30 |
-| **Branch atual** | `task/T-802-k8s-manifests` |
+| **Branch atual** | `task/T-803-hpa` |
 | **Fase do roadmap** | Fase 8 — Containerização e Kubernetes |
-| **Task ativa** | `T-802` — Manifests Kubernetes (em progresso) |
+| **Task ativa** | `T-803` — Escala horizontal por componente (em progresso) |
 
 ## 🟢 Última entrega (mergeada)
 
 
-**`T-801` — Imagens Docker de todos os executáveis (entregue via [PR #45](https://github.com/mclovin137/Horus/pull/45), mergeada em `main`).** `Dockerfile.jvm` multi-stage (Temurin 25) para os 5 módulos Quarkus, `worker/Dockerfile` (Rust) e `loadtest/Dockerfile` (Python 3.13), `.dockerignore`s, alvos `make docker-*`. Imagens não-root, validadas via `docker build` (horus 520MB, report-worker 141MB, loadtest 218MB). **CI verde.**
+**`T-802` — Manifests Kubernetes (entregue via [PR #46](https://github.com/mclovin137/Horus/pull/46), mergeada em `main`).** Base Kustomize em `deploy/k8s/` — namespace `horus`, `ConfigMap` (OTLP/backends), Secret de exemplo, `Deployment`(+`Service`) dos 7 executáveis com probes/resources e separação Horus/worker do domínio (ADR-0012). **CI verde.**
 
-> ▶️ **Em progresso:** **`T-802`** — Manifests Kubernetes (RF-033): base Kustomize em `deploy/k8s/` — namespace `horus`, `ConfigMap` (OTLP/backends), Secret de exemplo (DB por serviço + `ANTHROPIC_API_KEY`), `Deployment`(+`Service`) dos 7 executáveis com probes/resources e separação Horus/worker do domínio (ADR-0012). YAML validado; `kubectl apply -k deploy/k8s/`.
+> ▶️ **Em progresso:** **`T-803`** — Escala horizontal por componente (RNF-005): `HorizontalPodAutoscaler` (CPU) para domínio (2→6), saga (2→5), horus (1→3) e worker (1→4); Deployments geridos por HPA deixam de fixar `replicas`; HPAs na base Kustomize. YAML validado.
 
 
 ## ▶️ Próxima ação
 
-Fase 8: publicar **`T-802`** (abrir PR dos manifests K8s). Depois **`T-803`** (escala horizontal/HPA por componente) e **`T-804`** (confirmar worker/Horus separados — ADR-0012, já refletido nos labels/topologia). Pendente de cluster/ferramenta: overlay de infra K8s, `kubectl apply -k` real e **`T-405`** (validação ponta a ponta); Fase 9 (aceite) ao final.
+Fase 8: publicar **`T-803`** (abrir PR dos HPAs). Depois **`T-804`** (worker/Horus separados — ADR-0012, já refletido em labels/topologia; pode adicionar anti-affinity). Pendente de cluster/ferramenta: overlay de infra K8s, `kubectl apply -k` real e **`T-405`** (validação ponta a ponta); Fase 9 (aceite) ao final.
 
 > ⚙️ **Pendência sua (agora relevante p/ IA):** a IA real (T-601+) exige a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** e `horus.ai.enabled=true`. Sem isso, o Horus roda com o `StubLlmEngine` (placeholder) — não bloqueia build/CI.
 
@@ -35,6 +35,8 @@ Fase 8: publicar **`T-802`** (abrir PR dos manifests K8s). Depois **`T-803`** (e
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
+| 2026-06-30 | `T-803` | Escala horizontal por componente (RNF-005): `HorizontalPodAutoscaler` (CPU) p/ domínio (2→6), saga (2→5), horus (1→3), worker (1→4); Deployments geridos por HPA sem `replicas` fixo; HPAs na base Kustomize; YAML validado | `task/T-803-hpa` | — | 🟡 Em progresso |
+| 2026-06-30 | `T-802` | Manifests Kubernetes (RF-033) **mergeado** via PR #46; CI verde | `task/T-802-k8s-manifests` | [#46](https://github.com/mclovin137/Horus/pull/46) | ✅ Entregue |
 | 2026-06-30 | `T-802` | Manifests Kubernetes (RF-033): base Kustomize `deploy/k8s/` — namespace, ConfigMap, Secret-exemplo, Deployment+Service dos 7 executáveis (probes/resources, Horus/worker separados — ADR-0012); YAML validado | `task/T-802-k8s-manifests` | — | 🟡 Em progresso |
 | 2026-06-30 | `T-801` | Imagens Docker de todos os executáveis (RF-032/RNF-004) **mergeado** via PR #45; CI verde; imagens validadas via `docker build` (horus 520MB, worker 141MB, loadtest 218MB) | `task/T-801-docker-images` | [#45](https://github.com/mclovin137/Horus/pull/45) | ✅ Entregue |
 | 2026-06-30 | `T-504` | API do ciclo de vida da query (RF-H-002) — branch atualizada com `main` (T-505/506/507) e levada a PR: `QueryLifecycleService` + `GET /horus/lifecycle/queries/{traceId}`; `./mvnw -pl horus test` verde | `task/T-504-query-lifecycle-api` | [#38](https://github.com/mclovin137/Horus/pull/38) | 🔄 Em revisão (PR) |

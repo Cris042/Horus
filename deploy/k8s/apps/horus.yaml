@@ -10,7 +10,6 @@ metadata:
     app.kubernetes.io/part-of: horus
     app.kubernetes.io/component: platform
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: horus

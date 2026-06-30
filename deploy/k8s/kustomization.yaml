@@ -21,6 +21,13 @@ resources:
   - apps/horus.yaml
   - apps/report-worker.yaml
   - apps/loadtest.yaml
+  # Escala horizontal por componente (T-803, RNF-005).
+  - autoscaling/prontuario-service-hpa.yaml
+  - autoscaling/payment-service-hpa.yaml
+  - autoscaling/invoice-service-hpa.yaml
+  - autoscaling/saga-orchestrator-hpa.yaml
+  - autoscaling/horus-hpa.yaml
+  - autoscaling/report-worker-hpa.yaml
 
 # Sobrescreva a tag das imagens (default `dev`) sem editar cada manifesto:
 #   kustomize edit set image horus/horus=horus/horus:0.1.0
