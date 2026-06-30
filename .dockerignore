@@ -1,0 +1,12 @@
+# Artefatos de build e VCS — fora do contexto Docker (T-801).
+.git
+.github
+**/target
+**/__pycache__
+**/*.pyc
+worker/target
+docs
+*.md
+!lib.md
+.idea
+.vscode

@@ -37,13 +37,38 @@ As aplicações instrumentadas emitem **só via OTLP** para o Collector (`localh
 traces → Jaeger, logs → Loki, métricas → Prometheus (remote_write). Configs em `deploy/telemetry/`.
 A redação/sanitização de borda (PII) é aprofundada em **T-404/T-406** — ver [`docs/telemetry/CONTRACT.md`](../docs/telemetry/CONTRACT.md).
 
-> As **aplicações** (Quarkus/Rust/Python) ainda **não** entram neste compose — entram em `T-801`
-> com as imagens Docker dos executáveis e a rede comum de aplicação.
+> As **aplicações** (Quarkus/Rust/Python) ainda **não** entram neste compose — suas imagens
+> Docker são entregues em `T-801` (abaixo); subi-las junto da infra entra em `T-802`.
 > Este compose entrega apenas a infra de base.
+
+## Imagens Docker dos executáveis (T-801, RF-032/RNF-004)
+
+Cada executável tem um Dockerfile reproduzível (build multi-stage, roda como usuário
+não-root). Construa pela raiz do repo:
+
+```bash
+make docker-images     # todas as 7 imagens (5 Quarkus + worker + loadtest)
+make docker-quarkus    # só os 5 módulos Quarkus
+make docker-worker     # só o worker Rust
+make docker-loadtest   # só a API de carga (FastAPI)
+# tag customizada: make docker-images IMAGE_TAG=0.1.0
+```
+
+| Executável | Dockerfile | Contexto | Imagem | Porta |
+|---|---|---|---|---|
+| Horus | `horus/src/main/docker/Dockerfile.jvm` | raiz | `horus/horus` | 8080 |
+| Prontuário | `services/prontuario/src/main/docker/Dockerfile.jvm` | raiz | `horus/prontuario` | 8080 |
+| Payment | `services/payment/src/main/docker/Dockerfile.jvm` | raiz | `horus/payment` | 8080 |
+| Invoice | `services/invoice/src/main/docker/Dockerfile.jvm` | raiz | `horus/invoice` | 8080 |
+| SAGA | `services/saga-orchestrator/src/main/docker/Dockerfile.jvm` | raiz | `horus/saga-orchestrator` | 8080 |
+| Worker | `worker/Dockerfile` | `worker/` | `horus/report-worker` | — |
+| Loadtest | `loadtest/Dockerfile` | `loadtest/` | `horus/loadtest` | 8000 |
+
+> As imagens Quarkus constroem a partir da **raiz** (precisam do reator Maven); por isso o
+> `-f <módulo>/.../Dockerfile.jvm .`. São imagens **JVM** (Temurin 25); imagem nativa é otimização futura.
 
 ## Outras entregas (futuras)
 
-- **Imagens Docker** de todos os executáveis (T-801, RF-032).
 - **Manifests / Helm** para Kubernetes (T-802, RF-033): deployments, services, configmaps, secrets.
 - **Topologia:** worker e Horus implantados **separados** dos serviços de domínio (ADR-0012, T-804); escala horizontal independente por componente (RNF-005, T-803).
 

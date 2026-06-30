@@ -6,8 +6,10 @@
 
 COMPOSE := docker compose -f deploy/docker-compose.yml
 
+IMAGE_TAG ?= dev
+
 .DEFAULT_GOAL := help
-.PHONY: help up down ps logs restart clean build
+.PHONY: help up down ps logs restart clean build docker-images docker-quarkus docker-worker docker-loadtest
 
 help: ## Lista os alvos disponíveis
 	@echo "Horus — alvos disponíveis:"
@@ -41,3 +43,19 @@ clean: ## Derruba e REMOVE volumes (apaga dados dos bancos)
 
 build: ## Compila os componentes (no-op por enquanto)
 	@echo "[build] placeholder — nenhum componente compilável ainda; ver ROADMAP Fases 1+."
+
+# ---------------------------------------------------------------- Imagens Docker (T-801)
+docker-images: docker-quarkus docker-worker docker-loadtest ## Constrói TODAS as imagens (5 Quarkus + worker + loadtest)
+
+docker-quarkus: ## Imagens JVM dos 5 módulos Quarkus (build a partir da raiz = reator Maven)
+	docker build -f horus/src/main/docker/Dockerfile.jvm -t horus/horus:$(IMAGE_TAG) .
+	docker build -f services/prontuario/src/main/docker/Dockerfile.jvm -t horus/prontuario:$(IMAGE_TAG) .
+	docker build -f services/payment/src/main/docker/Dockerfile.jvm -t horus/payment:$(IMAGE_TAG) .
+	docker build -f services/invoice/src/main/docker/Dockerfile.jvm -t horus/invoice:$(IMAGE_TAG) .
+	docker build -f services/saga-orchestrator/src/main/docker/Dockerfile.jvm -t horus/saga-orchestrator:$(IMAGE_TAG) .
+
+docker-worker: ## Imagem do worker Rust de relatório/e-mail
+	docker build -t horus/report-worker:$(IMAGE_TAG) worker/
+
+docker-loadtest: ## Imagem da API de teste de carga (FastAPI)
+	docker build -t horus/loadtest:$(IMAGE_TAG) loadtest/

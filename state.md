@@ -7,21 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-30 |
-| **Branch atual** | `task/T-703-alerts` |
-| **Fase do roadmap** | Fase 7 — Painel e alertas do Horus |
-| **Task ativa** | `T-703` — Alertas (e-mail/webhook) com resumo de IA (em progresso) |
+| **Branch atual** | `task/T-801-docker-images` |
+| **Fase do roadmap** | Fase 8 — Containerização e Kubernetes |
+| **Task ativa** | `T-801` — Imagens Docker de todos os executáveis (em progresso) |
 
 ## 🟢 Última entrega (mergeada)
 
 
-**`T-606` — Anomaly Detector + Error Clusterer (entregue via [PR #43](https://github.com/mclovin137/Horus/pull/43), mergeada em `main`).** `ErrorClusterer` agrupa logs de erro por fingerprint **cross-service** com rótulo de IA (camada FAST) via `GET /horus/ai/errors/clusters/{traceId}`; `AnomalyDetector` avalia regras de limiar sobre métricas (PromQL) via `POST /horus/ai/anomalies`. **CI verde.**
+**`T-703` — Alertas (e-mail/webhook) com resumo de IA (entregue via [PR #44](https://github.com/mclovin137/Horus/pull/44), mergeada em `main`).** `AlertService` resume o gatilho via IA (camada FAST) e faz fan-out aos canais habilitados (`LogAlertChannel` sempre on; `WebhookAlertChannel` POST JSON; `EmailAlertChannel` stub gated); `POST /horus/alerts` + `GET /horus/alerts/channels`. **CI verde.**
 
-> ▶️ **Em progresso:** **`T-703`** — Alertas (e-mail/webhook) com resumo de IA (RF-H-013): `AlertService` monta um resumo de IA (camada FAST) do gatilho e faz fan-out aos canais habilitados (`LogAlertChannel` sempre on; `WebhookAlertChannel` POST JSON; `EmailAlertChannel` stub gated por config); `POST /horus/alerts` + `GET /horus/alerts/channels`. Funciona com `StubLlmEngine`; `./mvnw -pl horus test` verde (63).
+> ▶️ **Em progresso:** **`T-801`** — Imagens Docker de todos os executáveis (RF-032/RNF-004): `Dockerfile.jvm` multi-stage (Temurin 25) para os 5 módulos Quarkus, `worker/Dockerfile` (Rust multi-stage) e `loadtest/Dockerfile` (Python 3.13/FastAPI); `.dockerignore` (raiz+worker+loadtest), alvos `make docker-*`, doc em `deploy/README.md`. Imagens rodam como não-root. Builds validados localmente via `docker build`.
 
 
 ## ▶️ Próxima ação
 
-Fase 7: publicar **`T-703`** (abrir PR de alertas). Restantes do produto: UI para service-map/SAGA, integração SMTP real do e-mail, gatilho automático de alertas a partir do T-606. Depois **`T-405`** (validação ponta a ponta com stack real) e a Fase 8 (containerização/K8s + aceitação) — ficam para quando o ambiente estiver de pé.
+Fase 8: publicar **`T-801`** (abrir PR das imagens). Depois **`T-802`** (compose de aplicações + manifests/Helm K8s), **`T-803`** (escala horizontal) e **`T-804`** (worker/Horus separados — ADR-0012). **`T-405`** (validação ponta a ponta com stack real) e a Fase 9 (aceite) ficam para quando o ambiente estiver de pé.
 
 > ⚙️ **Pendência sua (agora relevante p/ IA):** a IA real (T-601+) exige a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** e `horus.ai.enabled=true`. Sem isso, o Horus roda com o `StubLlmEngine` (placeholder) — não bloqueia build/CI.
 
