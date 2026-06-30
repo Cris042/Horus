@@ -1,0 +1,26 @@
+# syntax=docker/dockerfile:1
+# Imagem JVM do módulo Quarkus `horus` (T-801, RF-032/RNF-004).
+# Build a partir da RAIZ do repositório (precisa do reator Maven):
+#   docker build -f horus/src/main/docker/Dockerfile.jvm -t horus/horus:dev .
+# Java 25 / Quarkus 3.37 (ver lib.md). Wrapper Maven 3.9.9 commitado é usado no build.
+
+FROM eclipse-temurin:25-jdk AS build
+WORKDIR /workspace
+# Copia o repositório (.dockerignore exclui target/, .git, etc.). O reator é necessário
+# porque o build de um módulo isolado (-pl ... -am) lê os POMs dos demais módulos.
+COPY . .
+RUN ./mvnw -q -B -pl horus -am -DskipTests clean package
+
+FROM eclipse-temurin:25-jre AS runtime
+WORKDIR /app
+# Usuário não-root (RNF de segurança): roda a aplicação sem privilégios.
+RUN groupadd -r horus && useradd -r -g horus horus
+# Estrutura "quarkus-app" em camadas (libs mudam pouco; app muda sempre).
+COPY --from=build /workspace/horus/target/quarkus-app/lib/ /app/lib/
+COPY --from=build /workspace/horus/target/quarkus-app/*.jar /app/
+COPY --from=build /workspace/horus/target/quarkus-app/app/ /app/app/
+COPY --from=build /workspace/horus/target/quarkus-app/quarkus/ /app/quarkus/
+USER horus
+EXPOSE 8080
+ENV JAVA_OPTS="-XX:MaxRAMPercentage=75.0"
+ENTRYPOINT ["sh","-c","exec java $JAVA_OPTS -jar /app/quarkus-run.jar"]
