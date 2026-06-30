@@ -1,0 +1,7 @@
+# Namespace do Horus (T-802, RF-033). Todos os workloads vivem aqui.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: horus
+  labels:
+    app.kubernetes.io/part-of: horus

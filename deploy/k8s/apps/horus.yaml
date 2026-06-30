@@ -1,0 +1,64 @@
+# Horus — plataforma de observabilidade por IA (T-802, RF-033).
+# Implantado SEPARADO dos serviços de domínio (ADR-0012 / T-804): só consome os backends.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: horus
+  namespace: horus
+  labels:
+    app.kubernetes.io/name: horus
+    app.kubernetes.io/part-of: horus
+    app.kubernetes.io/component: platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: horus
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: horus
+        app.kubernetes.io/part-of: horus
+        app.kubernetes.io/component: platform
+    spec:
+      containers:
+        - name: horus
+          image: horus/horus:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: horus-config
+          env:
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef: { name: horus-ai-secret, key: ANTHROPIC_API_KEY, optional: true }
+          readinessProbe:
+            httpGet: { path: /q/health/ready, port: http }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /q/health/live, port: http }
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          resources:
+            requests: { cpu: "250m", memory: "256Mi" }
+            limits: { cpu: "1", memory: "512Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: horus
+  namespace: horus
+  labels:
+    app.kubernetes.io/name: horus
+    app.kubernetes.io/part-of: horus
+spec:
+  selector:
+    app.kubernetes.io/name: horus
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

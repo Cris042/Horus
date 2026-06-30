@@ -1,0 +1,44 @@
+# Kustomize base dos workloads de aplicação do Horus (T-802, RF-033).
+#
+# Aplica: namespace + config + secret (exemplo) + Deployments/Services dos 7 executáveis.
+# A infraestrutura (Postgres ×4, RabbitMQ, OTel Collector, Jaeger, Loki, Prometheus) é
+# pré-requisito no cluster — em dev use o compose (`make up`); um overlay de infra para
+# K8s pode ser adicionado depois. Em produção, troque `secrets.example.yaml` por um Secret
+# gerenciado (sealed-secrets/external-secrets) e ajuste as tags via `images:` abaixo.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: horus
+
+resources:
+  - namespace.yaml
+  - config.yaml
+  - secrets.example.yaml
+  - apps/prontuario-service.yaml
+  - apps/payment-service.yaml
+  - apps/invoice-service.yaml
+  - apps/saga-orchestrator.yaml
+  - apps/horus.yaml
+  - apps/report-worker.yaml
+  - apps/loadtest.yaml
+
+# Sobrescreva a tag das imagens (default `dev`) sem editar cada manifesto:
+#   kustomize edit set image horus/horus=horus/horus:0.1.0
+images:
+  - name: horus/prontuario
+    newTag: dev
+  - name: horus/payment
+    newTag: dev
+  - name: horus/invoice
+    newTag: dev
+  - name: horus/saga-orchestrator
+    newTag: dev
+  - name: horus/horus
+    newTag: dev
+  - name: horus/report-worker
+    newTag: dev
+  - name: horus/loadtest
+    newTag: dev
+
+commonLabels:
+  app.kubernetes.io/managed-by: kustomize
