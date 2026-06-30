@@ -7,21 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-30 |
-| **Branch atual** | `task/T-702-waterfall-ui` |
-| **Fase do roadmap** | Fase 7 — Painel / UI do Horus |
-| **Task ativa** | `T-702` — Waterfall UI (em progresso) |
+| **Branch atual** | `task/T-606-anomaly-error-clustering` |
+| **Fase do roadmap** | Fase 6 — Camada de IA (Claude) |
+| **Task ativa** | `T-606` — Anomaly Detector + Error Clusterer (em progresso) |
 
 ## 🟢 Última entrega (mergeada)
 
 
-**Fase 5 core concluída.** `T-503`/`T-504` (ciclo de vida request/query), `T-505` (logs de erro), `T-506` (mapa de serviços) e `T-507` (visualização de SAGA) **mergeadas em `main`** — Horus mostra, para qualquer request, o fluxo completo + queries + logs de erro + topologia + SAGA. Última: **`T-504`** via [PR #38](https://github.com/mclovin137/Horus/pull/38) (branch atualizada com `main` e CI verde).
+**`T-702` — Waterfall UI (entregue via [PR #42](https://github.com/mclovin137/Horus/pull/42), mergeada em `main`).** Página estática `horus-waterfall.html` renderiza o ciclo de vida da request (barras de span por `offset`/`duração`/`depth`/`category` + queries SQL + logs de erro), consumindo T-503/504/505; `overview` do painel lista os endpoints de ciclo de vida e o painel linka o waterfall. **CI verde.** (Fase 5 core já estava concluída: T-503/504/505/506/507.)
 
-> ▶️ **Em progresso:** **`T-702`** — Waterfall UI (RF-H-011): página estática `horus-waterfall.html` renderiza o ciclo de vida da request (barras de span por `offset`/`duração`/`depth`/`category` + queries SQL + logs de erro), consumindo T-503/504/505; `overview` do painel passa a listar os endpoints de ciclo de vida e o painel linka o waterfall; `./mvnw -pl horus test` verde (54).
+> ▶️ **Em progresso:** **`T-606`** — Anomaly Detector + Error Clusterer (RF-H-008/009): `ErrorClusterer` agrupa logs de erro por fingerprint **cross-service** com rótulo de IA (camada FAST) via `GET /horus/ai/errors/clusters/{traceId}`; `AnomalyDetector` avalia regras de limiar sobre métricas (PromQL) via `POST /horus/ai/anomalies`. Determinístico/testável com portas mockadas + `StubLlmEngine`; `./mvnw -pl horus test` verde (59).
 
 
 ## ▶️ Próxima ação
 
-Fase 7: publicar **`T-702`** (abrir PR do waterfall UI). Depois, candidatos: **`T-703`** (alertas, dep T-606), **`T-606`** (anomalias/error clustering, dep T-505), **`T-606`**/UI para service-map e SAGA. **`T-405`** (validação ponta a ponta com stack real) e tarefas de containerização/K8s (Fase 8) ficam para quando o ambiente estiver de pé.
+Fase 6/7: publicar **`T-606`** (abrir PR de anomalias/error clustering). Depois entra **`T-703`** (alertas e-mail/webhook com resumo de IA, dep T-606). Restam ainda UI para service-map/SAGA, **`T-405`** (validação ponta a ponta com stack real) e a Fase 8 (containerização/K8s + aceitação) — ficam para quando o ambiente estiver de pé.
 
 > ⚙️ **Pendência sua (agora relevante p/ IA):** a IA real (T-601+) exige a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** e `horus.ai.enabled=true`. Sem isso, o Horus roda com o `StubLlmEngine` (placeholder) — não bloqueia build/CI.
 
@@ -36,6 +36,8 @@ Fase 7: publicar **`T-702`** (abrir PR do waterfall UI). Depois, candidatos: **`
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
 | 2026-06-30 | `T-504` | API do ciclo de vida da query (RF-H-002) — branch atualizada com `main` (T-505/506/507) e levada a PR: `QueryLifecycleService` + `GET /horus/lifecycle/queries/{traceId}`; `./mvnw -pl horus test` verde | `task/T-504-query-lifecycle-api` | [#38](https://github.com/mclovin137/Horus/pull/38) | 🔄 Em revisão (PR) |
+| 2026-06-30 | `T-606` | Anomaly Detector + Error Clusterer (RF-H-008/009): `ErrorClusterer` (fingerprint cross-service + rótulo IA FAST, `GET /horus/ai/errors/clusters/{traceId}`) + `AnomalyDetector` (regras de limiar sobre métricas, `POST /horus/ai/anomalies`); `./mvnw -pl horus test` verde (59, 5 novos) | `task/T-606-anomaly-error-clustering` | — | 🟡 Em progresso |
+| 2026-06-30 | `T-702` | Waterfall UI (RF-H-011) **mergeada** via PR #42; CI verde | `task/T-702-waterfall-ui` | [#42](https://github.com/mclovin137/Horus/pull/42) | ✅ Entregue |
 | 2026-06-30 | `T-702` | Waterfall UI (RF-H-011): `horus-waterfall.html` renderiza o ciclo de vida da request (spans por offset/duração/depth/categoria + queries SQL + logs de erro) consumindo T-503/504/505; `overview` do painel lista endpoints de ciclo de vida + link no painel; `./mvnw -pl horus test` verde (54) | `task/T-702-waterfall-ui` | — | 🟡 Em progresso |
 | 2026-06-30 | `T-504` | API do ciclo de vida da query (RF-H-002) **mergeada** via PR #38 (branch atualizada com `main` T-505/506/507; CI verde) | `task/T-504-query-lifecycle-api` | [#38](https://github.com/mclovin137/Horus/pull/38) | ✅ Entregue |
 | 2026-06-30 | `T-507` | Visualização de SAGA (RF-H-016, ADR-0013) **mergeada** via PR #41; CI verde — fecha a Fase 5 core | `task/T-507-saga-visualization` | [#41](https://github.com/mclovin137/Horus/pull/41) | ✅ Entregue |
