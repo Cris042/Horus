@@ -6,22 +6,22 @@
 
 | Campo | Valor |
 |---|---|
-| **Última atualização** | 2026-06-28 |
-| **Branch atual** | `task/T-504-query-lifecycle-api` |
+| **Última atualização** | 2026-06-30 |
+| **Branch atual** | `task/T-507-saga-visualization` |
 | **Fase do roadmap** | Fase 5 — Horus core (correlação + ciclo de vida) |
-| **Task ativa** | `T-504` — API do ciclo de vida da query (em progresso) |
+| **Task ativa** | `T-507` — Visualização de SAGA (em progresso) |
 
 ## 🟢 Última entrega (mergeada)
 
 
-**`T-503` — API do ciclo de vida da request (entregue via [PR #37](https://github.com/mclovin137/Horus/pull/37), mergeada em `main`).** `RequestLifecycleService` + `GET /horus/lifecycle/requests/{traceId}` projetam o trace em waterfall/timeline com `offsetMicros`, `depth`, categorias (`http`/`database`/`messaging`/`worker`/`internal`) e duração total por janela temporal. `mvn -pl horus test` verde (38/38). **CI verde.**
+**`T-506` — Mapa de serviços/dependências (entregue via [PR #40](https://github.com/mclovin137/Horus/pull/40), mergeada em `main`).** `ServiceMapService` + `GET /horus/lifecycle/service-map/{traceId}` projetam os spans do trace num grafo direcionado — nós por serviço (spanCount, duração, ponto de entrada) e arestas inter-serviço chamador→chamado (callCount, duração somada). **CI verde** (Java/Python/Rust + ai-review).
 
-> ▶️ **Em progresso:** **`T-504`** — API do ciclo de vida da query (RF-H-002): `QueryLifecycleService` + `GET /horus/lifecycle/queries/{traceId}` filtram os spans SQL do trace e expõem `statement` sanitizado, `db.namespace`, `db.system`, operação, duração e `offsetMicros` relativo à request. Construído sobre T-501/T-503; `./mvnw -pl horus test` verde (42/42).
+> ▶️ **Em progresso:** **`T-507`** — Visualização de SAGA (RF-H-016, ADR-0013): `SagaVisualizationService` + `GET /horus/lifecycle/saga/{traceId}` reconstroem, a partir dos spans (`saga.{flow}.{step}` / `.compensate` do contrato T-005), os passos, compensações e desfecho (`completed`/`compensated`/`none`) da SAGA. Construído sobre T-501/T-502; `./mvnw -pl horus test` verde (5 testes novos).
 
 
 ## ▶️ Próxima ação
 
-Fase 5 core: concluir **`T-504`** (abrir PR da API de query lifecycle), depois seguir para **`T-505`** (agregação de logs de erro correlacionados). Na sequência entram **`T-506`** (mapa de serviços) / **`T-507`** (visualização de SAGA) e Fase 7 **`T-702`** (waterfall UI). **`T-405`** (validação ponta a ponta com stack real) e **`T-606`** (anomalias, dep T-505) ficam para quando o ambiente estiver de pé / após T-505.
+Fase 5 core: publicar **`T-507`** (abrir PR da visualização de SAGA) — **fecha a Fase 5 core**. A branch de **`T-504`** já foi publicada e pode seguir em PR próprio. Depois entra a Fase 7 **`T-702`** (waterfall UI, dep T-503/504/505). **`T-405`** (validação ponta a ponta com stack real) e **`T-606`** (anomalias, dep T-505) ficam para quando o ambiente estiver de pé.
 
 > ⚙️ **Pendência sua (agora relevante p/ IA):** a IA real (T-601+) exige a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** e `horus.ai.enabled=true`. Sem isso, o Horus roda com o `StubLlmEngine` (placeholder) — não bloqueia build/CI.
 
@@ -35,7 +35,13 @@ Fase 5 core: concluir **`T-504`** (abrir PR da API de query lifecycle), depois s
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
-| 2026-06-28 | `T-504` | API do ciclo de vida da query (RF-H-002) em andamento: `QueryLifecycleService` + `GET /horus/lifecycle/queries/{traceId}` retornam spans SQL com `statement` sanitizado, `db.namespace`, `db.system`, operação, duração e `offsetMicros`; `./mvnw -pl horus test` verde (42/42) | `task/T-504-query-lifecycle-api` | — | 🟡 Em progresso |
+| 2026-06-30 | `T-504` | API do ciclo de vida da query (RF-H-002) — branch atualizada com `main` (T-505/506/507) e levada a PR: `QueryLifecycleService` + `GET /horus/lifecycle/queries/{traceId}`; `./mvnw -pl horus test` verde | `task/T-504-query-lifecycle-api` | [#38](https://github.com/mclovin137/Horus/pull/38) | 🔄 Em revisão (PR) |
+| 2026-06-30 | `T-507` | Visualização de SAGA (RF-H-016, ADR-0013): `SagaVisualizationService` + `GET /horus/lifecycle/saga/{traceId}` reconstroem passos/compensações/desfecho da SAGA a partir dos spans (`saga.{flow}.{step}` / `.compensate`); `./mvnw -pl horus test` verde (5 novos) | `task/T-507-saga-visualization` | — | 🟡 Em progresso |
+| 2026-06-30 | `T-506` | Mapa de serviços/dependências (RF-H-015) **mergeado** via PR #40; CI verde | `task/T-506-service-map` | [#40](https://github.com/mclovin137/Horus/pull/40) | ✅ Entregue |
+| 2026-06-30 | `T-506` | Mapa de serviços/dependências (RF-H-015): `ServiceMapService` + `GET /horus/lifecycle/service-map/{traceId}` projetam spans num grafo — nós por serviço (spanCount, duração, entryPoint) e arestas inter-serviço chamador→chamado (callCount, duração); `./mvnw -pl horus test` verde | `task/T-506-service-map` | — | 🟡 Em progresso |
+| 2026-06-30 | `T-505` | Agregação de logs de erro correlacionados (RF-H-003) **mergeada** via PR #39; CI verde (Java/Python/Rust + ai-review) | `task/T-505-error-log-aggregation` | [#39](https://github.com/mclovin137/Horus/pull/39) | ✅ Entregue |
+| 2026-06-28 | `T-505` | Agregação de logs de erro correlacionados (RF-H-003) em andamento: `ErrorLogAggregationService` + `GET /horus/lifecycle/errors/{traceId}` agrupam logs de erro por serviço + fingerprint textual com amostra, contagem, severidade, stack trace e timestamp; `./mvnw -pl horus test` verde (41/41) | `task/T-505-error-log-aggregation` | — | 🟡 Em progresso |
+| 2026-06-28 | `T-504` | API do ciclo de vida da query (RF-H-002): `QueryLifecycleService` + `GET /horus/lifecycle/queries/{traceId}` retornam spans SQL com `statement` sanitizado, `db.namespace`, `db.system`, operação, duração e `offsetMicros`; branch publicada em `origin/task/T-504-query-lifecycle-api`; `./mvnw -pl horus test` verde (42/42) | `task/T-504-query-lifecycle-api` | — | 🟡 Em progresso |
 | 2026-06-28 | `T-503` | API do ciclo de vida da request (RF-H-001/011): `RequestLifecycleService` + `GET /horus/lifecycle/requests/{traceId}` projetam trace em waterfall/timeline com `offsetMicros`, `depth`, categorias e duração total por janela temporal; mergeada em `main` via PR #37 | `task/T-503-request-lifecycle-api` | [#37](https://github.com/mclovin137/Horus/pull/37) | ✅ Entregue |
 | 2026-06-28 | `T-403` | OTel no worker + propagação HTTP→AMQP (RF-029/RF-H-004): `telemetry.rs` (provider+recurso `report-worker`/`medrec`, OTLP/HTTP sem protoc, bridge tracing→OTel, propagador W3C); `extrair_contexto` lê `traceparent` dos headers AMQP e o span de processamento vira filho do publicador; verificado em container `rust:1-slim` (test 12, fmt, clippy) | `task/T-403-worker-otel-amqp` | [#34](https://github.com/mclovin137/Horus/pull/34) | ✅ Entregue |
 | 2026-06-28 | `T-502` | Modelo de correlação por `trace_id` (RF-H-001/002/004): `CorrelationModel`+`CorrelationService` costuram spans-por-serviço + logs + fronteira mensageria/worker + erros num `RequestCorrelation`; `GET /horus/correlation/trace/{id}`; sobre portas T-501, testes mockados; `mvn -pl horus test` verde (35/35, 3 novos) | `task/T-502-correlation-model` | [#35](https://github.com/mclovin137/Horus/pull/35) | ✅ Entregue |
