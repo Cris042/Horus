@@ -1,0 +1,29 @@
+# HPA do prontuario-service (T-803, RNF-005): escala horizontal independente por componente,
+# dirigida por utilização média de CPU (requests definidos no Deployment do T-802).
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: prontuario-service
+  namespace: horus
+  labels:
+    app.kubernetes.io/name: prontuario-service
+    app.kubernetes.io/part-of: horus
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: prontuario-service
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+    scaleUp:
+      stabilizationWindowSeconds: 30

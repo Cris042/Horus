@@ -1,0 +1,29 @@
+# HPA do horus (T-803, RNF-005): escala horizontal independente por componente,
+# dirigida por utilização média de CPU (requests definidos no Deployment do T-802).
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: horus
+  namespace: horus
+  labels:
+    app.kubernetes.io/name: horus
+    app.kubernetes.io/part-of: horus
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: horus
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 75
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+    scaleUp:
+      stabilizationWindowSeconds: 30
