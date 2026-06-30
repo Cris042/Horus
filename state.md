@@ -7,21 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-30 |
-| **Branch atual** | `task/T-801-docker-images` |
+| **Branch atual** | `task/T-802-k8s-manifests` |
 | **Fase do roadmap** | Fase 8 — Containerização e Kubernetes |
-| **Task ativa** | `T-801` — Imagens Docker de todos os executáveis (em progresso) |
+| **Task ativa** | `T-802` — Manifests Kubernetes (em progresso) |
 
 ## 🟢 Última entrega (mergeada)
 
 
-**`T-703` — Alertas (e-mail/webhook) com resumo de IA (entregue via [PR #44](https://github.com/mclovin137/Horus/pull/44), mergeada em `main`).** `AlertService` resume o gatilho via IA (camada FAST) e faz fan-out aos canais habilitados (`LogAlertChannel` sempre on; `WebhookAlertChannel` POST JSON; `EmailAlertChannel` stub gated); `POST /horus/alerts` + `GET /horus/alerts/channels`. **CI verde.**
+**`T-801` — Imagens Docker de todos os executáveis (entregue via [PR #45](https://github.com/mclovin137/Horus/pull/45), mergeada em `main`).** `Dockerfile.jvm` multi-stage (Temurin 25) para os 5 módulos Quarkus, `worker/Dockerfile` (Rust) e `loadtest/Dockerfile` (Python 3.13), `.dockerignore`s, alvos `make docker-*`. Imagens não-root, validadas via `docker build` (horus 520MB, report-worker 141MB, loadtest 218MB). **CI verde.**
 
-> ▶️ **Em progresso:** **`T-801`** — Imagens Docker de todos os executáveis (RF-032/RNF-004): `Dockerfile.jvm` multi-stage (Temurin 25) para os 5 módulos Quarkus, `worker/Dockerfile` (Rust multi-stage) e `loadtest/Dockerfile` (Python 3.13/FastAPI); `.dockerignore` (raiz+worker+loadtest), alvos `make docker-*`, doc em `deploy/README.md`. Imagens rodam como não-root. Builds validados localmente via `docker build`.
+> ▶️ **Em progresso:** **`T-802`** — Manifests Kubernetes (RF-033): base Kustomize em `deploy/k8s/` — namespace `horus`, `ConfigMap` (OTLP/backends), Secret de exemplo (DB por serviço + `ANTHROPIC_API_KEY`), `Deployment`(+`Service`) dos 7 executáveis com probes/resources e separação Horus/worker do domínio (ADR-0012). YAML validado; `kubectl apply -k deploy/k8s/`.
 
 
 ## ▶️ Próxima ação
 
-Fase 8: publicar **`T-801`** (abrir PR das imagens). Depois **`T-802`** (compose de aplicações + manifests/Helm K8s), **`T-803`** (escala horizontal) e **`T-804`** (worker/Horus separados — ADR-0012). **`T-405`** (validação ponta a ponta com stack real) e a Fase 9 (aceite) ficam para quando o ambiente estiver de pé.
+Fase 8: publicar **`T-802`** (abrir PR dos manifests K8s). Depois **`T-803`** (escala horizontal/HPA por componente) e **`T-804`** (confirmar worker/Horus separados — ADR-0012, já refletido nos labels/topologia). Pendente de cluster/ferramenta: overlay de infra K8s, `kubectl apply -k` real e **`T-405`** (validação ponta a ponta); Fase 9 (aceite) ao final.
 
 > ⚙️ **Pendência sua (agora relevante p/ IA):** a IA real (T-601+) exige a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** e `horus.ai.enabled=true`. Sem isso, o Horus roda com o `StubLlmEngine` (placeholder) — não bloqueia build/CI.
 
@@ -35,6 +35,8 @@ Fase 8: publicar **`T-801`** (abrir PR das imagens). Depois **`T-802`** (compose
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
+| 2026-06-30 | `T-802` | Manifests Kubernetes (RF-033): base Kustomize `deploy/k8s/` — namespace, ConfigMap, Secret-exemplo, Deployment+Service dos 7 executáveis (probes/resources, Horus/worker separados — ADR-0012); YAML validado | `task/T-802-k8s-manifests` | — | 🟡 Em progresso |
+| 2026-06-30 | `T-801` | Imagens Docker de todos os executáveis (RF-032/RNF-004) **mergeado** via PR #45; CI verde; imagens validadas via `docker build` (horus 520MB, worker 141MB, loadtest 218MB) | `task/T-801-docker-images` | [#45](https://github.com/mclovin137/Horus/pull/45) | ✅ Entregue |
 | 2026-06-30 | `T-504` | API do ciclo de vida da query (RF-H-002) — branch atualizada com `main` (T-505/506/507) e levada a PR: `QueryLifecycleService` + `GET /horus/lifecycle/queries/{traceId}`; `./mvnw -pl horus test` verde | `task/T-504-query-lifecycle-api` | [#38](https://github.com/mclovin137/Horus/pull/38) | 🔄 Em revisão (PR) |
 | 2026-06-30 | `T-703` | Alertas (e-mail/webhook) com resumo de IA (RF-H-013): `AlertService` resume via IA (FAST) + fan-out a canais habilitados (log sempre on, webhook POST JSON, e-mail stub gated); `POST /horus/alerts` + `GET /horus/alerts/channels`; `./mvnw -pl horus test` verde (63, 4 novos) | `task/T-703-alerts` | — | 🟡 Em progresso |
 | 2026-06-30 | `T-606` | Anomaly Detector + Error Clusterer (RF-H-008/009) **mergeado** via PR #43; CI verde | `task/T-606-anomaly-error-clustering` | [#43](https://github.com/mclovin137/Horus/pull/43) | ✅ Entregue |

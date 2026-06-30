@@ -1,0 +1,20 @@
+# Configuração compartilhada (T-802, RF-033).
+#
+# As aplicações Quarkus rodam no profile `prod` por padrão (imagem empacotada), onde os
+# endpoints já apontam para os Services do cluster (postgres-*, otel-collector,
+# payment-service, ...). Este ConfigMap carrega apenas overrides não-secretos comuns.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: horus-config
+  namespace: horus
+  labels:
+    app.kubernetes.io/part-of: horus
+data:
+  HORUS_ENV: "k8s"
+  # Endpoint OTLP do Collector (mesmo valor do profile prod; explícito para clareza/override).
+  QUARKUS_OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
+  # Backends consultados pelo Horus (RF-H-014).
+  QUARKUS_REST_CLIENT_JAEGER_URL: "http://jaeger:16686"
+  QUARKUS_REST_CLIENT_LOKI_URL: "http://loki:3100"
+  QUARKUS_REST_CLIENT_PROMETHEUS_URL: "http://prometheus:9090"

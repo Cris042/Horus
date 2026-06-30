@@ -1,0 +1,67 @@
+# saga-orchestrator (T-802, RF-033). Quarkus profile prod ativo na imagem empacotada:
+# datasource → postgres-* / OTLP → otel-collector já vêm do profile. Credenciais via Secret.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: saga-orchestrator
+  namespace: horus
+  labels:
+    app.kubernetes.io/name: saga-orchestrator
+    app.kubernetes.io/part-of: horus
+    app.kubernetes.io/component: orchestrator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: saga-orchestrator
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: saga-orchestrator
+        app.kubernetes.io/part-of: horus
+        app.kubernetes.io/component: orchestrator
+    spec:
+      containers:
+        - name: saga-orchestrator
+          image: horus/saga-orchestrator:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8084
+          envFrom:
+            - configMapRef:
+                name: horus-config
+          env:
+            - name: QUARKUS_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef: { name: horus-db-secret, key: SAGA_DB_USERNAME }
+            - name: QUARKUS_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: horus-db-secret, key: SAGA_DB_PASSWORD }
+          readinessProbe:
+            httpGet: { path: /q/health/ready, port: http }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /q/health/live, port: http }
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          resources:
+            requests: { cpu: "250m", memory: "256Mi" }
+            limits: { cpu: "1", memory: "512Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: saga-orchestrator
+  namespace: horus
+  labels:
+    app.kubernetes.io/name: saga-orchestrator
+    app.kubernetes.io/part-of: horus
+spec:
+  selector:
+    app.kubernetes.io/name: saga-orchestrator
+  ports:
+    - name: http
+      port: 8084
+      targetPort: http
