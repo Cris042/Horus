@@ -22,7 +22,8 @@ class HorusPanelResourceTest {
                 .body("ai.live", is(false))
                 .body("ai.cache.enabled", is(true))
                 .body("backends.jaeger", notNullValue())
-                .body("endpoints.ask", containsString("/horus/ai/ask"));
+                .body("endpoints.ask", containsString("/horus/ai/ask"))
+                .body("endpoints.lifecycleRequest", containsString("/horus/lifecycle/requests/"));
     }
 
     @Test
@@ -30,5 +31,12 @@ class HorusPanelResourceTest {
         given().when().get("/horus-panel.html")
                 .then().statusCode(200)
                 .body(containsString("Horus"));
+    }
+
+    @Test
+    void waterfallPage_isServed() {
+        given().when().get("/horus-waterfall.html")
+                .then().statusCode(200)
+                .body(containsString("waterfall"));
     }
 }

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Horus — Waterfall</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; font-family: system-ui, sans-serif; background: #0e1116; color: #e6edf3; }
+    header { padding: 1rem 1.5rem; border-bottom: 1px solid #232a33; display: flex; align-items: baseline; gap: .75rem; }
+    header h1 { margin: 0; font-size: 1.25rem; }
+    header .eye { font-size: 1.4rem; }
+    header a { margin-left: auto; color: #58a6ff; font-size: .9rem; text-decoration: none; }
+    main { padding: 1.5rem; display: grid; gap: 1.25rem; max-width: 1100px; }
+    .card { background: #161b22; border: 1px solid #232a33; border-radius: 10px; padding: 1rem 1.25rem; }
+    .card h2 { margin: 0 0 .75rem; font-size: .95rem; text-transform: uppercase; letter-spacing: .05em; color: #8b98a5; }
+    .bar-input { display: flex; gap: .5rem; }
+    .bar-input input { flex: 1; background: #0e1116; border: 1px solid #232a33; color: #e6edf3; border-radius: 8px; padding: .55rem .75rem; }
+    .bar-input button { background: #238636; color: #fff; border: 0; border-radius: 8px; padding: .55rem 1rem; cursor: pointer; }
+    .muted { color: #8b98a5; font-size: .85rem; }
+    code { background: #0e1116; padding: .1rem .35rem; border-radius: 5px; font-size: .85rem; }
+    .summary { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; font-size: .9rem; }
+    .summary b { color: #e6edf3; }
+    /* waterfall */
+    .wf-row { display: grid; grid-template-columns: 280px 1fr 90px; align-items: center; gap: .5rem; padding: .15rem 0; font-size: .82rem; border-bottom: 1px solid #1b212a; }
+    .wf-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .wf-label .op { color: #e6edf3; }
+    .wf-label .svc { color: #8b98a5; }
+    .wf-track { position: relative; height: 16px; background: #0e1116; border-radius: 4px; }
+    .wf-bar { position: absolute; top: 2px; height: 12px; border-radius: 3px; min-width: 2px; }
+    .wf-dur { text-align: right; color: #8b98a5; font-variant-numeric: tabular-nums; }
+    .cat-http { background: #1f6feb; }
+    .cat-database { background: #8957e5; }
+    .cat-messaging { background: #d29922; }
+    .cat-worker { background: #db61a2; }
+    .cat-internal { background: #57606a; }
+    .legend { display: flex; gap: 1rem; font-size: .78rem; margin-top: .5rem; }
+    .legend span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: .35rem; vertical-align: middle; }
+    .legend .l-http::before { background: #1f6feb; }
+    .legend .l-database::before { background: #8957e5; }
+    .legend .l-messaging::before { background: #d29922; }
+    .legend .l-worker::before { background: #db61a2; }
+    .legend .l-internal::before { background: #57606a; }
+    table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+    th, td { text-align: left; padding: .3rem .5rem; border-bottom: 1px solid #1b212a; }
+    th { color: #8b98a5; font-weight: 600; }
+    .err-level { color: #f85149; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="eye">𓂀</span><h1>Horus — Waterfall</h1>
+    <span class="muted">ciclo de vida da request (spans + queries + logs)</span>
+    <a href="/horus-panel.html">← Painel</a>
+  </header>
+  <main>
+    <div class="card">
+      <div class="bar-input">
+        <input id="trace" placeholder="traceId (32 caracteres hex)"/>
+        <button onclick="load()">Carregar waterfall</button>
+      </div>
+      <div id="summary" class="muted" style="margin-top:.75rem">Informe um traceId para ver o fluxo de vida completo.</div>
+    </div>
+
+    <div class="card">
+      <h2>Spans</h2>
+      <div id="waterfall" class="muted">—</div>
+      <div class="legend">
+        <span class="l-http">http</span>
+        <span class="l-database">database</span>
+        <span class="l-messaging">messaging</span>
+        <span class="l-worker">worker</span>
+        <span class="l-internal">internal</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Queries SQL</h2>
+      <div id="queries" class="muted">—</div>
+    </div>
+
+    <div class="card">
+      <h2>Logs de erro</h2>
+      <div id="errors" class="muted">—</div>
+    </div>
+  </main>
+
+  <script>
+    async function jsafe(url) {
+      const r = await fetch(url);
+      if (!r.ok) return { __status: r.status };
+      return r.json();
+    }
+    const esc = s => String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+    const ms = micros => (micros / 1000).toFixed(micros < 10000 ? 2 : 0) + ' ms';
+
+    function renderWaterfall(life) {
+      const total = Math.max(life.durationMicros, 1);
+      const rows = life.spans.map(s => {
+        const left = (s.offsetMicros / total) * 100;
+        const width = Math.max((s.durationMicros / total) * 100, 0.4);
+        const indent = '&nbsp;'.repeat(Math.min(s.depth, 8) * 2);
+        return `<div class="wf-row">
+          <div class="wf-label" title="${esc(s.operation)}">${indent}<span class="op">${esc(s.operation)}</span> <span class="svc">· ${esc(s.serviceName)}</span></div>
+          <div class="wf-track"><div class="wf-bar cat-${esc(s.category)}" style="left:${left}%;width:${width}%" title="${esc(s.category)}"></div></div>
+          <div class="wf-dur">${ms(s.durationMicros)}</div>
+        </div>`;
+      }).join('');
+      document.getElementById('waterfall').innerHTML = rows || '<span class="muted">sem spans</span>';
+      document.getElementById('summary').innerHTML =
+        `<div class="summary">
+          <span>spans: <b>${life.spanCount}</b></span>
+          <span>serviços: <b>${esc((life.services || []).join(', '))}</b></span>
+          <span>duração total: <b>${ms(life.durationMicros)}</b></span>
+          <span>mensageria: <b>${life.messagingInvolved ? 'sim' : 'não'}</b></span>
+          <span>worker: <b>${life.workerInvolved ? 'sim' : 'não'}</b></span>
+        </div>`;
+    }
+
+    function renderQueries(q) {
+      if (!q || !q.queries || !q.queries.length) {
+        document.getElementById('queries').innerHTML = '<span class="muted">sem queries SQL neste trace</span>';
+        return;
+      }
+      const rows = q.queries.map(x => `<tr>
+        <td>${esc(x.serviceName)}</td>
+        <td>${esc(x.databaseSystem || '')} <span class="muted">${esc(x.databaseName || '')}</span></td>
+        <td><code>${esc(x.statement || x.operationName)}</code></td>
+        <td class="wf-dur">${ms(x.durationMicros)}</td>
+      </tr>`).join('');
+      document.getElementById('queries').innerHTML =
+        `<table><thead><tr><th>serviço</th><th>banco</th><th>statement</th><th>duração</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    function renderErrors(e) {
+      if (!e || !e.groups || !e.groups.length) {
+        document.getElementById('errors').innerHTML = '<span class="muted">nenhum log de erro correlacionado</span>';
+        return;
+      }
+      const rows = e.groups.map(g => `<tr>
+        <td>${esc(g.serviceName)}</td>
+        <td class="err-level">${esc(g.level)}</td>
+        <td>${esc(g.sample)}${g.hasStacktrace ? ' <span class="muted">(stacktrace)</span>' : ''}</td>
+        <td class="wf-dur">${g.count}×</td>
+      </tr>`).join('');
+      document.getElementById('errors').innerHTML =
+        `<div class="muted" style="margin-bottom:.5rem">${e.errorCount} erro(s) em ${e.groupCount} grupo(s)</div>` +
+        `<table><thead><tr><th>serviço</th><th>nível</th><th>amostra</th><th>contagem</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    async function load() {
+      const t = (document.getElementById('trace').value || '').trim();
+      if (!/^[0-9a-fA-F]{32}$/.test(t)) {
+        document.getElementById('summary').textContent = 'traceId inválido: use 32 caracteres hexadecimais.';
+        return;
+      }
+      document.getElementById('summary').textContent = 'carregando…';
+      document.getElementById('waterfall').textContent = '…';
+      document.getElementById('queries').textContent = '…';
+      document.getElementById('errors').textContent = '…';
+
+      const life = await jsafe(`/horus/lifecycle/requests/${t}`);
+      if (life.__status) {
+        document.getElementById('summary').textContent = life.__status === 404
+          ? 'trace não encontrado.' : 'falha ao carregar (' + life.__status + ').';
+        document.getElementById('waterfall').textContent = '—';
+        return;
+      }
+      renderWaterfall(life);
+      renderQueries(await jsafe(`/horus/lifecycle/queries/${t}`));
+      renderErrors(await jsafe(`/horus/lifecycle/errors/${t}`));
+    }
+
+    // Permite abrir já com ?trace=<id>
+    const pre = new URLSearchParams(location.search).get('trace');
+    if (pre) { document.getElementById('trace').value = pre; load(); }
+  </script>
+</body>
+</html>

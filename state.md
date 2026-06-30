@@ -7,21 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-30 |
-| **Branch atual** | `task/T-507-saga-visualization` |
-| **Fase do roadmap** | Fase 5 — Horus core (correlação + ciclo de vida) |
-| **Task ativa** | `T-507` — Visualização de SAGA (em progresso) |
+| **Branch atual** | `task/T-702-waterfall-ui` |
+| **Fase do roadmap** | Fase 7 — Painel / UI do Horus |
+| **Task ativa** | `T-702` — Waterfall UI (em progresso) |
 
 ## 🟢 Última entrega (mergeada)
 
 
-**`T-506` — Mapa de serviços/dependências (entregue via [PR #40](https://github.com/mclovin137/Horus/pull/40), mergeada em `main`).** `ServiceMapService` + `GET /horus/lifecycle/service-map/{traceId}` projetam os spans do trace num grafo direcionado — nós por serviço (spanCount, duração, ponto de entrada) e arestas inter-serviço chamador→chamado (callCount, duração somada). **CI verde** (Java/Python/Rust + ai-review).
+**Fase 5 core concluída.** `T-503`/`T-504` (ciclo de vida request/query), `T-505` (logs de erro), `T-506` (mapa de serviços) e `T-507` (visualização de SAGA) **mergeadas em `main`** — Horus mostra, para qualquer request, o fluxo completo + queries + logs de erro + topologia + SAGA. Última: **`T-504`** via [PR #38](https://github.com/mclovin137/Horus/pull/38) (branch atualizada com `main` e CI verde).
 
-> ▶️ **Em progresso:** **`T-507`** — Visualização de SAGA (RF-H-016, ADR-0013): `SagaVisualizationService` + `GET /horus/lifecycle/saga/{traceId}` reconstroem, a partir dos spans (`saga.{flow}.{step}` / `.compensate` do contrato T-005), os passos, compensações e desfecho (`completed`/`compensated`/`none`) da SAGA. Construído sobre T-501/T-502; `./mvnw -pl horus test` verde (5 testes novos).
+> ▶️ **Em progresso:** **`T-702`** — Waterfall UI (RF-H-011): página estática `horus-waterfall.html` renderiza o ciclo de vida da request (barras de span por `offset`/`duração`/`depth`/`category` + queries SQL + logs de erro), consumindo T-503/504/505; `overview` do painel passa a listar os endpoints de ciclo de vida e o painel linka o waterfall; `./mvnw -pl horus test` verde (54).
 
 
 ## ▶️ Próxima ação
 
-Fase 5 core: publicar **`T-507`** (abrir PR da visualização de SAGA) — **fecha a Fase 5 core**. A branch de **`T-504`** já foi publicada e pode seguir em PR próprio. Depois entra a Fase 7 **`T-702`** (waterfall UI, dep T-503/504/505). **`T-405`** (validação ponta a ponta com stack real) e **`T-606`** (anomalias, dep T-505) ficam para quando o ambiente estiver de pé.
+Fase 7: publicar **`T-702`** (abrir PR do waterfall UI). Depois, candidatos: **`T-703`** (alertas, dep T-606), **`T-606`** (anomalias/error clustering, dep T-505), **`T-606`**/UI para service-map e SAGA. **`T-405`** (validação ponta a ponta com stack real) e tarefas de containerização/K8s (Fase 8) ficam para quando o ambiente estiver de pé.
 
 > ⚙️ **Pendência sua (agora relevante p/ IA):** a IA real (T-601+) exige a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** e `horus.ai.enabled=true`. Sem isso, o Horus roda com o `StubLlmEngine` (placeholder) — não bloqueia build/CI.
 
@@ -36,6 +36,9 @@ Fase 5 core: publicar **`T-507`** (abrir PR da visualização de SAGA) — **fec
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
 | 2026-06-30 | `T-504` | API do ciclo de vida da query (RF-H-002) — branch atualizada com `main` (T-505/506/507) e levada a PR: `QueryLifecycleService` + `GET /horus/lifecycle/queries/{traceId}`; `./mvnw -pl horus test` verde | `task/T-504-query-lifecycle-api` | [#38](https://github.com/mclovin137/Horus/pull/38) | 🔄 Em revisão (PR) |
+| 2026-06-30 | `T-702` | Waterfall UI (RF-H-011): `horus-waterfall.html` renderiza o ciclo de vida da request (spans por offset/duração/depth/categoria + queries SQL + logs de erro) consumindo T-503/504/505; `overview` do painel lista endpoints de ciclo de vida + link no painel; `./mvnw -pl horus test` verde (54) | `task/T-702-waterfall-ui` | — | 🟡 Em progresso |
+| 2026-06-30 | `T-504` | API do ciclo de vida da query (RF-H-002) **mergeada** via PR #38 (branch atualizada com `main` T-505/506/507; CI verde) | `task/T-504-query-lifecycle-api` | [#38](https://github.com/mclovin137/Horus/pull/38) | ✅ Entregue |
+| 2026-06-30 | `T-507` | Visualização de SAGA (RF-H-016, ADR-0013) **mergeada** via PR #41; CI verde — fecha a Fase 5 core | `task/T-507-saga-visualization` | [#41](https://github.com/mclovin137/Horus/pull/41) | ✅ Entregue |
 | 2026-06-30 | `T-507` | Visualização de SAGA (RF-H-016, ADR-0013): `SagaVisualizationService` + `GET /horus/lifecycle/saga/{traceId}` reconstroem passos/compensações/desfecho da SAGA a partir dos spans (`saga.{flow}.{step}` / `.compensate`); `./mvnw -pl horus test` verde (5 novos) | `task/T-507-saga-visualization` | — | 🟡 Em progresso |
 | 2026-06-30 | `T-506` | Mapa de serviços/dependências (RF-H-015) **mergeado** via PR #40; CI verde | `task/T-506-service-map` | [#40](https://github.com/mclovin137/Horus/pull/40) | ✅ Entregue |
 | 2026-06-30 | `T-506` | Mapa de serviços/dependências (RF-H-015): `ServiceMapService` + `GET /horus/lifecycle/service-map/{traceId}` projetam spans num grafo — nós por serviço (spanCount, duração, entryPoint) e arestas inter-serviço chamador→chamado (callCount, duração); `./mvnw -pl horus test` verde | `task/T-506-service-map` | — | 🟡 Em progresso |
