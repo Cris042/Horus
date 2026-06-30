@@ -7,21 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-30 |
-| **Branch atual** | `task/T-606-anomaly-error-clustering` |
-| **Fase do roadmap** | Fase 6 — Camada de IA (Claude) |
-| **Task ativa** | `T-606` — Anomaly Detector + Error Clusterer (em progresso) |
+| **Branch atual** | `task/T-703-alerts` |
+| **Fase do roadmap** | Fase 7 — Painel e alertas do Horus |
+| **Task ativa** | `T-703` — Alertas (e-mail/webhook) com resumo de IA (em progresso) |
 
 ## 🟢 Última entrega (mergeada)
 
 
-**`T-702` — Waterfall UI (entregue via [PR #42](https://github.com/mclovin137/Horus/pull/42), mergeada em `main`).** Página estática `horus-waterfall.html` renderiza o ciclo de vida da request (barras de span por `offset`/`duração`/`depth`/`category` + queries SQL + logs de erro), consumindo T-503/504/505; `overview` do painel lista os endpoints de ciclo de vida e o painel linka o waterfall. **CI verde.** (Fase 5 core já estava concluída: T-503/504/505/506/507.)
+**`T-606` — Anomaly Detector + Error Clusterer (entregue via [PR #43](https://github.com/mclovin137/Horus/pull/43), mergeada em `main`).** `ErrorClusterer` agrupa logs de erro por fingerprint **cross-service** com rótulo de IA (camada FAST) via `GET /horus/ai/errors/clusters/{traceId}`; `AnomalyDetector` avalia regras de limiar sobre métricas (PromQL) via `POST /horus/ai/anomalies`. **CI verde.**
 
-> ▶️ **Em progresso:** **`T-606`** — Anomaly Detector + Error Clusterer (RF-H-008/009): `ErrorClusterer` agrupa logs de erro por fingerprint **cross-service** com rótulo de IA (camada FAST) via `GET /horus/ai/errors/clusters/{traceId}`; `AnomalyDetector` avalia regras de limiar sobre métricas (PromQL) via `POST /horus/ai/anomalies`. Determinístico/testável com portas mockadas + `StubLlmEngine`; `./mvnw -pl horus test` verde (59).
+> ▶️ **Em progresso:** **`T-703`** — Alertas (e-mail/webhook) com resumo de IA (RF-H-013): `AlertService` monta um resumo de IA (camada FAST) do gatilho e faz fan-out aos canais habilitados (`LogAlertChannel` sempre on; `WebhookAlertChannel` POST JSON; `EmailAlertChannel` stub gated por config); `POST /horus/alerts` + `GET /horus/alerts/channels`. Funciona com `StubLlmEngine`; `./mvnw -pl horus test` verde (63).
 
 
 ## ▶️ Próxima ação
 
-Fase 6/7: publicar **`T-606`** (abrir PR de anomalias/error clustering). Depois entra **`T-703`** (alertas e-mail/webhook com resumo de IA, dep T-606). Restam ainda UI para service-map/SAGA, **`T-405`** (validação ponta a ponta com stack real) e a Fase 8 (containerização/K8s + aceitação) — ficam para quando o ambiente estiver de pé.
+Fase 7: publicar **`T-703`** (abrir PR de alertas). Restantes do produto: UI para service-map/SAGA, integração SMTP real do e-mail, gatilho automático de alertas a partir do T-606. Depois **`T-405`** (validação ponta a ponta com stack real) e a Fase 8 (containerização/K8s + aceitação) — ficam para quando o ambiente estiver de pé.
 
 > ⚙️ **Pendência sua (agora relevante p/ IA):** a IA real (T-601+) exige a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** e `horus.ai.enabled=true`. Sem isso, o Horus roda com o `StubLlmEngine` (placeholder) — não bloqueia build/CI.
 
@@ -36,6 +36,8 @@ Fase 6/7: publicar **`T-606`** (abrir PR de anomalias/error clustering). Depois 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
 | 2026-06-30 | `T-504` | API do ciclo de vida da query (RF-H-002) — branch atualizada com `main` (T-505/506/507) e levada a PR: `QueryLifecycleService` + `GET /horus/lifecycle/queries/{traceId}`; `./mvnw -pl horus test` verde | `task/T-504-query-lifecycle-api` | [#38](https://github.com/mclovin137/Horus/pull/38) | 🔄 Em revisão (PR) |
+| 2026-06-30 | `T-703` | Alertas (e-mail/webhook) com resumo de IA (RF-H-013): `AlertService` resume via IA (FAST) + fan-out a canais habilitados (log sempre on, webhook POST JSON, e-mail stub gated); `POST /horus/alerts` + `GET /horus/alerts/channels`; `./mvnw -pl horus test` verde (63, 4 novos) | `task/T-703-alerts` | — | 🟡 Em progresso |
+| 2026-06-30 | `T-606` | Anomaly Detector + Error Clusterer (RF-H-008/009) **mergeado** via PR #43; CI verde | `task/T-606-anomaly-error-clustering` | [#43](https://github.com/mclovin137/Horus/pull/43) | ✅ Entregue |
 | 2026-06-30 | `T-606` | Anomaly Detector + Error Clusterer (RF-H-008/009): `ErrorClusterer` (fingerprint cross-service + rótulo IA FAST, `GET /horus/ai/errors/clusters/{traceId}`) + `AnomalyDetector` (regras de limiar sobre métricas, `POST /horus/ai/anomalies`); `./mvnw -pl horus test` verde (59, 5 novos) | `task/T-606-anomaly-error-clustering` | — | 🟡 Em progresso |
 | 2026-06-30 | `T-702` | Waterfall UI (RF-H-011) **mergeada** via PR #42; CI verde | `task/T-702-waterfall-ui` | [#42](https://github.com/mclovin137/Horus/pull/42) | ✅ Entregue |
 | 2026-06-30 | `T-702` | Waterfall UI (RF-H-011): `horus-waterfall.html` renderiza o ciclo de vida da request (spans por offset/duração/depth/categoria + queries SQL + logs de erro) consumindo T-503/504/505; `overview` do painel lista endpoints de ciclo de vida + link no painel; `./mvnw -pl horus test` verde (54) | `task/T-702-waterfall-ui` | — | 🟡 Em progresso |
