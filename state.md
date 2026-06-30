@@ -6,22 +6,22 @@
 
 | Campo | Valor |
 |---|---|
-| **Última atualização** | 2026-06-28 |
-| **Branch atual** | `task/T-505-error-log-aggregation` |
+| **Última atualização** | 2026-06-30 |
+| **Branch atual** | `task/T-506-service-map` |
 | **Fase do roadmap** | Fase 5 — Horus core (correlação + ciclo de vida) |
-| **Task ativa** | `T-505` — Agregação de logs de erro correlacionados (em progresso) |
+| **Task ativa** | `T-506` — Mapa de serviços/dependências (em progresso) |
 
 ## 🟢 Última entrega (mergeada)
 
 
-**`T-503` — API do ciclo de vida da request (entregue via [PR #37](https://github.com/mclovin137/Horus/pull/37), mergeada em `main`).** `RequestLifecycleService` + `GET /horus/lifecycle/requests/{traceId}` projetam o trace em waterfall/timeline com `offsetMicros`, `depth`, categorias (`http`/`database`/`messaging`/`worker`/`internal`) e duração total por janela temporal. `mvn -pl horus test` verde (38/38). **CI verde.**
+**`T-505` — Agregação de logs de erro correlacionados (entregue via [PR #39](https://github.com/mclovin137/Horus/pull/39), mergeada em `main`).** `ErrorLogAggregationService` + `GET /horus/lifecycle/errors/{traceId}` filtram e agregam logs de erro por serviço + fingerprint textual, com amostra, contagem, severidade, stack trace e timestamp mais recente. **CI verde** (Java/Python/Rust + ai-review).
 
-> ▶️ **Em progresso:** **`T-505`** — Agregação de logs de erro correlacionados (RF-H-003): `ErrorLogAggregationService` + `GET /horus/lifecycle/errors/{traceId}` filtram e agregam logs de erro por serviço + fingerprint textual, com amostra, contagem, severidade, stack trace e timestamp mais recente. Construído sobre T-501/T-502; `./mvnw -pl horus test` verde (41/41).
+> ▶️ **Em progresso:** **`T-506`** — Mapa de serviços/dependências (RF-H-015): `ServiceMapService` + `GET /horus/lifecycle/service-map/{traceId}` projetam os spans do trace num grafo direcionado — nós por serviço (spanCount, duração, ponto de entrada) e arestas inter-serviço chamador→chamado (callCount, duração somada). Construído sobre T-501/T-502; `./mvnw -pl horus test` verde (3 testes novos).
 
 
 ## ▶️ Próxima ação
 
-Fase 5 core: publicar **`T-505`** (abrir PR da agregação de logs de erro correlacionados). A branch de **`T-504`** já foi publicada e pode seguir em PR próprio. Depois entram **`T-506`** (mapa de serviços) / **`T-507`** (visualização de SAGA) e Fase 7 **`T-702`** (waterfall UI). **`T-405`** (validação ponta a ponta com stack real) e **`T-606`** (anomalias, dep T-505) ficam para quando o ambiente estiver de pé / após T-505.
+Fase 5 core: publicar **`T-506`** (abrir PR do mapa de serviços). A branch de **`T-504`** já foi publicada e pode seguir em PR próprio. Depois entra **`T-507`** (visualização de SAGA) e Fase 7 **`T-702`** (waterfall UI). **`T-405`** (validação ponta a ponta com stack real) e **`T-606`** (anomalias, dep T-505) ficam para quando o ambiente estiver de pé.
 
 > ⚙️ **Pendência sua (agora relevante p/ IA):** a IA real (T-601+) exige a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** e `horus.ai.enabled=true`. Sem isso, o Horus roda com o `StubLlmEngine` (placeholder) — não bloqueia build/CI.
 
@@ -35,6 +35,8 @@ Fase 5 core: publicar **`T-505`** (abrir PR da agregação de logs de erro corre
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
+| 2026-06-30 | `T-506` | Mapa de serviços/dependências (RF-H-015): `ServiceMapService` + `GET /horus/lifecycle/service-map/{traceId}` projetam spans num grafo — nós por serviço (spanCount, duração, entryPoint) e arestas inter-serviço chamador→chamado (callCount, duração); `./mvnw -pl horus test` verde | `task/T-506-service-map` | — | 🟡 Em progresso |
+| 2026-06-30 | `T-505` | Agregação de logs de erro correlacionados (RF-H-003) **mergeada** via PR #39; CI verde (Java/Python/Rust + ai-review) | `task/T-505-error-log-aggregation` | [#39](https://github.com/mclovin137/Horus/pull/39) | ✅ Entregue |
 | 2026-06-28 | `T-505` | Agregação de logs de erro correlacionados (RF-H-003) em andamento: `ErrorLogAggregationService` + `GET /horus/lifecycle/errors/{traceId}` agrupam logs de erro por serviço + fingerprint textual com amostra, contagem, severidade, stack trace e timestamp; `./mvnw -pl horus test` verde (41/41) | `task/T-505-error-log-aggregation` | — | 🟡 Em progresso |
 | 2026-06-28 | `T-504` | API do ciclo de vida da query (RF-H-002): `QueryLifecycleService` + `GET /horus/lifecycle/queries/{traceId}` retornam spans SQL com `statement` sanitizado, `db.namespace`, `db.system`, operação, duração e `offsetMicros`; branch publicada em `origin/task/T-504-query-lifecycle-api`; `./mvnw -pl horus test` verde (42/42) | `task/T-504-query-lifecycle-api` | — | 🟡 Em progresso |
 | 2026-06-28 | `T-503` | API do ciclo de vida da request (RF-H-001/011): `RequestLifecycleService` + `GET /horus/lifecycle/requests/{traceId}` projetam trace em waterfall/timeline com `offsetMicros`, `depth`, categorias e duração total por janela temporal; mergeada em `main` via PR #37 | `task/T-503-request-lifecycle-api` | [#37](https://github.com/mclovin137/Horus/pull/37) | ✅ Entregue |
