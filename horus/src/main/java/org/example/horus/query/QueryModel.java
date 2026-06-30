@@ -34,10 +34,20 @@ public final class QueryModel {
             long durationMicros,
             long startTimeMicros,
             String parentSpanId,
-            String kind) {
+            String kind,
+            String dbOperationName,
+            String dbNamespace,
+            String dbSystemName,
+            String dbQueryText) {
 
         public SpanRef(String spanId, String operation, String serviceName, long durationMicros) {
-            this(spanId, operation, serviceName, durationMicros, 0L, null, null);
+            this(spanId, operation, serviceName, durationMicros, 0L, null, null, null, null, null, null);
+        }
+
+        public SpanRef(String spanId, String operation, String serviceName, long durationMicros,
+                       long startTimeMicros, String parentSpanId, String kind) {
+            this(spanId, operation, serviceName, durationMicros, startTimeMicros, parentSpanId, kind,
+                    null, null, null, null);
         }
     }
 
