@@ -44,14 +44,19 @@ public class HorusPanelResource {
     public Overview overview() {
         var ai = new AiStatus(engine.isLive() ? "live" : "stub", engine.isLive(), cache.stats());
         var backends = new Backends(jaegerUrl, lokiUrl, prometheusUrl);
-        var endpoints = Map.of(
-                "summaryTrace", "GET /horus/ai/summary/trace/{traceId}",
-                "explainTrace", "GET /horus/ai/explain/trace/{traceId}",
-                "rcaTrace", "GET /horus/ai/rca/trace/{traceId}",
-                "ask", "POST /horus/ai/ask",
-                "queryTrace", "GET /horus/query/traces/{traceId}",
-                "queryLogs", "GET /horus/query/logs?traceId=",
-                "queryMetrics", "GET /horus/query/metrics?query=");
+        var endpoints = Map.ofEntries(
+                Map.entry("summaryTrace", "GET /horus/ai/summary/trace/{traceId}"),
+                Map.entry("explainTrace", "GET /horus/ai/explain/trace/{traceId}"),
+                Map.entry("rcaTrace", "GET /horus/ai/rca/trace/{traceId}"),
+                Map.entry("ask", "POST /horus/ai/ask"),
+                Map.entry("queryTrace", "GET /horus/query/traces/{traceId}"),
+                Map.entry("queryLogs", "GET /horus/query/logs?traceId="),
+                Map.entry("queryMetrics", "GET /horus/query/metrics?query="),
+                Map.entry("lifecycleRequest", "GET /horus/lifecycle/requests/{traceId}"),
+                Map.entry("lifecycleQuery", "GET /horus/lifecycle/queries/{traceId}"),
+                Map.entry("lifecycleErrors", "GET /horus/lifecycle/errors/{traceId}"),
+                Map.entry("serviceMap", "GET /horus/lifecycle/service-map/{traceId}"),
+                Map.entry("saga", "GET /horus/lifecycle/saga/{traceId}"));
         return new Overview("horus", ai, backends, endpoints);
     }
 
