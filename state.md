@@ -7,21 +7,21 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-06-30 |
-| **Branch atual** | `task/T-506-service-map` |
+| **Branch atual** | `task/T-507-saga-visualization` |
 | **Fase do roadmap** | Fase 5 — Horus core (correlação + ciclo de vida) |
-| **Task ativa** | `T-506` — Mapa de serviços/dependências (em progresso) |
+| **Task ativa** | `T-507` — Visualização de SAGA (em progresso) |
 
 ## 🟢 Última entrega (mergeada)
 
 
-**`T-505` — Agregação de logs de erro correlacionados (entregue via [PR #39](https://github.com/mclovin137/Horus/pull/39), mergeada em `main`).** `ErrorLogAggregationService` + `GET /horus/lifecycle/errors/{traceId}` filtram e agregam logs de erro por serviço + fingerprint textual, com amostra, contagem, severidade, stack trace e timestamp mais recente. **CI verde** (Java/Python/Rust + ai-review).
+**`T-506` — Mapa de serviços/dependências (entregue via [PR #40](https://github.com/mclovin137/Horus/pull/40), mergeada em `main`).** `ServiceMapService` + `GET /horus/lifecycle/service-map/{traceId}` projetam os spans do trace num grafo direcionado — nós por serviço (spanCount, duração, ponto de entrada) e arestas inter-serviço chamador→chamado (callCount, duração somada). **CI verde** (Java/Python/Rust + ai-review).
 
-> ▶️ **Em progresso:** **`T-506`** — Mapa de serviços/dependências (RF-H-015): `ServiceMapService` + `GET /horus/lifecycle/service-map/{traceId}` projetam os spans do trace num grafo direcionado — nós por serviço (spanCount, duração, ponto de entrada) e arestas inter-serviço chamador→chamado (callCount, duração somada). Construído sobre T-501/T-502; `./mvnw -pl horus test` verde (3 testes novos).
+> ▶️ **Em progresso:** **`T-507`** — Visualização de SAGA (RF-H-016, ADR-0013): `SagaVisualizationService` + `GET /horus/lifecycle/saga/{traceId}` reconstroem, a partir dos spans (`saga.{flow}.{step}` / `.compensate` do contrato T-005), os passos, compensações e desfecho (`completed`/`compensated`/`none`) da SAGA. Construído sobre T-501/T-502; `./mvnw -pl horus test` verde (5 testes novos).
 
 
 ## ▶️ Próxima ação
 
-Fase 5 core: publicar **`T-506`** (abrir PR do mapa de serviços). A branch de **`T-504`** já foi publicada e pode seguir em PR próprio. Depois entra **`T-507`** (visualização de SAGA) e Fase 7 **`T-702`** (waterfall UI). **`T-405`** (validação ponta a ponta com stack real) e **`T-606`** (anomalias, dep T-505) ficam para quando o ambiente estiver de pé.
+Fase 5 core: publicar **`T-507`** (abrir PR da visualização de SAGA) — **fecha a Fase 5 core**. A branch de **`T-504`** já foi publicada e pode seguir em PR próprio. Depois entra a Fase 7 **`T-702`** (waterfall UI, dep T-503/504/505). **`T-405`** (validação ponta a ponta com stack real) e **`T-606`** (anomalias, dep T-505) ficam para quando o ambiente estiver de pé.
 
 > ⚙️ **Pendência sua (agora relevante p/ IA):** a IA real (T-601+) exige a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** e `horus.ai.enabled=true`. Sem isso, o Horus roda com o `StubLlmEngine` (placeholder) — não bloqueia build/CI.
 
@@ -35,6 +35,8 @@ Fase 5 core: publicar **`T-506`** (abrir PR do mapa de serviços). A branch de *
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
+| 2026-06-30 | `T-507` | Visualização de SAGA (RF-H-016, ADR-0013): `SagaVisualizationService` + `GET /horus/lifecycle/saga/{traceId}` reconstroem passos/compensações/desfecho da SAGA a partir dos spans (`saga.{flow}.{step}` / `.compensate`); `./mvnw -pl horus test` verde (5 novos) | `task/T-507-saga-visualization` | — | 🟡 Em progresso |
+| 2026-06-30 | `T-506` | Mapa de serviços/dependências (RF-H-015) **mergeado** via PR #40; CI verde | `task/T-506-service-map` | [#40](https://github.com/mclovin137/Horus/pull/40) | ✅ Entregue |
 | 2026-06-30 | `T-506` | Mapa de serviços/dependências (RF-H-015): `ServiceMapService` + `GET /horus/lifecycle/service-map/{traceId}` projetam spans num grafo — nós por serviço (spanCount, duração, entryPoint) e arestas inter-serviço chamador→chamado (callCount, duração); `./mvnw -pl horus test` verde | `task/T-506-service-map` | — | 🟡 Em progresso |
 | 2026-06-30 | `T-505` | Agregação de logs de erro correlacionados (RF-H-003) **mergeada** via PR #39; CI verde (Java/Python/Rust + ai-review) | `task/T-505-error-log-aggregation` | [#39](https://github.com/mclovin137/Horus/pull/39) | ✅ Entregue |
 | 2026-06-28 | `T-505` | Agregação de logs de erro correlacionados (RF-H-003) em andamento: `ErrorLogAggregationService` + `GET /horus/lifecycle/errors/{traceId}` agrupam logs de erro por serviço + fingerprint textual com amostra, contagem, severidade, stack trace e timestamp; `./mvnw -pl horus test` verde (41/41) | `task/T-505-error-log-aggregation` | — | 🟡 Em progresso |
