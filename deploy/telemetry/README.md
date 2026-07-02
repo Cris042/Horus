@@ -37,6 +37,8 @@ Origem do plumbing: `T-003` (Collector + backends). `T-404` endurece e valida:
 | `loki-config.yaml` | Loki single-binary, filesystem, OTLP habilitado |
 | `prometheus.yml` | self-scrape; métricas chegam por remote_write |
 | `grafana/datasources.yaml` | datasources provisionados (Prometheus/Loki/Jaeger) |
+| `grafana/dashboards.yaml` | provider de dashboards (aponta para `grafana/dashboards/`) |
+| `grafana/dashboards/microservices.json` | dashboard RED + JVM dos 4 serviços de domínio/SAGA |
 
 ## Verificação do pipeline
 
@@ -59,7 +61,10 @@ Origem do plumbing: `T-003` (Collector + backends). `T-404` endurece e valida:
    - Grafana: `curl -fsS http://localhost:3000/api/health`
 4. **Datasources no Grafana:** abrir `http://localhost:3000` → *Connections → Data sources*
    deve listar **Prometheus**, **Loki** e **Jaeger** já provisionados.
-5. **Smoke OTLP** (opcional, sem apps) — enviar um span de teste ao Collector e
+5. **Dashboard:** `http://localhost:3000/d/horus-microservices` (pasta "Horus") — taxa de
+   requisição/latência p95/erros por serviço (RED) + heap/threads/GC (JVM), 4 serviços de
+   domínio/SAGA. Provisionado no boot, sem cliques manuais (mesmo padrão dos datasources).
+6. **Smoke OTLP** (opcional, sem apps) — enviar um span de teste ao Collector e
    conferir em `http://localhost:16686` (Jaeger). A validação ponta a ponta real
    (request→query→log→mensagem→worker no mesmo `trace_id`) é o escopo de **T-405**.
 
@@ -71,3 +76,8 @@ Origem do plumbing: `T-003` (Collector + backends). `T-404` endurece e valida:
 - O datasource Loki traz `derivedFields` que extrai `trace_id` dos logs e linka ao
   Jaeger — base da correlação log→trace explorada em `T-405`.
 - Redação/sanitização de PII na borda do Collector é `T-406`.
+- **`quarkus.otel.metrics.enabled` é `false` por padrão** na extensão OTel do Quarkus —
+  sem essa flag (agora ligada em `application.properties` dos 4 serviços de domínio/SAGA),
+  nenhuma métrica (`http.server.request.duration`, JVM) chega ao Prometheus, mesmo com
+  traces/logs funcionando normalmente. É `BUILD_AND_RUN_TIME_FIXED` (precisa rebuild, não
+  dá pra ligar só com `-D`/env em runtime).

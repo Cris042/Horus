@@ -1,0 +1,18 @@
+# Grafana — dashboards provisionados (RNF-H-014 / T-404 complementar).
+#
+# Aponta para o diretório com os JSON de dashboard (montado no compose). Provisionado no
+# boot (sem cliques manuais), no mesmo espírito de `datasources.yaml`.
+
+apiVersion: 1
+
+providers:
+  - name: horus-dashboards
+    orgId: 1
+    folder: Horus
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/files
+      foldersFromFilesStructure: false

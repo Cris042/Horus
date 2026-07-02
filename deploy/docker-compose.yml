@@ -26,6 +26,11 @@ x-postgres-common: &postgres-common
     retries: 5
   networks: [horus]
 
+x-postgres-exporter-common: &postgres-exporter-common
+  image: quay.io/prometheuscommunity/postgres-exporter:v0.15.0
+  restart: unless-stopped
+  networks: [horus]
+
 services:
   # ---------------------------------------------------------------- Bancos (1 por serviço)
   postgres-prontuario:
@@ -63,6 +68,41 @@ services:
       POSTGRES_DB: saga_db
     ports: ["5435:5432"]
     volumes: ["pg-saga:/var/lib/postgresql/data"]
+
+  # ---------------------------------------------------------------- Métricas de banco (Grafana)
+  # postgres_exporter, 1 por banco (credenciais isoladas — RNF-003). Scrape interno pelo
+  # Prometheus (sem porta exposta ao host); dashboard em grafana/dashboards/postgres.json.
+  postgres-exporter-prontuario:
+    <<: *postgres-exporter-common
+    environment:
+      DATA_SOURCE_NAME: "postgresql://prontuario_svc:prontuario_pw@postgres-prontuario:5432/prontuario_db?sslmode=disable"
+    depends_on:
+      postgres-prontuario:
+        condition: service_healthy
+
+  postgres-exporter-payment:
+    <<: *postgres-exporter-common
+    environment:
+      DATA_SOURCE_NAME: "postgresql://payment_svc:payment_pw@postgres-payment:5432/payment_db?sslmode=disable"
+    depends_on:
+      postgres-payment:
+        condition: service_healthy
+
+  postgres-exporter-invoice:
+    <<: *postgres-exporter-common
+    environment:
+      DATA_SOURCE_NAME: "postgresql://invoice_svc:invoice_pw@postgres-invoice:5432/invoice_db?sslmode=disable"
+    depends_on:
+      postgres-invoice:
+        condition: service_healthy
+
+  postgres-exporter-saga:
+    <<: *postgres-exporter-common
+    environment:
+      DATA_SOURCE_NAME: "postgresql://saga_svc:saga_pw@postgres-saga:5432/saga_db?sslmode=disable"
+    depends_on:
+      postgres-saga:
+        condition: service_healthy
 
   # ---------------------------------------------------------------- Mensageria (relatórios)
   rabbitmq:
@@ -152,6 +192,9 @@ services:
     volumes:
       # Datasources provisionados no boot (Prometheus, Loki, Jaeger)
       - ./telemetry/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+      # Dashboards provisionados no boot (RED por serviço + JVM)
+      - ./telemetry/grafana/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml:ro
+      - ./telemetry/grafana/dashboards:/etc/grafana/provisioning/dashboards/files:ro
     ports:
       - "3000:3000"   # UI (RF-031)
     healthcheck:
