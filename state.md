@@ -7,20 +7,20 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-07-02 |
-| **Branch atual** | `feature/grafana-dashboard-metrics` (não é task do roadmap — melhoria de observabilidade de dev, ver abaixo) |
+| **Branch atual** | `task/T-904-privacy-audit` |
 | **Fase do roadmap** | Fase 9 — Endurecimento e aceite |
-| **Task ativa** | Nenhuma task de roadmap em progresso; próxima é `T-904` |
+| **Task ativa** | `T-904` — Auditoria de privacidade (concluída, abrindo PR) |
 
 ## 🟢 Última entrega (mergeada)
 
 
-**`T-903` — Orçamento de overhead de instrumentação medido sob carga (entregue via [PR #52](https://github.com/mclovin137/Horus/pull/52), mergeada em `main`).** Orçamento definido e medido com infra real (`prontuario-service` + Locust); diferença ON/OFF dentro do ruído, 0 falhas. **CI verde.**
+**Melhoria de observabilidade de dev — 4 dashboards Grafana + `quarkus.otel.metrics.enabled` (entregue via [PR #53](https://github.com/mclovin137/Horus/pull/53), mergeada em `main`; fora do roadmap, pedida interativamente).** `microservices.json` (RED+JVM), `postgres.json` (conexões/tx/tamanho via `postgres_exporter`), `docker.json` (CPU/mem/rede via `cadvisor` — precisou da imagem `ghcr.io/google/cadvisor:v0.60.3`, a `gcr.io` v0.49.1 tem client Docker velho demais pra este Engine), `kubernetes.json` (nós/pods/deployments via `kube-state-metrics` num cluster `kind` local + `kubectl port-forward`, documentado como fora do `make up`). **CI verde.**
 
-> ▶️ **Em andamento (fora do roadmap):** melhoria de observabilidade de **dev** pedida interativamente — descoberta+correção de um gap real (`quarkus.otel.metrics.enabled=false` por padrão na extensão OTel do Quarkus; nenhuma métrica de app nunca chegou ao Prometheus, mesmo com traces/logs funcionando) e provisionamento de **2 dashboards Grafana** (mesmo padrão dos datasources — JSON + volume no compose, sem cliques manuais): `microservices.json` (RED + JVM dos 4 serviços de domínio/SAGA) e `postgres.json` (conexões/tx/cache-hit/tamanho dos 4 bancos, via `postgres_exporter` novo — 1 por banco, mesma segregação de credenciais RNF-003). Texto de SQL segue disponível via Jaeger (spans `db.query.text`), sem dashboard novo pra isso. Branch `feature/grafana-dashboard-metrics`, ainda não commitada/PR aberta nesta atualização — ver PLAN equivalente nesta entrada do log abaixo quando entrar.
+> ▶️ **Concluída, abrindo PR:** **`T-904`** — Auditoria de privacidade (RNF-H-002/006), com dados reais fluindo pelo pipeline (não só releitura de código): **Camada 1** (origem) confirmada — `db.statement` real 100% parametrizado, nenhum log ecoou um valor PII-like enviado de propósito. **Camada 2** (borda do Collector) confirmada — span e log sintéticos enviados direto ao OTLP do Collector com `email`/`cpf`/`nome_paciente`/`cartao`: chaves proibidas somem completamente, padrões (e-mail/CPF) em texto livre viram `***`. **Camada 3** (fronteira do prompt): auditados todos os pontos de chamada de `LlmEngine.complete` — **achou um gap real**: `ErrorClusterer.label()` montava o prompt direto de `log.line()` (telemetria) sem nunca passar por `PromptSanitizer`, diferente de todo o resto dos agentes (que usam `ContextAssembler`). **Corrigido** (não só documentado) + teste de regressão (`LlmRequest` real capturado via mock, afirma ausência de PII crua). `AlertService`/`NlQueryAgent` revisados e confirmados fora de escopo (entrada do operador/usuário, não telemetria automática). `./mvnw -pl horus -am test` verde (64/64).
 
 ## ▶️ Próxima ação
 
-Abrir PR da melhoria de observabilidade (`feature/grafana-dashboard-metrics`). Depois retomar o roadmap: `T-904` (auditoria de privacidade — nenhum dado sensível cru em telemetria/IA), `T-905` (aceite final do PRD, item 1-15 — **última task do roadmap**). Pendente de cluster/ferramenta: overlay de infra K8s e `kubectl apply -k` real (T-405/T-902/T-903 já validados com infra real de compose, sem precisar de K8s).
+Abrir PR de **`T-904`**. Depois: **`T-905`** (aceite final do PRD, itens 1-15 — **última task do roadmap**, fecha o projeto). Pendente de cluster/ferramenta: overlay de infra K8s "de produção" e `kubectl apply -k` real com as imagens da aplicação (T-405/T-902/T-903/T-904 já validados com infra real de compose, sem precisar disso; o cluster `kind` local desta sessão só tem `kube-state-metrics`/`metrics-server`, não a aplicação).
 
 > ⚙️ **Pendência técnica registrada (não bloqueia, observação de T-901):** o LB (NGINX, T-201) nunca foi de fato ativado como serviço containerizado no `docker-compose.yml` nem ganhou Deployment em K8s — os Dockerfiles/imagens existem (T-801) e o `Ingress` cobre a entrada externa em K8s (T-901), mas o compose ainda não sobe o LB (apps rodam via `quarkus:dev`/host, ou diretamente por porta como em T-405). Fica como possível task futura se for necessário testar o roteamento do LB ponta a ponta em compose.
 
@@ -36,6 +36,8 @@ Abrir PR da melhoria de observabilidade (`feature/grafana-dashboard-metrics`). D
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
+| 2026-07-02 | `T-904` | Auditoria de privacidade (RNF-H-002/006) com dados reais: Camadas 1/2 (origem + borda do Collector) confirmadas via sondas reais/sintéticas; Camada 3 (prompt) — achado e corrigido gap real (`ErrorClusterer` não sanitizava antes de `engine.complete`), + teste de regressão; `./mvnw -pl horus -am test` verde (64/64) | `task/T-904-privacy-audit` | — | 🟡 Em progresso |
+| 2026-07-02 | — | Observabilidade de dev **mergeada** via PR #53 (4 dashboards Grafana + `quarkus.otel.metrics.enabled`); CI verde | `feature/grafana-dashboard-metrics` | [#53](https://github.com/mclovin137/Horus/pull/53) | ✅ Entregue |
 | 2026-07-02 | — | Observabilidade de dev: liga `quarkus.otel.metrics.enabled` (`false` por padrão — gap real, nenhuma métrica de app chegava ao Prometheus) nos 4 serviços de domínio/SAGA; provisiona 2 dashboards Grafana (`microservices.json` RED+JVM, `postgres.json` conexões/tx/tamanho via `postgres_exporter` novo, 1 por banco) pelo mesmo padrão dos datasources (JSON + volume, sem clique manual) | `feature/grafana-dashboard-metrics` | — | 🟡 Em progresso |
 | 2026-07-02 | `T-903` | Orçamento de overhead de instrumentação medido sob carga (RNF-H-001/007) **mergeado** via PR #52; CI verde | `task/T-903-instrumentation-overhead` | [#52](https://github.com/mclovin137/Horus/pull/52) | ✅ Entregue |
 | 2026-07-02 | `T-903` | Orçamento de overhead de instrumentação medido sob carga (RNF-H-001/007): orçamento definido (p95 ≤10%/≤10ms); medido com `prontuario-service` real (2× OTel ON, 2× OTel OFF) sob Locust (T-203, `ProntuarioUser`); diferença dentro do ruído de medição, 0 falhas; ingestão Collector→Jaeger sem erros/descartes | `task/T-903-instrumentation-overhead` | — | 🟡 Em progresso |
