@@ -13,6 +13,13 @@ O plano sobe primeiro o **sistema observado** (o suficiente para gerar tráfego 
 **Legenda de prioridade:** 🔴 crítico · 🟠 importante · 🟢 incremental
 **Estimativas** em pontos relativos (P = pequeno, M = médio, G = grande); ajuste à sua capacidade.
 
+> 📍 **Progresso atual (2026-07-02):** Fases 0-8 completas. Fase 9 em andamento —
+> `T-901`/`T-902`/`T-903` **entregues**; restam `T-904` (auditoria de privacidade) e `T-905`
+> (aceite final, última task do roadmap). `T-405` (Fase 4), pendente desde a criação deste
+> plano por falta de infra real, foi validada e corrigida nesta sessão. Este roadmap é o
+> **plano estático**; status task-a-task e o log de entregas vivem em
+> [`../state.md`](../state.md) (fonte de verdade), atualizado a cada entrega (regra R1).
+
 ---
 
 ## Fase 0 — Fundação do repositório 🔴

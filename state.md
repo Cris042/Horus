@@ -7,20 +7,20 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-07-02 |
-| **Branch atual** | `task/T-903-instrumentation-overhead` |
+| **Branch atual** | `feature/grafana-dashboard-metrics` (não é task do roadmap — melhoria de observabilidade de dev, ver abaixo) |
 | **Fase do roadmap** | Fase 9 — Endurecimento e aceite |
-| **Task ativa** | `T-903` — Orçamento de overhead medido sob carga (concluída, abrindo PR) |
+| **Task ativa** | Nenhuma task de roadmap em progresso; próxima é `T-904` |
 
 ## 🟢 Última entrega (mergeada)
 
 
-**`T-405` — Validação ponta a ponta da correlação (entregue via [PR #51](https://github.com/mclovin137/Horus/pull/51), mergeada em `main`).** Encontrou e corrigiu 2 bugs reais na fronteira HTTP→AMQP (`traceparent` nunca injetado; `trace-flags` reservado rejeitado pelo propagador Rust) + gap de log do worker; validado via Jaeger + logs reais. **CI verde.** Fechou o gargalo de valor citado no `ROADMAP.md`.
+**`T-903` — Orçamento de overhead de instrumentação medido sob carga (entregue via [PR #52](https://github.com/mclovin137/Horus/pull/52), mergeada em `main`).** Orçamento definido e medido com infra real (`prontuario-service` + Locust); diferença ON/OFF dentro do ruído, 0 falhas. **CI verde.**
 
-> ▶️ **Concluída, abrindo PR:** **`T-903`** — Orçamento de overhead de instrumentação medido sob carga (RNF-H-001/007), desbloqueada por T-405. Orçamento definido (p95 ≤10% relativo ou ≤10ms absoluto vs. baseline; 0 falhas introduzidas). Medido com infra real: `prontuario-service` rodado 2× com `quarkus.otel.sdk.disabled=false` (default) e 2× com `=true`, sob o cenário Locust `ProntuarioUser` (T-203, reaproveitado sem modificação, ~20 VUs/~40 req/s) — diferença ON vs. OFF (p95 médio 7ms vs. 6ms; avg médio 4.19ms vs. 4.51ms) **dentro do ruído de medição**, bem abaixo do orçamento; 0 falhas em ambas as condições. RNF-H-007: `otel-collector` sem erros/descartes durante as execuções instrumentadas; Jaeger armazenou centenas de traces completos. Task de **medição**, sem mudança de código.
+> ▶️ **Em andamento (fora do roadmap):** melhoria de observabilidade de **dev** pedida interativamente — descoberta+correção de um gap real (`quarkus.otel.metrics.enabled=false` por padrão na extensão OTel do Quarkus; nenhuma métrica de app nunca chegou ao Prometheus, mesmo com traces/logs funcionando) e provisionamento de **2 dashboards Grafana** (mesmo padrão dos datasources — JSON + volume no compose, sem cliques manuais): `microservices.json` (RED + JVM dos 4 serviços de domínio/SAGA) e `postgres.json` (conexões/tx/cache-hit/tamanho dos 4 bancos, via `postgres_exporter` novo — 1 por banco, mesma segregação de credenciais RNF-003). Texto de SQL segue disponível via Jaeger (spans `db.query.text`), sem dashboard novo pra isso. Branch `feature/grafana-dashboard-metrics`, ainda não commitada/PR aberta nesta atualização — ver PLAN equivalente nesta entrada do log abaixo quando entrar.
 
 ## ▶️ Próxima ação
 
-Abrir PR de **`T-903`**. Depois: `T-904` (auditoria de privacidade — nenhum dado sensível cru em telemetria/IA), `T-905` (aceite final do PRD, item 1-15 — última task do roadmap). Pendente de cluster/ferramenta: overlay de infra K8s e `kubectl apply -k` real (T-405/T-902/T-903 já validados com infra real de compose, sem precisar de K8s).
+Abrir PR da melhoria de observabilidade (`feature/grafana-dashboard-metrics`). Depois retomar o roadmap: `T-904` (auditoria de privacidade — nenhum dado sensível cru em telemetria/IA), `T-905` (aceite final do PRD, item 1-15 — **última task do roadmap**). Pendente de cluster/ferramenta: overlay de infra K8s e `kubectl apply -k` real (T-405/T-902/T-903 já validados com infra real de compose, sem precisar de K8s).
 
 > ⚙️ **Pendência técnica registrada (não bloqueia, observação de T-901):** o LB (NGINX, T-201) nunca foi de fato ativado como serviço containerizado no `docker-compose.yml` nem ganhou Deployment em K8s — os Dockerfiles/imagens existem (T-801) e o `Ingress` cobre a entrada externa em K8s (T-901), mas o compose ainda não sobe o LB (apps rodam via `quarkus:dev`/host, ou diretamente por porta como em T-405). Fica como possível task futura se for necessário testar o roteamento do LB ponta a ponta em compose.
 
@@ -36,6 +36,8 @@ Abrir PR de **`T-903`**. Depois: `T-904` (auditoria de privacidade — nenhum da
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
+| 2026-07-02 | — | Observabilidade de dev: liga `quarkus.otel.metrics.enabled` (`false` por padrão — gap real, nenhuma métrica de app chegava ao Prometheus) nos 4 serviços de domínio/SAGA; provisiona 2 dashboards Grafana (`microservices.json` RED+JVM, `postgres.json` conexões/tx/tamanho via `postgres_exporter` novo, 1 por banco) pelo mesmo padrão dos datasources (JSON + volume, sem clique manual) | `feature/grafana-dashboard-metrics` | — | 🟡 Em progresso |
+| 2026-07-02 | `T-903` | Orçamento de overhead de instrumentação medido sob carga (RNF-H-001/007) **mergeado** via PR #52; CI verde | `task/T-903-instrumentation-overhead` | [#52](https://github.com/mclovin137/Horus/pull/52) | ✅ Entregue |
 | 2026-07-02 | `T-903` | Orçamento de overhead de instrumentação medido sob carga (RNF-H-001/007): orçamento definido (p95 ≤10%/≤10ms); medido com `prontuario-service` real (2× OTel ON, 2× OTel OFF) sob Locust (T-203, `ProntuarioUser`); diferença dentro do ruído de medição, 0 falhas; ingestão Collector→Jaeger sem erros/descartes | `task/T-903-instrumentation-overhead` | — | 🟡 Em progresso |
 | 2026-07-02 | `T-405` | Validação ponta a ponta da correlação (RF-H-004) **mergeado** via PR #51; CI verde | `task/T-405-e2e-correlation` | [#51](https://github.com/mclovin137/Horus/pull/51) | ✅ Entregue |
 | 2026-07-02 | `T-405` | Validação ponta a ponta da correlação (RF-H-004) com infra real: 2 bugs reais corrigidos na fronteira HTTP→AMQP (`traceparent` nunca injetado pelo publicador; `trace-flags` reservado rejeitado pelo propagador Rust) + gap de `trace_id` ausente nos logs do worker; validado via Jaeger + logs estruturados; testes de regressão (Java+Rust) | `task/T-405-e2e-correlation` | — | 🟡 Em progresso |
