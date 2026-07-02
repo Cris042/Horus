@@ -10,6 +10,7 @@ Workloads de **aplicação** do Horus para Kubernetes, organizados como base Kus
 | `config.yaml` | `ConfigMap horus-config` (endpoints OTLP/backends, `HORUS_ENV`) |
 | `secrets.example.yaml` | **Exemplo** de Secrets (credenciais de banco por serviço + `ANTHROPIC_API_KEY`) |
 | `apps/*.yaml` | `Deployment` + `Service` de cada executável |
+| `apps/ingress.yaml` | `Ingress` (ponto único de entrada externo, TLS opcional — T-901) |
 | `autoscaling/*-hpa.yaml` | `HorizontalPodAutoscaler` por componente (T-803) |
 | `kustomization.yaml` | Agrega tudo + transformer de tag de imagem |
 
@@ -53,6 +54,40 @@ kubectl label node <no-dominio>   horus.io/tier=domain
 Assim o Horus (observador) e o worker escalam/operam isolados da carga de domínio,
 reforçando a não intrusividade (RNF-H-008).
 
+### Entrada externa e TLS (T-901, RNF-017 / ADR-0002)
+
+Antes desta task os Services eram só `ClusterIP` — sem nenhum ponto de entrada externo em
+K8s. `apps/ingress.yaml` cobre isso: um `Ingress` (`ingressClassName: nginx`, mesma tecnologia
+do LB de compose por ADR-0002) espelhando o roteamento por prefixo de
+`deploy/lb/locations.conf` (`/prontuarios`, `/consultas`, `/carteiras`, `/pagamentos`,
+`/notas`, `/sagas`) para os Services de domínio/saga.
+
+TLS via `spec.tls`, referenciando um Secret `kubernetes.io/tls` chamado `horus-tls-secret`
+(**não** commitado). Crie-o antes de aplicar a base:
+
+```bash
+kubectl -n horus create secret tls horus-tls-secret --cert=tls.crt --key=tls.key
+# ou, com cert-manager instalado no cluster, emita via um Certificate/Issuer apontando
+# para o mesmo Secret name.
+```
+
+Sem o Secret, o `Ingress` fica pendente de TLS (o roteamento HTTP simples via
+`ingressClassName` ainda funciona se o controller permitir; para produção, sempre forneça o
+certificado). O `host` (`horus.local`) é um placeholder — troque por um domínio real no seu
+DNS/`/etc/hosts`.
+
+### Segurança e credenciais (T-901, RNF-017 — auditoria)
+
+- `secrets.example.yaml` é só exemplo (valores de dev não-secretos); `secrets.yaml` (real) é
+  gitignorado (`deploy/k8s/.gitignore`) — nunca commitar segredos reais.
+- `ANTHROPIC_API_KEY` vem do Secret `horus-ai-secret` (`optional: true` no Deployment do
+  Horus); vazio por padrão → `StubLlmEngine`.
+- Tráfego **interno** (serviço-a-serviço, Postgres, RabbitMQ) roda em texto claro dentro do
+  namespace — tratado como fronteira de confiança nesta versão (sem service mesh); TLS interno
+  fica para um endurecimento futuro (ex.: `sslmode=require` no JDBC, `amqps` no RabbitMQ), não
+  ativado por padrão pois exigiria material de CA que não existe nesta base.
+- Chamadas do Horus ao Anthropic API já são HTTPS (endpoint do provedor).
+
 ## Pré-requisitos
 
 A **infraestrutura** (Postgres ×4, RabbitMQ, OTel Collector, Jaeger, Loki, Prometheus) deve
@@ -83,4 +118,6 @@ cd deploy/k8s && kustomize edit set image horus/horus=horus/horus:0.1.0
 
 - Overlay de **infraestrutura** K8s (bancos/mensageria/observabilidade) — hoje pré-requisito.
 - **Escala horizontal** por componente (HPA) — T-803.
-- Ingress/Gateway, NetworkPolicies, PodDisruptionBudgets, Helm chart empacotado.
+- Emissão/gestão automatizada de certificados (cert-manager como dependência de cluster) — o
+  `Ingress` (T-901) só referencia o Secret TLS, não o provisiona.
+- NetworkPolicies, PodDisruptionBudgets, Helm chart empacotado.

@@ -21,6 +21,8 @@ resources:
   - apps/horus.yaml
   - apps/report-worker.yaml
   - apps/loadtest.yaml
+  # Ponto único de entrada externo, com TLS opcional (T-901, RNF-017).
+  - apps/ingress.yaml
   # Escala horizontal por componente (T-803, RNF-005).
   - autoscaling/prontuario-service-hpa.yaml
   - autoscaling/payment-service-hpa.yaml

@@ -1,0 +1,49 @@
+# Ingress — ponto único de entrada em Kubernetes (T-901, RNF-017 / ADR-0002).
+#
+# Espelha o roteamento por prefixo do NGINX de compose (T-201, `deploy/lb/locations.conf`):
+# os Services eram só ClusterIP (sem entrada externa nenhuma em K8s até esta task). `tls:`
+# referencia um Secret `kubernetes.io/tls` NÃO commitado — crie via cert-manager ou:
+#   kubectl -n horus create secret tls horus-tls-secret --cert=tls.crt --key=tls.key
+# Assume um Ingress controller NGINX (`ingressClassName: nginx`) — mesma tecnologia do LB
+# de compose, por consistência com ADR-0002. Troque a classe se o cluster usar outro controller.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: horus-ingress
+  namespace: horus
+  labels:
+    app.kubernetes.io/part-of: horus
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - horus.local
+      secretName: horus-tls-secret
+  rules:
+    - host: horus.local
+      http:
+        paths:
+          - path: /prontuarios
+            pathType: Prefix
+            backend:
+              service: { name: prontuario-service, port: { number: 8081 } }
+          - path: /consultas
+            pathType: Prefix
+            backend:
+              service: { name: prontuario-service, port: { number: 8081 } }
+          - path: /carteiras
+            pathType: Prefix
+            backend:
+              service: { name: payment-service, port: { number: 8082 } }
+          - path: /pagamentos
+            pathType: Prefix
+            backend:
+              service: { name: payment-service, port: { number: 8082 } }
+          - path: /notas
+            pathType: Prefix
+            backend:
+              service: { name: invoice-service, port: { number: 8083 } }
+          - path: /sagas
+            pathType: Prefix
+            backend:
+              service: { name: saga-orchestrator, port: { number: 8084 } }
