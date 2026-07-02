@@ -6,22 +6,21 @@
 
 | Campo | Valor |
 |---|---|
-| **Última atualização** | 2026-06-30 |
-| **Branch atual** | `task/T-803-hpa` |
+| **Última atualização** | 2026-07-01 |
+| **Branch atual** | `task/T-804-separate-platform` |
 | **Fase do roadmap** | Fase 8 — Containerização e Kubernetes |
-| **Task ativa** | `T-803` — Escala horizontal por componente (em progresso) |
+| **Task ativa** | `T-804` — Worker e Horus separados do domínio (em revisão/PR) |
 
 ## 🟢 Última entrega (mergeada)
 
 
-**`T-802` — Manifests Kubernetes (entregue via [PR #46](https://github.com/mclovin137/Horus/pull/46), mergeada em `main`).** Base Kustomize em `deploy/k8s/` — namespace `horus`, `ConfigMap` (OTLP/backends), Secret de exemplo, `Deployment`(+`Service`) dos 7 executáveis com probes/resources e separação Horus/worker do domínio (ADR-0012). **CI verde.**
+**`T-803` — Escala horizontal por componente (entregue via [PR #47](https://github.com/mclovin137/Horus/pull/47), mergeada em `main`).** `HorizontalPodAutoscaler` (CPU) para domínio (2→6), saga (2→5), horus (1→3) e worker (1→4); Deployments geridos por HPA sem `replicas` fixo. **CI verde.**
 
-> ▶️ **Em progresso:** **`T-803`** — Escala horizontal por componente (RNF-005): `HorizontalPodAutoscaler` (CPU) para domínio (2→6), saga (2→5), horus (1→3) e worker (1→4); Deployments geridos por HPA deixam de fixar `replicas`; HPAs na base Kustomize. YAML validado.
-
+> ▶️ **Em progresso:** **`T-804`** — Worker e Horus separados dos serviços de domínio (ADR-0012): `nodeAffinity` **preferida** (soft) por pool `horus.io/tier` — `horus`/`report-worker` → `platform`; `prontuario`/`payment`/`invoice`/`saga-orchestrator` → `domain`. README documenta a rotulagem de nós. YAML validado (parser).
 
 ## ▶️ Próxima ação
 
-Fase 8: publicar **`T-803`** (abrir PR dos HPAs). Depois **`T-804`** (worker/Horus separados — ADR-0012, já refletido em labels/topologia; pode adicionar anti-affinity). Pendente de cluster/ferramenta: overlay de infra K8s, `kubectl apply -k` real e **`T-405`** (validação ponta a ponta); Fase 9 (aceite) ao final.
+Abrir PR de **`T-804`** (fecha a Fase 8 — todas as tasks `T-801`..`T-804` entregues). Depois Fase 9 — endurecimento e aceite: `T-901` (TLS/revisão de segredos), `T-902` (não intrusividade — derrubar Horus/IA não afeta o domínio; depende de `T-804`), `T-903` (overhead de instrumentação sob carga), `T-904` (auditoria de privacidade), `T-905` (aceite final do PRD). Pendente de cluster/ferramenta: overlay de infra K8s, `kubectl apply -k` real e **`T-405`** (validação ponta a ponta).
 
 > ⚙️ **Pendência sua (agora relevante p/ IA):** a IA real (T-601+) exige a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** e `horus.ai.enabled=true`. Sem isso, o Horus roda com o `StubLlmEngine` (placeholder) — não bloqueia build/CI.
 
@@ -35,6 +34,8 @@ Fase 8: publicar **`T-803`** (abrir PR dos HPAs). Depois **`T-804`** (worker/Hor
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
+| 2026-07-01 | `T-804` | Worker e Horus separados do domínio (ADR-0012): `nodeAffinity` soft por pool `horus.io/tier` (`horus`/`report-worker` → `platform`; `prontuario`/`payment`/`invoice`/`saga-orchestrator` → `domain`) nos 6 Deployments; README documenta rotulagem de nós; YAML validado | `task/T-804-separate-platform` | — | 🟡 Em progresso |
+| 2026-06-30 | `T-803` | Escala horizontal por componente (RNF-005) **mergeado** via PR #47; CI verde | `task/T-803-hpa` | [#47](https://github.com/mclovin137/Horus/pull/47) | ✅ Entregue |
 | 2026-06-30 | `T-803` | Escala horizontal por componente (RNF-005): `HorizontalPodAutoscaler` (CPU) p/ domínio (2→6), saga (2→5), horus (1→3), worker (1→4); Deployments geridos por HPA sem `replicas` fixo; HPAs na base Kustomize; YAML validado | `task/T-803-hpa` | — | 🟡 Em progresso |
 | 2026-06-30 | `T-802` | Manifests Kubernetes (RF-033) **mergeado** via PR #46; CI verde | `task/T-802-k8s-manifests` | [#46](https://github.com/mclovin137/Horus/pull/46) | ✅ Entregue |
 | 2026-06-30 | `T-802` | Manifests Kubernetes (RF-033): base Kustomize `deploy/k8s/` — namespace, ConfigMap, Secret-exemplo, Deployment+Service dos 7 executáveis (probes/resources, Horus/worker separados — ADR-0012); YAML validado | `task/T-802-k8s-manifests` | — | 🟡 Em progresso |

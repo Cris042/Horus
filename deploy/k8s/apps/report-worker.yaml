@@ -21,6 +21,16 @@ spec:
         app.kubernetes.io/part-of: horus
         app.kubernetes.io/component: worker
     spec:
+      affinity:
+        nodeAffinity:
+          # ADR-0012 / T-804: prefere nos do pool "platform" (soft, nao bloqueia sem labels).
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: horus.io/tier
+                    operator: In
+                    values: ["platform"]
       containers:
         - name: report-worker
           image: horus/report-worker:dev
