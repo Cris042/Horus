@@ -41,6 +41,30 @@ load-balancer:
 
 > **Sintaxe validada** (T-201): `docker run --rm -v "$PWD/deploy/lb/nginx.conf:/etc/nginx/nginx.conf:ro" nginx:1.27-alpine nginx -t` → *syntax is ok / test is successful*.
 
+## TLS (T-901, RNF-017)
+
+O roteamento por prefixo vive em [`locations.conf`](./locations.conf), compartilhado entre:
+
+| Arquivo | Portas | Uso |
+|---|---|---|
+| [`nginx.conf`](./nginx.conf) | `80` | Default — sem TLS (dev local) |
+| [`nginx.tls.conf`](./nginx.tls.conf) | `80` (redireciona) + `443` | **Opt-in** — TLS na borda |
+
+`nginx.tls.conf` espera um certificado em `/etc/nginx/tls/tls.crt`/`tls.key`. Para dev, gere um
+autoassinado:
+
+```bash
+openssl req -x509 -newkey rsa:2048 -nodes -days 1 \
+  -keyout /tmp/horus-tls/tls.key -out /tmp/horus-tls/tls.crt -subj "/CN=horus.local"
+```
+
+E troque o arquivo montado no serviço do LB (esboço acima) por `nginx.tls.conf`, com um volume
+extra apontando `/tmp/horus-tls` → `/etc/nginx/tls`. Em produção, monte um certificado real
+(emitido por uma CA — manual ou via cert-manager, se o LB migrar para um Ingress controller) no
+mesmo caminho; nunca commite `tls.key`.
+
+> **Sintaxe validada** (T-901): `docker run --rm -v "$PWD/deploy/lb/nginx.tls.conf:/etc/nginx/nginx.conf:ro" -v "$PWD/deploy/lb/locations.conf:/etc/nginx/locations.conf:ro" -v "<dir-do-cert>:/etc/nginx/tls:ro" nginx:1.27-alpine nginx -t` → *syntax is ok / test is successful*.
+
 ## Tasks
 
-`T-201` (esta config) · `T-801` (containerizar serviços + ativar o LB no compose/K8s) · `T-202`/`T-402` (load test atravessa o LB).
+`T-201` (esta config) · `T-801` (containerizar serviços + ativar o LB no compose/K8s) · `T-202`/`T-402` (load test atravessa o LB) · `T-901` (TLS opt-in na borda).
