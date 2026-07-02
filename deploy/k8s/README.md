@@ -39,6 +39,20 @@ por métricas customizadas (ex.: fila RabbitMQ via KEDA) é evolução futura.
 As apps Quarkus rodam no profile **prod** (default da imagem empacotada), onde os endpoints
 já apontam para os Services do cluster (`postgres-*`, `otel-collector`, `payment-service`…).
 
+#### Separação platform × domain (ADR-0012 / T-804)
+
+`horus` e `report-worker` têm `nodeAffinity` **preferida** pelo pool `platform`; os serviços
+de domínio + saga preferem o pool `domain`. A preferência é *soft* (não bloqueia em cluster
+single-node sem labels). Para separar de fato, rotule os nós:
+
+```bash
+kubectl label node <no-plataforma> horus.io/tier=platform
+kubectl label node <no-dominio>   horus.io/tier=domain
+```
+
+Assim o Horus (observador) e o worker escalam/operam isolados da carga de domínio,
+reforçando a não intrusividade (RNF-H-008).
+
 ## Pré-requisitos
 
 A **infraestrutura** (Postgres ×4, RabbitMQ, OTel Collector, Jaeger, Loki, Prometheus) deve
