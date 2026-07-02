@@ -7,22 +7,22 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-07-02 |
-| **Branch atual** | `task/T-902-non-intrusiveness` |
-| **Fase do roadmap** | Fase 9 — Endurecimento e aceite |
-| **Task ativa** | `T-902` — Verificação de não intrusividade (concluída, abrindo PR) |
+| **Branch atual** | `task/T-405-e2e-correlation` |
+| **Fase do roadmap** | Fase 4 — Telemetria ponta a ponta (retomada) / Fase 9 — Endurecimento e aceite |
+| **Task ativa** | `T-405` — Validação ponta a ponta da correlação (concluída, abrindo PR) |
 
 ## 🟢 Última entrega (mergeada)
 
 
-**`T-901` — TLS onde exigido; revisão de segredos/credenciais (entregue via [PR #49](https://github.com/mclovin137/Horus/pull/49), mergeada em `main`).** TLS opt-in na borda (compose `nginx.tls.conf` + `locations.conf` compartilhado) e `Ingress` K8s com TLS via Secret `horus-tls-secret`; auditoria de credenciais documentada (nenhum segredo real commitado). **CI verde.**
+**`T-902` — Verificação de não intrusividade (entregue via [PR #50](https://github.com/mclovin137/Horus/pull/50), mergeada em `main`).** Auditoria estática + prova empírica real (Horus totalmente ausente, `prontuario-service` funcionando integralmente). **CI verde.**
 
-> ▶️ **Concluída, abrindo PR:** **`T-902`** — Verificação de não intrusividade (RNF-H-008): auditoria estática confirma que nenhum dos 4 serviços de domínio/SAGA tem dependência de runtime sobre o Horus (só a coordenada do parent POM Maven, sem client REST/URL); **prova empírica real** — `prontuario-service` (JAR Quarkus) + Postgres via compose, **Horus totalmente ausente** (nenhum processo/container) durante todo o teste, `POST`/`GET /prontuarios` e validação (`400`) funcionando normalmente. Evidência (comandos + saída) registrada no PRD da task. Task de **verificação**, sem mudança de código/manifests.
+> ▶️ **Concluída, abrindo PR:** **`T-405`** — Validação ponta a ponta da correlação (RF-H-004), pendente desde a Fase 4 por falta de cluster real em sessões anteriores. Executada com infraestrutura real (compose + `invoice-service` real + `worker` Rust real) e **encontrou e corrigiu 2 bugs reais** na fronteira HTTP→AMQP (o "ponto crítico" citado em `CONTRACT.md`): **(1)** `RelatorioPublisher` nunca injetava o `traceparent` nos headers AMQP (assumia injeção automática que não existe no conector SmallRye/RabbitMQ) — corrigido injetando explicitamente via `OutgoingRabbitMQMetadata`; **(2)** mesmo com o header chegando, o `opentelemetry_sdk` (Rust) 0.27 rejeitava o `trace-flags=03` que o OTel Java do Quarkus injeta (bit "random trace id" do W3C Trace Context Level 2 além do `sampled`) — corrigido normalizando o byte de flags antes da extração. Também corrigido um gap adicional: logs do worker não carregavam `trace_id`/`span_id` (contrato §4.1) — agora carregam. Validado de ponta a ponta via Jaeger real (`processar_relatorio` do `report-worker` aparece como filho de `relatorios publish` do `invoice-service`, mesmo `trace_id`) e via logs estruturados dos dois serviços com `trace_id` idêntico. Testes de regressão adicionados (Java: header AMQP presente; Rust: `trace-flags` reservado é aceito). `./mvnw -pl services/invoice -am test` verde (8/8); `cargo fmt`/`clippy -D warnings`/`test` verdes no worker (14/14).
 
 ## ▶️ Próxima ação
 
-Abrir PR de **`T-902`**. Depois: `T-903` (overhead de instrumentação sob carga — depende de T-405/T-803), `T-904` (auditoria de privacidade), `T-905` (aceite final do PRD). Pendente de cluster/ferramenta: overlay de infra K8s, `kubectl apply -k` real e **`T-405`** (validação ponta a ponta, também pré-requisito de T-903).
+Abrir PR de **`T-405`** — isso desbloqueia **`T-903`** (overhead de instrumentação sob carga, que dependia de T-405). Depois: `T-903`, `T-904` (auditoria de privacidade), `T-905` (aceite final do PRD). Pendente de cluster/ferramenta: overlay de infra K8s e `kubectl apply -k` real (T-405 em si já foi validado com infra real de compose, sem precisar de K8s).
 
-> ⚙️ **Pendência técnica registrada (não bloqueia, observação de T-901):** o LB (NGINX, T-201) nunca foi de fato ativado como serviço containerizado no `docker-compose.yml` nem ganhou Deployment em K8s — os Dockerfiles/imagens existem (T-801) e o `Ingress` cobre a entrada externa em K8s (T-901), mas o compose ainda não sobe o LB (apps rodam via `quarkus:dev`/host). Fica como possível task futura se for necessário testar o roteamento do LB ponta a ponta em compose.
+> ⚙️ **Pendência técnica registrada (não bloqueia, observação de T-901):** o LB (NGINX, T-201) nunca foi de fato ativado como serviço containerizado no `docker-compose.yml` nem ganhou Deployment em K8s — os Dockerfiles/imagens existem (T-801) e o `Ingress` cobre a entrada externa em K8s (T-901), mas o compose ainda não sobe o LB (apps rodam via `quarkus:dev`/host, ou diretamente por porta como em T-405). Fica como possível task futura se for necessário testar o roteamento do LB ponta a ponta em compose.
 
 > ⚙️ **Pendência sua (agora relevante p/ IA):** a IA real (T-601+) exige a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** e `horus.ai.enabled=true`. Sem isso, o Horus roda com o `StubLlmEngine` (placeholder) — não bloqueia build/CI.
 
@@ -36,6 +36,8 @@ Abrir PR de **`T-902`**. Depois: `T-903` (overhead de instrumentação sob carga
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
+| 2026-07-02 | `T-405` | Validação ponta a ponta da correlação (RF-H-004) com infra real: 2 bugs reais corrigidos na fronteira HTTP→AMQP (`traceparent` nunca injetado pelo publicador; `trace-flags` reservado rejeitado pelo propagador Rust) + gap de `trace_id` ausente nos logs do worker; validado via Jaeger + logs estruturados; testes de regressão (Java+Rust) | `task/T-405-e2e-correlation` | — | 🟡 Em progresso |
+| 2026-07-02 | `T-902` | Verificação de não intrusividade (RNF-H-008) **mergeado** via PR #50; CI verde | `task/T-902-non-intrusiveness` | [#50](https://github.com/mclovin137/Horus/pull/50) | ✅ Entregue |
 | 2026-07-02 | `T-902` | Verificação de não intrusividade (RNF-H-008): auditoria estática (0 dependência de runtime dos 4 serviços de domínio/SAGA sobre o Horus) + prova empírica (`prontuario-service` funcionando integralmente com o Horus totalmente ausente); evidência no PRD | `task/T-902-non-intrusiveness` | — | 🟡 Em progresso |
 | 2026-07-02 | `T-901` | TLS onde exigido; revisão de segredos/credenciais (RNF-017) **mergeado** via PR #49; CI verde | `task/T-901-tls-secrets-review` | [#49](https://github.com/mclovin137/Horus/pull/49) | ✅ Entregue |
 | 2026-07-02 | `T-901` | TLS onde exigido; revisão de segredos/credenciais (RNF-017): TLS opt-in na borda (`nginx.tls.conf` + `locations.conf` compartilhado) e `Ingress` K8s com TLS via Secret `horus-tls-secret`; auditoria de credenciais no PRD (nenhum segredo real commitado); `nginx -t` + YAML validados | `task/T-901-tls-secrets-review` | — | 🟡 Em progresso |
