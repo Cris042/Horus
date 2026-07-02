@@ -2,12 +2,16 @@ package org.example.horus.ai.anomaly;
 
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
+import org.example.horus.ai.LlmEngine;
+import org.example.horus.ai.LlmEngine.LlmRequest;
+import org.example.horus.ai.LlmEngine.LlmResponse;
 import org.example.horus.query.LogQueryPort;
 import org.example.horus.query.QueryModel.LogLine;
 import org.example.horus.query.QueryModel.SpanRef;
 import org.example.horus.query.QueryModel.TraceResult;
 import org.example.horus.query.TraceQueryPort;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.util.List;
 import java.util.Map;
@@ -16,8 +20,12 @@ import java.util.Optional;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -78,5 +86,38 @@ class ErrorClustererTest {
 
         verify(traces, never()).findTrace("not-a-trace");
         verify(logs, never()).findByTraceId(eq("not-a-trace"), anyInt());
+    }
+
+    /**
+     * T-904 (auditoria de privacidade): o prompt do rótulo é montado direto de
+     * {@code log.line()} (telemetria) — precisa passar pelo mesmo {@code PromptSanitizer}
+     * do {@code ContextAssembler} (RNF-H-006). Instancia o agente direto (sem CDI) com um
+     * {@link LlmEngine} mockado para capturar o prompt de fato enviado.
+     */
+    @Test
+    void promptDoLabelNaoCarregaPiiCrua() {
+        TraceQueryPort tracesMock = mock(TraceQueryPort.class);
+        LogQueryPort logsMock = mock(LogQueryPort.class);
+        LlmEngine engineMock = mock(LlmEngine.class);
+
+        when(tracesMock.findTrace(TRACE_ID)).thenReturn(Optional.of(
+                new TraceResult(TRACE_ID, 1, List.of(
+                        new SpanRef("s1", "POST /pagamentos", "payment-service", 1_000)))));
+        when(logsMock.findByTraceId(eq(TRACE_ID), anyInt())).thenReturn(List.of(
+                new LogLine("100", "falha ao notificar paciente.real@example.com cpf 123.456.789-09",
+                        Map.of("level", "error", "service_name", "payment-service"))));
+        when(engineMock.complete(any(LlmRequest.class)))
+                .thenReturn(new LlmResponse("resumo", "stub", false));
+
+        ErrorClusterer clusterer = new ErrorClusterer(tracesMock, logsMock, engineMock);
+        clusterer.clusterByTrace(TRACE_ID, 10);
+
+        ArgumentCaptor<LlmRequest> captor = ArgumentCaptor.forClass(LlmRequest.class);
+        verify(engineMock).complete(captor.capture());
+        String prompt = captor.getValue().prompt();
+
+        assertFalse(prompt.contains("paciente.real@example.com"), "e-mail cru vazou pro prompt");
+        assertFalse(prompt.contains("123.456.789-09"), "CPF cru vazou pro prompt");
+        assertTrue(prompt.contains("***@***") || prompt.contains("***"), "esperava marcador de redação no prompt");
     }
 }

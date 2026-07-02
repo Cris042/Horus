@@ -7,6 +7,7 @@ import org.example.horus.ai.LlmEngine.LlmResponse;
 import org.example.horus.ai.ModelTier;
 import org.example.horus.ai.anomaly.ErrorClusterModel.ErrorCluster;
 import org.example.horus.ai.anomaly.ErrorClusterModel.ErrorClustering;
+import org.example.horus.ai.context.PromptSanitizer;
 import org.example.horus.query.LogQueryPort;
 import org.example.horus.query.QueryModel.LogLine;
 import org.example.horus.query.TraceQueryPort;
@@ -99,7 +100,11 @@ public class ErrorClusterer {
                 .append(c.crossService() ? " (cross-service " + c.serviceCount() + ")" : "")
                 .append(" serviços=").append(c.affectedServices())
                 .append(" :: ").append(c.sample()).append('\n'));
-        return engine.complete(new LlmRequest(SYSTEM, sb.toString(), ModelTier.FAST));
+        // Guarda final de PII na fronteira do prompt (RNF-H-006) — mesma rede de segurança do
+        // ContextAssembler (T-602); achado em T-904: este agente monta o prompt direto de
+        // `sample()` (log cru da telemetria) e não passava por ela.
+        String prompt = PromptSanitizer.sanitize(sb.toString());
+        return engine.complete(new LlmRequest(SYSTEM, prompt, ModelTier.FAST));
     }
 
     private static boolean isError(LogLine log) {
