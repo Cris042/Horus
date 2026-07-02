@@ -111,10 +111,17 @@ async fn main() -> Result<()> {
 
         // Span de processamento que CONTINUA o trace do publicador (HTTP→AMQP, RF-H-004):
         // extrai o contexto W3C dos headers AMQP e o define como pai do span.
-        let span = tracing::info_span!("processar_relatorio", messaging.system = "rabbitmq");
+        let span = tracing::info_span!(
+            "processar_relatorio",
+            messaging.system = "rabbitmq",
+            trace_id = tracing::field::Empty,
+            span_id = tracing::field::Empty,
+        );
         if let Some(headers) = delivery.properties.headers() {
             span.set_parent(telemetry::extrair_contexto(headers));
         }
+        // Injeta trace_id/span_id nos logs deste span (contrato T-005 §4.1, RF-H-004).
+        telemetry::registrar_trace_context(&span);
         let _guard = span.enter();
 
         match processor.parse_e_processar(&delivery.data) {
