@@ -7,20 +7,20 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-07-02 |
-| **Branch atual** | `task/T-405-e2e-correlation` |
-| **Fase do roadmap** | Fase 4 — Telemetria ponta a ponta (retomada) / Fase 9 — Endurecimento e aceite |
-| **Task ativa** | `T-405` — Validação ponta a ponta da correlação (concluída, abrindo PR) |
+| **Branch atual** | `task/T-903-instrumentation-overhead` |
+| **Fase do roadmap** | Fase 9 — Endurecimento e aceite |
+| **Task ativa** | `T-903` — Orçamento de overhead medido sob carga (concluída, abrindo PR) |
 
 ## 🟢 Última entrega (mergeada)
 
 
-**`T-902` — Verificação de não intrusividade (entregue via [PR #50](https://github.com/mclovin137/Horus/pull/50), mergeada em `main`).** Auditoria estática + prova empírica real (Horus totalmente ausente, `prontuario-service` funcionando integralmente). **CI verde.**
+**`T-405` — Validação ponta a ponta da correlação (entregue via [PR #51](https://github.com/mclovin137/Horus/pull/51), mergeada em `main`).** Encontrou e corrigiu 2 bugs reais na fronteira HTTP→AMQP (`traceparent` nunca injetado; `trace-flags` reservado rejeitado pelo propagador Rust) + gap de log do worker; validado via Jaeger + logs reais. **CI verde.** Fechou o gargalo de valor citado no `ROADMAP.md`.
 
-> ▶️ **Concluída, abrindo PR:** **`T-405`** — Validação ponta a ponta da correlação (RF-H-004), pendente desde a Fase 4 por falta de cluster real em sessões anteriores. Executada com infraestrutura real (compose + `invoice-service` real + `worker` Rust real) e **encontrou e corrigiu 2 bugs reais** na fronteira HTTP→AMQP (o "ponto crítico" citado em `CONTRACT.md`): **(1)** `RelatorioPublisher` nunca injetava o `traceparent` nos headers AMQP (assumia injeção automática que não existe no conector SmallRye/RabbitMQ) — corrigido injetando explicitamente via `OutgoingRabbitMQMetadata`; **(2)** mesmo com o header chegando, o `opentelemetry_sdk` (Rust) 0.27 rejeitava o `trace-flags=03` que o OTel Java do Quarkus injeta (bit "random trace id" do W3C Trace Context Level 2 além do `sampled`) — corrigido normalizando o byte de flags antes da extração. Também corrigido um gap adicional: logs do worker não carregavam `trace_id`/`span_id` (contrato §4.1) — agora carregam. Validado de ponta a ponta via Jaeger real (`processar_relatorio` do `report-worker` aparece como filho de `relatorios publish` do `invoice-service`, mesmo `trace_id`) e via logs estruturados dos dois serviços com `trace_id` idêntico. Testes de regressão adicionados (Java: header AMQP presente; Rust: `trace-flags` reservado é aceito). `./mvnw -pl services/invoice -am test` verde (8/8); `cargo fmt`/`clippy -D warnings`/`test` verdes no worker (14/14).
+> ▶️ **Concluída, abrindo PR:** **`T-903`** — Orçamento de overhead de instrumentação medido sob carga (RNF-H-001/007), desbloqueada por T-405. Orçamento definido (p95 ≤10% relativo ou ≤10ms absoluto vs. baseline; 0 falhas introduzidas). Medido com infra real: `prontuario-service` rodado 2× com `quarkus.otel.sdk.disabled=false` (default) e 2× com `=true`, sob o cenário Locust `ProntuarioUser` (T-203, reaproveitado sem modificação, ~20 VUs/~40 req/s) — diferença ON vs. OFF (p95 médio 7ms vs. 6ms; avg médio 4.19ms vs. 4.51ms) **dentro do ruído de medição**, bem abaixo do orçamento; 0 falhas em ambas as condições. RNF-H-007: `otel-collector` sem erros/descartes durante as execuções instrumentadas; Jaeger armazenou centenas de traces completos. Task de **medição**, sem mudança de código.
 
 ## ▶️ Próxima ação
 
-Abrir PR de **`T-405`** — isso desbloqueia **`T-903`** (overhead de instrumentação sob carga, que dependia de T-405). Depois: `T-903`, `T-904` (auditoria de privacidade), `T-905` (aceite final do PRD). Pendente de cluster/ferramenta: overlay de infra K8s e `kubectl apply -k` real (T-405 em si já foi validado com infra real de compose, sem precisar de K8s).
+Abrir PR de **`T-903`**. Depois: `T-904` (auditoria de privacidade — nenhum dado sensível cru em telemetria/IA), `T-905` (aceite final do PRD, item 1-15 — última task do roadmap). Pendente de cluster/ferramenta: overlay de infra K8s e `kubectl apply -k` real (T-405/T-902/T-903 já validados com infra real de compose, sem precisar de K8s).
 
 > ⚙️ **Pendência técnica registrada (não bloqueia, observação de T-901):** o LB (NGINX, T-201) nunca foi de fato ativado como serviço containerizado no `docker-compose.yml` nem ganhou Deployment em K8s — os Dockerfiles/imagens existem (T-801) e o `Ingress` cobre a entrada externa em K8s (T-901), mas o compose ainda não sobe o LB (apps rodam via `quarkus:dev`/host, ou diretamente por porta como em T-405). Fica como possível task futura se for necessário testar o roteamento do LB ponta a ponta em compose.
 
@@ -36,6 +36,8 @@ Abrir PR de **`T-405`** — isso desbloqueia **`T-903`** (overhead de instrument
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
+| 2026-07-02 | `T-903` | Orçamento de overhead de instrumentação medido sob carga (RNF-H-001/007): orçamento definido (p95 ≤10%/≤10ms); medido com `prontuario-service` real (2× OTel ON, 2× OTel OFF) sob Locust (T-203, `ProntuarioUser`); diferença dentro do ruído de medição, 0 falhas; ingestão Collector→Jaeger sem erros/descartes | `task/T-903-instrumentation-overhead` | — | 🟡 Em progresso |
+| 2026-07-02 | `T-405` | Validação ponta a ponta da correlação (RF-H-004) **mergeado** via PR #51; CI verde | `task/T-405-e2e-correlation` | [#51](https://github.com/mclovin137/Horus/pull/51) | ✅ Entregue |
 | 2026-07-02 | `T-405` | Validação ponta a ponta da correlação (RF-H-004) com infra real: 2 bugs reais corrigidos na fronteira HTTP→AMQP (`traceparent` nunca injetado pelo publicador; `trace-flags` reservado rejeitado pelo propagador Rust) + gap de `trace_id` ausente nos logs do worker; validado via Jaeger + logs estruturados; testes de regressão (Java+Rust) | `task/T-405-e2e-correlation` | — | 🟡 Em progresso |
 | 2026-07-02 | `T-902` | Verificação de não intrusividade (RNF-H-008) **mergeado** via PR #50; CI verde | `task/T-902-non-intrusiveness` | [#50](https://github.com/mclovin137/Horus/pull/50) | ✅ Entregue |
 | 2026-07-02 | `T-902` | Verificação de não intrusividade (RNF-H-008): auditoria estática (0 dependência de runtime dos 4 serviços de domínio/SAGA sobre o Horus) + prova empírica (`prontuario-service` funcionando integralmente com o Horus totalmente ausente); evidência no PRD | `task/T-902-non-intrusiveness` | — | 🟡 Em progresso |
