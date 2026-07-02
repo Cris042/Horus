@@ -7,31 +7,39 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-07-02 |
-| **Branch atual** | `task/T-905-final-acceptance` |
-| **Fase do roadmap** | Fase 9 — Endurecimento e aceite — **roadmap completo, aguardando merge do PR final** |
-| **Task ativa** | `T-905` — Aceite final do PRD (concluída, abrindo PR — **última task do roadmap**) |
+| **Branch atual** | `main` |
+| **Fase do roadmap** | 🏁 **Roadmap completo — Fases 0-9 entregues** |
+| **Task ativa** | Nenhuma — todas as tasks do roadmap (`T-001`..`T-905`) entregues |
 
 ## 🟢 Última entrega (mergeada)
 
 
-**`T-904` — Auditoria de privacidade (entregue via [PR #54](https://github.com/mclovin137/Horus/pull/54), mergeada em `main`).** 3 camadas de defesa contra PII testadas com dados reais/sintéticos; achou e corrigiu 1 gap real (`ErrorClusterer` sem `PromptSanitizer`). **CI verde.**
+**`T-905` — Aceite final do PRD (entregue via [PR #55](https://github.com/mclovin137/Horus/pull/55), mergeada em `main`) — última task do roadmap.** Validou os 16 critérios do `PRD.md` §10 com o sistema real rodando. Três achados corrigidos, não só documentados:
+1. **LB nunca tinha sido testado com tráfego real** (critério #2) — containerizei os 4 serviços de domínio/SAGA (buildei as imagens que faltavam) + o NGINX real na rede do compose; roteamento e propagação de `traceparent` confirmados via `:8088`. Desenho já estava correto, só nunca tinha sido exercitado.
+2. **`kubectl apply -k deploy/k8s/` nunca tinha sido rodado contra um cluster real** (critério #7) — carreguei as 7 imagens no `kind`, apliquei os manifestos sem erros (achei e corrigi um `commonLabels` deprecado no caminho); pods ficam pendentes só pela ausência do overlay de infra K8s (gap já documentado, não bug de manifesto).
+3. **Achado maior: a visualização de SAGA do Horus (T-507) nunca funcionou com uma SAGA real** (critério #16) — `SagaVisualizationService` espera spans `saga.{flow}.{step}`, mas `SagaService` nunca os emitia (só spans HTTP/DB automáticos); os testes de T-507 só usavam dados sintéticos, então isso nunca foi pego. **Corrigido**: `SagaService` agora envolve cada passo/compensação com um span próprio (`horus.saga.*`, contrato T-005 §3.4); validado ao vivo — SAGA real com compensação aparece corretamente em `GET /horus/lifecycle/saga/{traceId}`.
 
-> ▶️ **Concluída, abrindo PR:** **`T-905`** — Validação dos 16 critérios de aceite do `PRD.md` §10, com o sistema **realmente rodando** (infra + 4 domínio/SAGA + Horus + LB real + cluster `kind` real). Dois achados reais, ambos **corrigidos** nesta task:
-> 1. **LB nunca tinha sido testado com tráfego real** (critério #2) — containerizei os 4 serviços de domínio/SAGA (buildei as imagens que faltavam) + o NGINX real na rede do compose; roteamento e propagação de `traceparent` confirmados via `:8088`. Desenho já estava correto, só nunca tinha sido exercitado.
-> 2. **`kubectl apply -k deploy/k8s/` nunca tinha sido rodado contra um cluster real** (critério #7) — carreguei as 7 imagens no `kind`, apliquei os manifestos sem erros (achei e corrigi um `commonLabels` deprecado no caminho); pods ficam pendentes só pela ausência do overlay de infra K8s (gap já documentado, não bug de manifesto).
-> 3. **Achado maior: a visualização de SAGA do Horus (T-507) nunca funcionou com uma SAGA real** (critério #16) — `SagaVisualizationService` espera spans `saga.{flow}.{step}`, mas `SagaService` nunca os emitia (só spans HTTP/DB automáticos); os testes de T-507 só usavam dados sintéticos, então isso nunca foi pego. **Corrigido**: `SagaService` agora envolve cada passo/compensação com um span próprio (`horus.saga.*`, contrato T-005 §3.4); validado ao vivo — SAGA real com compensação aparece corretamente em `GET /horus/lifecycle/saga/{traceId}` (`outcome: compensated`, 2 passos + 1 compensação, timeline correta).
->
-> Critérios #1/#3/#4/#5/#6/#8/#9/#10/#11/#12/#13/#14/#15 confirmados com evidência real (a maioria já validada em T-405/T-902/T-903/T-904; completados #1/#9/#10/#11/#12/#13 nesta task). `./mvnw verify` (raiz) verde — 86 testes, `BUILD SUCCESS`; `pytest` 21/21; `cargo fmt`/`clippy`/`test` do worker limpos, 14/14.
+Critérios #1/#3/#4/#5/#6/#8/#9/#10/#11/#12/#13/#14/#15 confirmados com evidência real. `./mvnw verify` (raiz) verde — 86 testes; `pytest` 21/21; worker 14/14. **CI verde.**
 
-## ▶️ Próxima ação
+## 🏁 Roadmap completo
 
-Abrir e mergear o PR de **`T-905`** — ao mergear, **o roadmap está 100% completo** (todas as
-19 tasks de Fase 9 + as 8 fases anteriores entregues, todos os 16 critérios de aceite do PRD
-validados com evidência real). Trabalho futuro (não roadmap): overlay de infraestrutura K8s
-"de produção" (Postgres/RabbitMQ/Collector dentro do cluster — sempre fora de escopo),
-ativar o LB permanentemente no `docker-compose.yml`/K8s (hoje validado ad-hoc, não é um
-serviço padrão do `make up`), e a pendência do usuário de configurar `ANTHROPIC_API_KEY` para
-a IA real (documentada desde T-601, não bloqueia).
+**Todas as 9 fases e ~90 tasks do `docs/ROADMAP.md` foram entregues.** Os 16 critérios de
+aceite do `docs/PRD.md` §10 estão validados com evidência real (não só código/documentação) —
+ver `docs/tasks/T-905/PRD.md` para a tabela completa por critério.
+
+### Trabalho futuro (fora do roadmap original)
+
+- **Overlay de infraestrutura K8s "de produção"** (Postgres/RabbitMQ/Collector dentro do
+  cluster) — sempre foi documentado como fora de escopo (T-802 em diante); os manifestos de
+  aplicação já foram validados como corretos e prontos para quando essa infra existir (T-905).
+- **Ativar o LB (NGINX) permanentemente** no `docker-compose.yml`/K8s — hoje validado ad-hoc
+  (T-905), não é um serviço padrão do `make up`.
+- **`ANTHROPIC_API_KEY`** (pendência sua, ver abaixo) — para a IA real substituir o
+  `StubLlmEngine`.
+- Endurecimentos adicionais sugeridos pelas próprias tasks de auditoria (T-904: nenhum
+  mecanismo automático impede um novo agente de IA esquecer o `PromptSanitizer`).
+
+### Pendências operacionais (não bloqueiam)
 
 > ⚙️ **Pendência sua (agora relevante p/ IA):** a IA real (T-601+) exige a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** e `horus.ai.enabled=true`. Sem isso, o Horus roda com o `StubLlmEngine` (placeholder) — não bloqueia build/CI.
 
@@ -45,6 +53,7 @@ a IA real (documentada desde T-601, não bloqueia).
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
+| 2026-07-02 | `T-905` | **Aceite final do PRD — última task do roadmap** **mergeada** via PR #55; roadmap 100% completo; CI verde | `task/T-905-final-acceptance` | [#55](https://github.com/mclovin137/Horus/pull/55) | ✅ Entregue |
 | 2026-07-02 | `T-905` | **Aceite final do PRD** (16 critérios, §10) validados com o sistema real rodando; 3 achados corrigidos: LB nunca testado com tráfego real (agora testado), `kubectl apply -k` nunca rodado contra cluster real (agora aplicado, `commonLabels` deprecado corrigido), e o achado maior — visualização de SAGA (T-507) nunca funcionava com SAGA real, `SagaService` não emitia os spans `saga.{flow}.{step}` esperados (corrigido); `./mvnw verify` raiz verde (86 testes), `pytest` 21/21, worker 14/14 | `task/T-905-final-acceptance` | — | 🟡 Em progresso |
 | 2026-07-02 | `T-904` | Auditoria de privacidade (RNF-H-002/006) **mergeada** via PR #54; CI verde | `task/T-904-privacy-audit` | [#54](https://github.com/mclovin137/Horus/pull/54) | ✅ Entregue |
 | 2026-07-02 | `T-904` | Auditoria de privacidade (RNF-H-002/006) com dados reais: Camadas 1/2 (origem + borda do Collector) confirmadas via sondas reais/sintéticas; Camada 3 (prompt) — achado e corrigido gap real (`ErrorClusterer` não sanitizava antes de `engine.complete`), + teste de regressão; `./mvnw -pl horus -am test` verde (64/64) | `task/T-904-privacy-audit` | — | 🟡 Em progresso |
