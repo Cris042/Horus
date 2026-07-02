@@ -24,3 +24,16 @@ scrape_configs:
         labels: { database: invoice_db }
       - targets: ["postgres-exporter-saga:9187"]
         labels: { database: saga_db }
+
+  # CPU/memória/rede por contêiner Docker do host (dashboard `docker.json`).
+  - job_name: cadvisor
+    static_configs:
+      - targets: ["cadvisor:8080"]
+
+  # kube-state-metrics de um cluster kind LOCAL (dashboard `kubernetes.json`) — não é parte
+  # do `make up`; requer `kind create cluster` + `kubectl port-forward -n kube-system
+  # svc/kube-state-metrics 8090:8080` no host (ver deploy/telemetry/README.md). Sem isso,
+  # o alvo fica "down" sem quebrar o resto do pipeline.
+  - job_name: kubernetes-state
+    static_configs:
+      - targets: ["host.docker.internal:8090"]

@@ -152,6 +152,11 @@ services:
       - "--web.enable-remote-write-receiver"   # recebe métricas do Collector via remote_write
     volumes:
       - ./telemetry/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    # Ponte p/ um cluster kind local (dashboard `kubernetes.json`) via `kubectl port-forward`
+    # no host — fora do `make up` (ver deploy/telemetry/README.md). Inofensivo sem cluster:
+    # o alvo só aparece "down".
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "9090:9090"
     healthcheck:
@@ -209,6 +214,22 @@ services:
         condition: service_healthy
       jaeger:
         condition: service_started
+    networks: [horus]
+
+  # ---------------------------------------------------------------- Métricas de contêiner
+  # cAdvisor: CPU/memória/rede/disco por contêiner Docker deste host, raspado pelo Prometheus
+  # (dashboard `docker.json`). Read-only nos sockets/cgroups do host — não é destrutivo.
+  cadvisor:
+    image: ghcr.io/google/cadvisor:v0.60.3
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks: [horus]
 
 volumes:

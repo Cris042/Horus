@@ -39,6 +39,9 @@ Origem do plumbing: `T-003` (Collector + backends). `T-404` endurece e valida:
 | `grafana/datasources.yaml` | datasources provisionados (Prometheus/Loki/Jaeger) |
 | `grafana/dashboards.yaml` | provider de dashboards (aponta para `grafana/dashboards/`) |
 | `grafana/dashboards/microservices.json` | dashboard RED + JVM dos 4 serviços de domínio/SAGA |
+| `grafana/dashboards/postgres.json` | dashboard de conexões/transações/tamanho dos 4 bancos |
+| `grafana/dashboards/docker.json` | dashboard de CPU/memória/rede por contêiner Docker do host |
+| `grafana/dashboards/kubernetes.json` | dashboard de cluster K8s (nós/pods/deployments) — requer cluster kind local, ver abaixo |
 
 ## Verificação do pipeline
 
@@ -67,6 +70,32 @@ Origem do plumbing: `T-003` (Collector + backends). `T-404` endurece e valida:
 6. **Smoke OTLP** (opcional, sem apps) — enviar um span de teste ao Collector e
    conferir em `http://localhost:16686` (Jaeger). A validação ponta a ponta real
    (request→query→log→mensagem→worker no mesmo `trace_id`) é o escopo de **T-405**.
+
+## Dashboards de infraestrutura (Docker e Kubernetes)
+
+- **`docker.json`** (`http://localhost:3000/d/horus-docker`) — funciona **direto** com
+  `make up`: o serviço `cadvisor` (compose) já raspa todos os contêineres do host.
+- **`kubernetes.json`** (`http://localhost:3000/d/horus-kubernetes`) — **não** é parte do
+  `make up` (não há cluster K8s no compose). Para popular:
+  ```bash
+  # 1) Suba um cluster kind local (uma vez):
+  kind create cluster --name horus
+
+  # 2) Aplique o namespace/config/secret de exemplo (opcional, sem imagens de app):
+  kubectl --context kind-horus apply -f deploy/k8s/namespace.yaml \
+    -f deploy/k8s/config.yaml -f deploy/k8s/secrets.example.yaml
+
+  # 3) kube-state-metrics (métricas de objetos K8s — pods/deployments/nós):
+  kubectl --context kind-horus apply -k "github.com/kubernetes/kube-state-metrics/?ref=v2.13.0"
+
+  # 4) Ponte para o Prometheus do compose (mantenha rodando em outro terminal):
+  kubectl --context kind-horus port-forward -n kube-system svc/kube-state-metrics 8090:8080
+  ```
+  O Prometheus do compose já está configurado para raspar
+  `host.docker.internal:8090` (job `kubernetes-state`); sem o port-forward acima, esse alvo
+  fica "down" sem afetar o resto do pipeline. Uso real de CPU/memória por pod (não só
+  contagem/estado) requer `metrics-server` + `kubectl top`, que **não** é raspável via
+  Prometheus sem um adaptador — fora de escopo aqui.
 
 ## Notas
 
