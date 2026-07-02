@@ -175,17 +175,18 @@ Resumo das decisões-chave (cada uma é um ADR em [`docs/adr/`](docs/adr/)):
 
 ## 🚦 Estado atual
 
-O roadmap está **quase completo**: Fases 0-8 (fundação, domínio, carga, worker, telemetria,
-Horus core, IA, painel/RBAC, containerização/K8s) entregues. Fase 9 (endurecimento e aceite)
-em andamento — `T-901` (TLS/segredos), `T-902` (não intrusividade) e `T-903` (orçamento de
-overhead) já entregues; restam `T-904` (auditoria de privacidade) e `T-905` (aceite final do
-PRD — última task do roadmap). `T-405` (validação ponta a ponta da correlação), pendente desde
-a Fase 4 por falta de infraestrutura real em sessões anteriores, foi validada e **corrigiu 2
-bugs reais** na fronteira HTTP→AMQP (ver log de entregas em [`state.md`](state.md)).
+**O roadmap está completo** (Fases 0-9): fundação, domínio, carga, worker, telemetria, Horus
+core, IA, painel/RBAC, containerização/K8s e endurecimento/aceite (`T-901`..`T-905`) entregues.
+`T-905` (aceite final) validou os 16 critérios do `PRD.md` §10 com o sistema **realmente
+rodando** — incluindo, pela primeira vez na história do projeto, o Load Balancer real com
+tráfego de verdade e `kubectl apply -k` contra um cluster Kubernetes real — e corrigiu um gap
+significativo: a visualização de SAGA do Horus nunca tinha funcionado com uma SAGA real (só
+com dados sintéticos nos testes). Ver o log completo de entregas em [`state.md`](state.md).
 
 Ambiente de dev roda de ponta a ponta: `docker compose` sobe a infra (Postgres ×4, RabbitMQ,
 OTel Collector, Jaeger, Loki, Prometheus, Grafana com dashboards provisionados — RED por
-serviço e métricas de banco), e os 4 serviços de domínio/SAGA + Horus + worker rodam por cima.
+serviço, métricas de banco, Docker e Kubernetes), e os 4 serviços de domínio/SAGA + Horus +
+worker rodam por cima.
 
 ## Pré-requisitos de desenvolvimento
 

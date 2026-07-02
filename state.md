@@ -7,22 +7,31 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-07-02 |
-| **Branch atual** | `task/T-904-privacy-audit` |
-| **Fase do roadmap** | Fase 9 — Endurecimento e aceite |
-| **Task ativa** | `T-904` — Auditoria de privacidade (concluída, abrindo PR) |
+| **Branch atual** | `task/T-905-final-acceptance` |
+| **Fase do roadmap** | Fase 9 — Endurecimento e aceite — **roadmap completo, aguardando merge do PR final** |
+| **Task ativa** | `T-905` — Aceite final do PRD (concluída, abrindo PR — **última task do roadmap**) |
 
 ## 🟢 Última entrega (mergeada)
 
 
-**Melhoria de observabilidade de dev — 4 dashboards Grafana + `quarkus.otel.metrics.enabled` (entregue via [PR #53](https://github.com/mclovin137/Horus/pull/53), mergeada em `main`; fora do roadmap, pedida interativamente).** `microservices.json` (RED+JVM), `postgres.json` (conexões/tx/tamanho via `postgres_exporter`), `docker.json` (CPU/mem/rede via `cadvisor` — precisou da imagem `ghcr.io/google/cadvisor:v0.60.3`, a `gcr.io` v0.49.1 tem client Docker velho demais pra este Engine), `kubernetes.json` (nós/pods/deployments via `kube-state-metrics` num cluster `kind` local + `kubectl port-forward`, documentado como fora do `make up`). **CI verde.**
+**`T-904` — Auditoria de privacidade (entregue via [PR #54](https://github.com/mclovin137/Horus/pull/54), mergeada em `main`).** 3 camadas de defesa contra PII testadas com dados reais/sintéticos; achou e corrigiu 1 gap real (`ErrorClusterer` sem `PromptSanitizer`). **CI verde.**
 
-> ▶️ **Concluída, abrindo PR:** **`T-904`** — Auditoria de privacidade (RNF-H-002/006), com dados reais fluindo pelo pipeline (não só releitura de código): **Camada 1** (origem) confirmada — `db.statement` real 100% parametrizado, nenhum log ecoou um valor PII-like enviado de propósito. **Camada 2** (borda do Collector) confirmada — span e log sintéticos enviados direto ao OTLP do Collector com `email`/`cpf`/`nome_paciente`/`cartao`: chaves proibidas somem completamente, padrões (e-mail/CPF) em texto livre viram `***`. **Camada 3** (fronteira do prompt): auditados todos os pontos de chamada de `LlmEngine.complete` — **achou um gap real**: `ErrorClusterer.label()` montava o prompt direto de `log.line()` (telemetria) sem nunca passar por `PromptSanitizer`, diferente de todo o resto dos agentes (que usam `ContextAssembler`). **Corrigido** (não só documentado) + teste de regressão (`LlmRequest` real capturado via mock, afirma ausência de PII crua). `AlertService`/`NlQueryAgent` revisados e confirmados fora de escopo (entrada do operador/usuário, não telemetria automática). `./mvnw -pl horus -am test` verde (64/64).
+> ▶️ **Concluída, abrindo PR:** **`T-905`** — Validação dos 16 critérios de aceite do `PRD.md` §10, com o sistema **realmente rodando** (infra + 4 domínio/SAGA + Horus + LB real + cluster `kind` real). Dois achados reais, ambos **corrigidos** nesta task:
+> 1. **LB nunca tinha sido testado com tráfego real** (critério #2) — containerizei os 4 serviços de domínio/SAGA (buildei as imagens que faltavam) + o NGINX real na rede do compose; roteamento e propagação de `traceparent` confirmados via `:8088`. Desenho já estava correto, só nunca tinha sido exercitado.
+> 2. **`kubectl apply -k deploy/k8s/` nunca tinha sido rodado contra um cluster real** (critério #7) — carreguei as 7 imagens no `kind`, apliquei os manifestos sem erros (achei e corrigi um `commonLabels` deprecado no caminho); pods ficam pendentes só pela ausência do overlay de infra K8s (gap já documentado, não bug de manifesto).
+> 3. **Achado maior: a visualização de SAGA do Horus (T-507) nunca funcionou com uma SAGA real** (critério #16) — `SagaVisualizationService` espera spans `saga.{flow}.{step}`, mas `SagaService` nunca os emitia (só spans HTTP/DB automáticos); os testes de T-507 só usavam dados sintéticos, então isso nunca foi pego. **Corrigido**: `SagaService` agora envolve cada passo/compensação com um span próprio (`horus.saga.*`, contrato T-005 §3.4); validado ao vivo — SAGA real com compensação aparece corretamente em `GET /horus/lifecycle/saga/{traceId}` (`outcome: compensated`, 2 passos + 1 compensação, timeline correta).
+>
+> Critérios #1/#3/#4/#5/#6/#8/#9/#10/#11/#12/#13/#14/#15 confirmados com evidência real (a maioria já validada em T-405/T-902/T-903/T-904; completados #1/#9/#10/#11/#12/#13 nesta task). `./mvnw verify` (raiz) verde — 86 testes, `BUILD SUCCESS`; `pytest` 21/21; `cargo fmt`/`clippy`/`test` do worker limpos, 14/14.
 
 ## ▶️ Próxima ação
 
-Abrir PR de **`T-904`**. Depois: **`T-905`** (aceite final do PRD, itens 1-15 — **última task do roadmap**, fecha o projeto). Pendente de cluster/ferramenta: overlay de infra K8s "de produção" e `kubectl apply -k` real com as imagens da aplicação (T-405/T-902/T-903/T-904 já validados com infra real de compose, sem precisar disso; o cluster `kind` local desta sessão só tem `kube-state-metrics`/`metrics-server`, não a aplicação).
-
-> ⚙️ **Pendência técnica registrada (não bloqueia, observação de T-901):** o LB (NGINX, T-201) nunca foi de fato ativado como serviço containerizado no `docker-compose.yml` nem ganhou Deployment em K8s — os Dockerfiles/imagens existem (T-801) e o `Ingress` cobre a entrada externa em K8s (T-901), mas o compose ainda não sobe o LB (apps rodam via `quarkus:dev`/host, ou diretamente por porta como em T-405). Fica como possível task futura se for necessário testar o roteamento do LB ponta a ponta em compose.
+Abrir e mergear o PR de **`T-905`** — ao mergear, **o roadmap está 100% completo** (todas as
+19 tasks de Fase 9 + as 8 fases anteriores entregues, todos os 16 critérios de aceite do PRD
+validados com evidência real). Trabalho futuro (não roadmap): overlay de infraestrutura K8s
+"de produção" (Postgres/RabbitMQ/Collector dentro do cluster — sempre fora de escopo),
+ativar o LB permanentemente no `docker-compose.yml`/K8s (hoje validado ad-hoc, não é um
+serviço padrão do `make up`), e a pendência do usuário de configurar `ANTHROPIC_API_KEY` para
+a IA real (documentada desde T-601, não bloqueia).
 
 > ⚙️ **Pendência sua (agora relevante p/ IA):** a IA real (T-601+) exige a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** e `horus.ai.enabled=true`. Sem isso, o Horus roda com o `StubLlmEngine` (placeholder) — não bloqueia build/CI.
 
@@ -36,6 +45,8 @@ Abrir PR de **`T-904`**. Depois: **`T-905`** (aceite final do PRD, itens 1-15 �
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
+| 2026-07-02 | `T-905` | **Aceite final do PRD** (16 critérios, §10) validados com o sistema real rodando; 3 achados corrigidos: LB nunca testado com tráfego real (agora testado), `kubectl apply -k` nunca rodado contra cluster real (agora aplicado, `commonLabels` deprecado corrigido), e o achado maior — visualização de SAGA (T-507) nunca funcionava com SAGA real, `SagaService` não emitia os spans `saga.{flow}.{step}` esperados (corrigido); `./mvnw verify` raiz verde (86 testes), `pytest` 21/21, worker 14/14 | `task/T-905-final-acceptance` | — | 🟡 Em progresso |
+| 2026-07-02 | `T-904` | Auditoria de privacidade (RNF-H-002/006) **mergeada** via PR #54; CI verde | `task/T-904-privacy-audit` | [#54](https://github.com/mclovin137/Horus/pull/54) | ✅ Entregue |
 | 2026-07-02 | `T-904` | Auditoria de privacidade (RNF-H-002/006) com dados reais: Camadas 1/2 (origem + borda do Collector) confirmadas via sondas reais/sintéticas; Camada 3 (prompt) — achado e corrigido gap real (`ErrorClusterer` não sanitizava antes de `engine.complete`), + teste de regressão; `./mvnw -pl horus -am test` verde (64/64) | `task/T-904-privacy-audit` | — | 🟡 Em progresso |
 | 2026-07-02 | — | Observabilidade de dev **mergeada** via PR #53 (4 dashboards Grafana + `quarkus.otel.metrics.enabled`); CI verde | `feature/grafana-dashboard-metrics` | [#53](https://github.com/mclovin137/Horus/pull/53) | ✅ Entregue |
 | 2026-07-02 | — | Observabilidade de dev: liga `quarkus.otel.metrics.enabled` (`false` por padrão — gap real, nenhuma métrica de app chegava ao Prometheus) nos 4 serviços de domínio/SAGA; provisiona 2 dashboards Grafana (`microservices.json` RED+JVM, `postgres.json` conexões/tx/tamanho via `postgres_exporter` novo, 1 por banco) pelo mesmo padrão dos datasources (JSON + volume, sem clique manual) | `feature/grafana-dashboard-metrics` | — | 🟡 Em progresso |

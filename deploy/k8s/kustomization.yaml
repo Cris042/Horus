@@ -49,5 +49,6 @@ images:
   - name: horus/loadtest
     newTag: dev
 
-commonLabels:
-  app.kubernetes.io/managed-by: kustomize
+labels:
+  - pairs:
+      app.kubernetes.io/managed-by: kustomize
