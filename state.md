@@ -7,22 +7,22 @@
 | Campo | Valor |
 |---|---|
 | **Última atualização** | 2026-07-02 |
-| **Branch atual** | `task/T-901-tls-secrets-review` |
+| **Branch atual** | `task/T-902-non-intrusiveness` |
 | **Fase do roadmap** | Fase 9 — Endurecimento e aceite |
-| **Task ativa** | `T-901` — TLS onde exigido; revisão de segredos/credenciais (em progresso) |
+| **Task ativa** | `T-902` — Verificação de não intrusividade (concluída, abrindo PR) |
 
 ## 🟢 Última entrega (mergeada)
 
 
-**`T-804` — Worker e Horus separados do domínio (entregue via [PR #48](https://github.com/mclovin137/Horus/pull/48), mergeada em `main`).** `nodeAffinity` soft por pool `horus.io/tier` (`horus`/`report-worker` → `platform`; `prontuario`/`payment`/`invoice`/`saga-orchestrator` → `domain`); README documenta a rotulagem de nós. **Fecha a Fase 8 (T-801..T-804). CI verde.**
+**`T-901` — TLS onde exigido; revisão de segredos/credenciais (entregue via [PR #49](https://github.com/mclovin137/Horus/pull/49), mergeada em `main`).** TLS opt-in na borda (compose `nginx.tls.conf` + `locations.conf` compartilhado) e `Ingress` K8s com TLS via Secret `horus-tls-secret`; auditoria de credenciais documentada (nenhum segredo real commitado). **CI verde.**
 
-> ▶️ **Em progresso:** **`T-901`** — TLS onde exigido; revisão de segredos/credenciais (RNF-017): TLS **opt-in** na borda — `deploy/lb/nginx.tls.conf` (HTTPS 443 + redirect 80→443, roteamento compartilhado via `locations.conf`) ao lado do `nginx.conf` HTTP default; `deploy/k8s/apps/ingress.yaml` (novo — o cluster não tinha nenhuma entrada externa antes, só `ClusterIP`) com `tls:` via Secret `horus-tls-secret` (não commitado). Auditoria de credenciais registrada no PRD da task (nenhum segredo real commitado; `%prod` dos serviços de domínio usa credenciais de placeholder no `application.properties`, sobrescritas em cluster pelo Secret — observação para hardening futuro, não bloqueia). `nginx -t` validado (HTTP e HTTPS c/ cert de teste); YAML validado (parser).
+> ▶️ **Concluída, abrindo PR:** **`T-902`** — Verificação de não intrusividade (RNF-H-008): auditoria estática confirma que nenhum dos 4 serviços de domínio/SAGA tem dependência de runtime sobre o Horus (só a coordenada do parent POM Maven, sem client REST/URL); **prova empírica real** — `prontuario-service` (JAR Quarkus) + Postgres via compose, **Horus totalmente ausente** (nenhum processo/container) durante todo o teste, `POST`/`GET /prontuarios` e validação (`400`) funcionando normalmente. Evidência (comandos + saída) registrada no PRD da task. Task de **verificação**, sem mudança de código/manifests.
 
 ## ▶️ Próxima ação
 
-Abrir PR de **`T-901`**. Depois: `T-902` (não intrusividade — derrubar Horus/IA não afeta o domínio; depende de `T-804`, já entregue), `T-903` (overhead de instrumentação sob carga), `T-904` (auditoria de privacidade), `T-905` (aceite final do PRD). Pendente de cluster/ferramenta: overlay de infra K8s, `kubectl apply -k` real e **`T-405`** (validação ponta a ponta).
+Abrir PR de **`T-902`**. Depois: `T-903` (overhead de instrumentação sob carga — depende de T-405/T-803), `T-904` (auditoria de privacidade), `T-905` (aceite final do PRD). Pendente de cluster/ferramenta: overlay de infra K8s, `kubectl apply -k` real e **`T-405`** (validação ponta a ponta, também pré-requisito de T-903).
 
-> ⚙️ **Pendência técnica registrada (não bloqueia, observação de T-901):** o LB (NGINX, T-201) nunca foi de fato ativado como serviço containerizado no `docker-compose.yml` nem ganhou Deployment em K8s — os Dockerfiles/imagens existem (T-801) e agora o `Ingress` cobre a entrada externa em K8s (T-901), mas o compose ainda não sobe o LB (apps rodam via `quarkus:dev`/host). Fica como possível task futura se for necessário testar o roteamento do LB ponta a ponta em compose.
+> ⚙️ **Pendência técnica registrada (não bloqueia, observação de T-901):** o LB (NGINX, T-201) nunca foi de fato ativado como serviço containerizado no `docker-compose.yml` nem ganhou Deployment em K8s — os Dockerfiles/imagens existem (T-801) e o `Ingress` cobre a entrada externa em K8s (T-901), mas o compose ainda não sobe o LB (apps rodam via `quarkus:dev`/host). Fica como possível task futura se for necessário testar o roteamento do LB ponta a ponta em compose.
 
 > ⚙️ **Pendência sua (agora relevante p/ IA):** a IA real (T-601+) exige a secret `ANTHROPIC_API_KEY` em **Settings → Secrets and variables → Actions** e `horus.ai.enabled=true`. Sem isso, o Horus roda com o `StubLlmEngine` (placeholder) — não bloqueia build/CI.
 
@@ -36,6 +36,8 @@ Abrir PR de **`T-901`**. Depois: `T-902` (não intrusividade — derrubar Horus/
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
+| 2026-07-02 | `T-902` | Verificação de não intrusividade (RNF-H-008): auditoria estática (0 dependência de runtime dos 4 serviços de domínio/SAGA sobre o Horus) + prova empírica (`prontuario-service` funcionando integralmente com o Horus totalmente ausente); evidência no PRD | `task/T-902-non-intrusiveness` | — | 🟡 Em progresso |
+| 2026-07-02 | `T-901` | TLS onde exigido; revisão de segredos/credenciais (RNF-017) **mergeado** via PR #49; CI verde | `task/T-901-tls-secrets-review` | [#49](https://github.com/mclovin137/Horus/pull/49) | ✅ Entregue |
 | 2026-07-02 | `T-901` | TLS onde exigido; revisão de segredos/credenciais (RNF-017): TLS opt-in na borda (`nginx.tls.conf` + `locations.conf` compartilhado) e `Ingress` K8s com TLS via Secret `horus-tls-secret`; auditoria de credenciais no PRD (nenhum segredo real commitado); `nginx -t` + YAML validados | `task/T-901-tls-secrets-review` | — | 🟡 Em progresso |
 | 2026-07-01 | `T-804` | Worker e Horus separados do domínio (RF-033) **mergeado** via PR #48; CI verde; fecha a Fase 8 | `task/T-804-separate-platform` | [#48](https://github.com/mclovin137/Horus/pull/48) | ✅ Entregue |
 | 2026-07-01 | `T-804` | Worker e Horus separados do domínio (ADR-0012): `nodeAffinity` soft por pool `horus.io/tier` (`horus`/`report-worker` → `platform`; `prontuario`/`payment`/`invoice`/`saga-orchestrator` → `domain`) nos 6 Deployments; README documenta rotulagem de nós; YAML validado | `task/T-804-separate-platform` | — | 🟡 Em progresso |
