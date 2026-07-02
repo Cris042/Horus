@@ -175,11 +175,17 @@ Resumo das decisões-chave (cada uma é um ADR em [`docs/adr/`](docs/adr/)):
 
 ## 🚦 Estado atual
 
-Projeto avançou além da fundação: domínio, carga, worker, telemetria base, primeira fatia do
-Horus core, IA, painel e RBAC já foram implementados em PRs. A task ativa registrada em
-[`state.md`](state.md) é `T-108` — hardening de concorrência do Payment — em revisão de PR.
-As próximas fatias de produto são `T-503`/`T-504`/`T-505` (ciclo de vida de request/query e
-logs de erro), depois `T-506`/`T-507`, `T-702`, containerização/K8s e aceite final.
+O roadmap está **quase completo**: Fases 0-8 (fundação, domínio, carga, worker, telemetria,
+Horus core, IA, painel/RBAC, containerização/K8s) entregues. Fase 9 (endurecimento e aceite)
+em andamento — `T-901` (TLS/segredos), `T-902` (não intrusividade) e `T-903` (orçamento de
+overhead) já entregues; restam `T-904` (auditoria de privacidade) e `T-905` (aceite final do
+PRD — última task do roadmap). `T-405` (validação ponta a ponta da correlação), pendente desde
+a Fase 4 por falta de infraestrutura real em sessões anteriores, foi validada e **corrigiu 2
+bugs reais** na fronteira HTTP→AMQP (ver log de entregas em [`state.md`](state.md)).
+
+Ambiente de dev roda de ponta a ponta: `docker compose` sobe a infra (Postgres ×4, RabbitMQ,
+OTel Collector, Jaeger, Loki, Prometheus, Grafana com dashboards provisionados — RED por
+serviço e métricas de banco), e os 4 serviços de domínio/SAGA + Horus + worker rodam por cima.
 
 ## Pré-requisitos de desenvolvimento
 

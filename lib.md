@@ -4,8 +4,8 @@ Catálogo de dependências de **todos os componentes** do projeto **Horus** (pla
 
 | Campo | Valor |
 |---|---|
-| **Versão do documento** | 1.0 |
-| **Data** | 2026-06-26 |
+| **Versão do documento** | 1.1 |
+| **Data** | 2026-07-02 |
 | **Relacionado** | [`docs/PRD.md`](./docs/PRD.md) · [`docs/adr/`](./docs/adr/) |
 
 > ⚠️ **Sobre as versões.** Os números abaixo são **versões-alvo recomendadas** para o contexto de meados de 2026, escolhidas por compatibilidade entre os componentes. **Confirme a versão estável mais recente e fixe (pin) cada dependência** ao implementar — especialmente as de IA, OTel e Quarkus, que evoluem rápido. Os IDs de modelo Claude estão corretos; **preços e limites devem ser verificados na referência oficial da API**.
@@ -38,8 +38,7 @@ Catálogo de dependências de **todos os componentes** do projeto **Horus** (pla
 | Quarkus BOM / Platform | **3.37.x** | Base do framework (bump em T-101: 3.20 não suporta Panache sob JDK 25) |
 | `quarkus-rest` (+ `quarkus-rest-jackson`) | (via BOM) | API REST do Horus |
 | `quarkus-websockets-next` | (via BOM) | Streaming do painel em tempo real (RF-H-012) |
-| `quarkus-opentelemetry` | (via BOM) | Ingestão/propagação OTel |
-| `quarkus-micrometer-registry-prometheus` | (via BOM) | Métricas do próprio Horus |
+| `quarkus-opentelemetry` | (via BOM) | Ingestão/propagação OTel — traces, logs **e métricas** (`quarkus.otel.metrics.enabled=true`; ver nota abaixo) |
 | `quarkus-hibernate-orm-panache` | (via BOM) | Persistência de metadados/configuração do Horus |
 | `quarkus-jdbc-postgresql` | (via BOM) | Acesso ao Postgres do Horus |
 | `quarkus-flyway` | (via BOM) | Migrações do banco do Horus |
@@ -63,9 +62,9 @@ Catálogo de dependências de **todos os componentes** do projeto **Horus** (pla
 
 ---
 
-## 3. Microsserviços de domínio (Quarkus) — Prontuário, Payment, Invoice
+## 3. Microsserviços de domínio (Quarkus) — Prontuário, Payment, Invoice, SAGA Orchestrator
 
-Mesma base para os três serviços.
+Mesma base para os quatro serviços.
 
 | Dependência | Versão-alvo | Uso |
 |---|---|---|
@@ -75,12 +74,19 @@ Mesma base para os três serviços.
 | `quarkus-jdbc-postgresql` | (via BOM) | Driver PostgreSQL |
 | `quarkus-flyway` | (via BOM) | Migrações independentes por serviço (RF-028) |
 | `quarkus-hibernate-validator` | (via BOM) | Validação de entrada |
-| `quarkus-opentelemetry` | (via BOM) | Tracing + **instrumentação de JDBC/Hibernate (RF-H-002)** |
-| `quarkus-micrometer-registry-prometheus` | (via BOM) | Métricas |
+| `quarkus-opentelemetry` | (via BOM) | Tracing + **instrumentação de JDBC/Hibernate (RF-H-002)** + métricas RED/JVM (`quarkus.otel.metrics.enabled=true`) |
 | `quarkus-messaging-rabbitmq` (SmallRye Reactive Messaging) | (via BOM) | Publicar solicitação de relatório (RF-021) |
 | `quarkus-narayana-lra` | (via BOM) | **SAGA por orquestração (MicroProfile LRA) — passos e compensações (ADR-0013)** |
 | `quarkus-smallrye-health` | (via BOM) | Health/readiness |
 | `quarkus-container-image-jib` | (via BOM) | Imagem Docker |
+
+> **Nota métricas (T-903):** `quarkus.otel.metrics.enabled` é **`false` por padrão** na extensão
+> `quarkus-opentelemetry` — sem essa flag, só traces/logs saem via OTLP, nenhuma métrica chega
+> ao Prometheus (mesmo com `quarkus.datasource.jdbc.telemetry=true` e o Collector saudável). É
+> `BUILD_AND_RUN_TIME_FIXED` (precisa rebuild). Ligada nos 4 serviços de domínio/SAGA. O projeto
+> **não** usa `quarkus-micrometer-registry-prometheus` (nunca foi adicionado às dependências,
+> apesar de versões anteriores deste documento o listarem como alvo) — métricas vêm inteiramente
+> do SDK OTel.
 
 ---
 
@@ -125,7 +131,8 @@ Mesma base para os três serviços.
 
 | Componente | Imagem / Versão-alvo | Uso |
 |---|---|---|
-| PostgreSQL | **17.x** | Banco por serviço (`prontuario_db`/`payment_db`/`invoice_db`) + banco do Horus |
+| PostgreSQL | **17.x** | Banco por serviço (`prontuario_db`/`payment_db`/`invoice_db`/`saga_db`), isolado (RNF-003) |
+| `postgres_exporter` | **quay.io/prometheuscommunity/postgres-exporter:v0.15.x** | Métricas de cada banco p/ Prometheus (conexões/tx/tamanho) — dashboard `postgres.json` |
 | RabbitMQ | **4.0.x** (com management) | Mensageria restrita a relatórios (ADR-0004) |
 | LRA Coordinator (Narayana) | **quay.io/jbosstm/lra-coordinator** (compatível com Narayana 7.x) | Coordenador da SAGA por orquestração (ADR-0013) |
 | NGINX | **1.27.x** | Load Balancer (opção A) |
@@ -134,8 +141,8 @@ Mesma base para os três serviços.
 | Jaeger | **2.x** | UI de traces (RF-031) |
 | Grafana Tempo | **2.7.x** | *(Opcional)* backend de traces ao lado do Jaeger |
 | Grafana Loki | **3.4.x** | Backend de logs (RF-H-003) |
-| Prometheus | **3.2.x** | Backend de métricas |
-| Grafana | **11.x** | *(Opcional)* visualização complementar |
+| Prometheus | **3.2.x** | Backend de métricas (`remote_write` do Collector + scrape do `postgres_exporter`) |
+| Grafana | **11.x** | Lente unificada — dashboards provisionados por arquivo (`microservices.json`, `postgres.json`), sem cliques manuais |
 
 ---
 

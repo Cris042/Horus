@@ -1,8 +1,9 @@
 # Prometheus — config de DEV (T-003, ADR-0010)
 #
-# Em dev as métricas chegam por **remote_write** a partir do OTel Collector
-# (`--web.enable-remote-write-receiver`), então não há `scrape_configs` de apps.
-# Mantém-se apenas o self-scrape do próprio Prometheus para sanidade.
+# Em dev as métricas de app chegam por **remote_write** a partir do OTel Collector
+# (`--web.enable-remote-write-receiver`), então não há `scrape_configs` de apps aqui.
+# Os bancos são a exceção: `postgres_exporter` (1 por banco) é raspado (scrape) direto,
+# padrão do ecossistema Prometheus para métricas de infraestrutura de terceiros.
 
 global:
   scrape_interval: 15s
@@ -12,3 +13,27 @@ scrape_configs:
   - job_name: prometheus
     static_configs:
       - targets: ["localhost:9090"]
+
+  - job_name: postgres
+    static_configs:
+      - targets: ["postgres-exporter-prontuario:9187"]
+        labels: { database: prontuario_db }
+      - targets: ["postgres-exporter-payment:9187"]
+        labels: { database: payment_db }
+      - targets: ["postgres-exporter-invoice:9187"]
+        labels: { database: invoice_db }
+      - targets: ["postgres-exporter-saga:9187"]
+        labels: { database: saga_db }
+
+  # CPU/memória/rede por contêiner Docker do host (dashboard `docker.json`).
+  - job_name: cadvisor
+    static_configs:
+      - targets: ["cadvisor:8080"]
+
+  # kube-state-metrics de um cluster kind LOCAL (dashboard `kubernetes.json`) — não é parte
+  # do `make up`; requer `kind create cluster` + `kubectl port-forward -n kube-system
+  # svc/kube-state-metrics 8090:8080` no host (ver deploy/telemetry/README.md). Sem isso,
+  # o alvo fica "down" sem quebrar o resto do pipeline.
+  - job_name: kubernetes-state
+    static_configs:
+      - targets: ["host.docker.internal:8090"]
