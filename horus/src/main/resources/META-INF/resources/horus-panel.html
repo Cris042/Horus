@@ -54,6 +54,7 @@
         </select>
         <select id="service" aria-label="serviço"><option value="">todos os serviços</option></select>
         <label class="muted"><input type="checkbox" id="onlyErrors"/> só com erro</label>
+        <label class="muted" title="esconde traces de 1 span (queries de boot, jobs internos)"><input type="checkbox" id="hideBg" checked/> ocultar ruído</label>
         <label class="muted">≥ <input type="number" id="minMs" min="0" value="0" style="width:5rem"/> ms</label>
         <button onclick="searchTraces()">Buscar</button>
         <button onclick="summarizeState()">Resumir estado</button>
@@ -134,6 +135,7 @@
         lookback: document.getElementById('lookback').value,
         error: document.getElementById('onlyErrors').checked,
         minDurationMs: document.getElementById('minMs').value || 0,
+        minSpans: document.getElementById('hideBg').checked ? 2 : 1,
         limit: 50
       });
       const service = document.getElementById('service').value;

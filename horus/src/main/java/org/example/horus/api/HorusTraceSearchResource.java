@@ -48,7 +48,8 @@ public class HorusTraceSearchResource {
                                     @QueryParam("to") String to,
                                     @QueryParam("minDurationMs") @DefaultValue("0") long minDurationMs,
                                     @QueryParam("error") @DefaultValue("false") boolean onlyErrors,
-                                    @QueryParam("limit") @DefaultValue("20") int limit) {
+                                    @QueryParam("limit") @DefaultValue("20") int limit,
+                                    @QueryParam("minSpans") @DefaultValue("1") int minSpans) {
         if (limit < 1 || limit > MAX_LIMIT) {
             throw new BadRequestException("limit deve estar entre 1 e " + MAX_LIMIT);
         }
@@ -57,8 +58,12 @@ public class HorusTraceSearchResource {
         }
         TimeWindow window = ApiWindows.resolve(lookback, from, to);
         String scoped = CallerScope.scopedService(request, service); // DEVELOPER: só seus serviços (T-1007)
+        // minSpans (T-1011): esconde "ruído de fundo" (queries de boot/Flyway viram traces de 1 span).
+        // Busca mais que o limite para compensar os descartados.
+        int fetch = minSpans > 1 ? Math.min(MAX_LIMIT, limit * 3) : limit;
         List<TraceSummary> found = traces.searchTraces(
-                new TraceSearch(scoped, operation, window, minDurationMs * 1_000, onlyErrors, limit));
+                        new TraceSearch(scoped, operation, window, minDurationMs * 1_000, onlyErrors, fetch))
+                .stream().filter(t -> t.spanCount() >= minSpans).limit(limit).toList();
         return new TraceSearchResult(window.startMicros(), window.endMicros(), found.size(), found);
     }
 

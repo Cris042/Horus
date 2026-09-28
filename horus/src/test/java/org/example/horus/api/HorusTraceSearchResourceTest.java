@@ -86,4 +86,20 @@ class HorusTraceSearchResourceTest {
                 .then().statusCode(200)
                 .body("[1]", equalTo("prontuario-service"));
     }
+
+    @Test
+    void minSpans_hidesBackgroundSingleSpanTraces() {
+        TraceSummary background = new TraceSummary("bg", "saga-orchestrator", "SELECT saga_db", 2_000, 10, 1,
+                List.of("saga-orchestrator"), 0, null);
+        when(traces.searchTraces(any())).thenReturn(List.of(background, summary()));
+
+        given().when().get("/horus/traces?minSpans=2&limit=5")
+                .then().statusCode(200)
+                .body("count", is(1))
+                .body("traces[0].traceId", equalTo("abc123"));
+
+        ArgumentCaptor<TraceSearch> captor = ArgumentCaptor.forClass(TraceSearch.class);
+        verify(traces).searchTraces(captor.capture());
+        assertEquals(15, captor.getValue().limit()); // busca a mais para compensar o filtro
+    }
 }

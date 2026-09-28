@@ -45,6 +45,26 @@
     th, td { text-align: left; padding: .3rem .5rem; border-bottom: 1px solid #1b212a; }
     th { color: #8b98a5; font-weight: 600; }
     .err-level { color: #f85149; font-weight: 600; }
+    /* mapa de serviços (T-1011) */
+    #servicemap svg { width: 100%; height: auto; display: block; }
+    #servicemap svg.fit { max-width: var(--natural-width); }
+    #servicemap .node rect { fill: #0e1116; stroke: #30363d; stroke-width: 1.5; rx: 8; }
+    #servicemap .node.entry rect { stroke: #1f6feb; }
+    #servicemap .node text { fill: #e6edf3; font-size: 12px; }
+    #servicemap .node .meta { fill: #8b98a5; font-size: 10.5px; }
+    #servicemap .edge { stroke: #57606a; stroke-width: 1.5; fill: none; marker-end: url(#arrow); }
+    #servicemap .edge-label { fill: #8b98a5; font-size: 10.5px; }
+    /* SAGA (T-1011) */
+    .saga-head { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; font-size: .9rem; margin-bottom: .6rem; }
+    .pill { display: inline-block; padding: .1rem .55rem; border-radius: 999px; font-size: .78rem; font-weight: 600; }
+    .pill.completed { background: #133929; color: #3fb950; }
+    .pill.compensated { background: #3d2d12; color: #d29922; }
+    .pill.failed { background: #3c1618; color: #f85149; }
+    .pill.recovered, .pill.none { background: #21262d; color: #8b98a5; }
+    .saga-step { display: grid; grid-template-columns: 22px 1fr 90px; gap: .5rem; align-items: center; padding: .3rem 0; border-bottom: 1px solid #1b212a; font-size: .85rem; }
+    .saga-step .dot { width: 12px; height: 12px; border-radius: 50%; background: #1f6feb; justify-self: center; }
+    .saga-step.compensation .dot { background: #d29922; }
+    .saga-step.failed .dot { background: #f85149; }
   </style>
 </head>
 <body>
@@ -72,6 +92,16 @@
         <span class="l-worker">worker</span>
         <span class="l-internal">internal</span>
       </div>
+    </div>
+
+    <div class="card">
+      <h2>Mapa de serviços</h2>
+      <div id="servicemap" class="muted">—</div>
+    </div>
+
+    <div class="card">
+      <h2>SAGA</h2>
+      <div id="saga" class="muted">—</div>
     </div>
 
     <div class="card">
@@ -125,6 +155,66 @@
         </div>`;
     }
 
+    // Mapa de serviços (T-1011): camadas por distância a partir dos pontos de entrada.
+    function renderServiceMap(m) {
+      const out = document.getElementById('servicemap');
+      if (!m || m.__status || !m.nodes || !m.nodes.length) { out.textContent = 'Sem dados de serviços para este trace.'; return; }
+      const names = m.nodes.map(n => n.serviceName);
+      const out_ = {}; names.forEach(n => out_[n] = []);
+      m.edges.forEach(e => { if (out_[e.from]) out_[e.from].push(e.to); });
+      const layer = {};
+      let frontier = m.nodes.filter(n => n.entryPoint).map(n => n.serviceName);
+      if (!frontier.length) frontier = [names[0]];
+      frontier.forEach(n => layer[n] = 0);
+      while (frontier.length) {
+        const next = [];
+        frontier.forEach(n => (out_[n] || []).forEach(t => { if (layer[t] === undefined) { layer[t] = layer[n] + 1; next.push(t); } }));
+        frontier = next;
+      }
+      names.forEach(n => { if (layer[n] === undefined) layer[n] = 0; });
+      const cols = {}; names.forEach(n => (cols[layer[n]] = cols[layer[n]] || []).push(n));
+      const W = 190, H = 54, GX = 70, GY = 22;
+      const depth = Math.max(...Object.keys(cols).map(Number)) + 1;
+      const rows = Math.max(...Object.values(cols).map(c => c.length));
+      const pos = {};
+      Object.entries(cols).forEach(([c, list]) => list.forEach((n, i) => pos[n] = { x: 10 + c * (W + GX), y: 10 + i * (H + GY) }));
+      const byName = {}; m.nodes.forEach(n => byName[n.serviceName] = n);
+      const edges = m.edges.map(e => {
+        const a = pos[e.from], b = pos[e.to]; if (!a || !b) return '';
+        const x1 = a.x + W, y1 = a.y + H / 2, x2 = b.x, y2 = b.y + H / 2;
+        const mx = (x1 + x2) / 2;
+        return `<path class="edge" d="M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2 - 4},${y2}"/>` +
+               `<text class="edge-label" x="${mx}" y="${(y1 + y2) / 2 - 4}" text-anchor="middle">${e.callCount}×</text>`;
+      }).join('');
+      const nodes = names.map(n => {
+        const p = pos[n], d = byName[n];
+        return `<g class="node${d.entryPoint ? ' entry' : ''}" transform="translate(${p.x},${p.y})">` +
+               `<rect width="${W}" height="${H}"/><text x="10" y="21">${esc(n)}</text>` +
+               `<text class="meta" x="10" y="40">${d.spanCount} spans · ${ms(d.totalDurationMicros)}</text></g>`;
+      }).join('');
+      const width = 20 + depth * W + (depth - 1) * GX, height = 20 + rows * H + (rows - 1) * GY;
+      out.innerHTML = `<svg class="fit" style="--natural-width:${width}px" viewBox="0 0 ${width} ${height}" role="img" aria-label="Mapa de serviços do trace">` +
+        `<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">` +
+        `<path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker></defs>${edges}${nodes}</svg>` +
+        `<div class="muted" style="margin-top:.4rem">${m.nodeCount} serviços · ${m.edgeCount} dependências · borda azul = ponto de entrada</div>`;
+    }
+
+    // SAGA (T-1011): passos, compensações, passo que falhou e recuperação automática (T-1010).
+    function renderSaga(sg) {
+      const out = document.getElementById('saga');
+      if (!sg || sg.__status || sg.outcome === 'none') { out.textContent = 'Este trace não contém uma SAGA.'; return; }
+      const outcome = sg.recovered ? 'recovered' : sg.outcome;
+      const label = { completed: 'concluída', compensated: 'compensada', failed: 'falhou (sem compensação)', recovered: 'compensada pela recuperação automática' }[outcome] || outcome;
+      const head = `<div class="saga-head"><span>fluxo <b>${esc(sg.flow)}</b></span><span class="pill ${outcome}">${label}</span>` +
+        `<span>${sg.stepCount} passos · ${sg.compensationCount} compensações · ${ms(sg.totalDurationMicros)}</span>` +
+        (sg.failedStep ? `<span class="err-level">falhou em: ${esc(sg.failedStep)}</span>` : '') + `</div>`;
+      const steps = sg.steps.map(st => `<div class="saga-step${st.compensation ? ' compensation' : ''}${st.failed ? ' failed' : ''}">` +
+        `<span class="dot" title="${st.compensation ? 'compensação' : st.failed ? 'falhou' : 'passo'}"></span>` +
+        `<span>${st.compensation ? '↩ compensa ' : ''}<b>${esc(st.step)}</b> <span class="muted">${esc(st.serviceName)} · +${ms(st.offsetMicros)}</span>` +
+        `${st.failed ? ' <span class="err-level">erro</span>' : ''}</span><span class="wf-dur">${ms(st.durationMicros)}</span></div>`).join('');
+      out.innerHTML = head + steps;
+    }
+
     function renderQueries(q) {
       if (!q || !q.queries || !q.queries.length) {
         document.getElementById('queries').innerHTML = '<span class="muted">sem queries SQL neste trace</span>';
@@ -175,6 +265,8 @@
         return;
       }
       renderWaterfall(life);
+      renderServiceMap(await jsafe(`/horus/lifecycle/service-map/${t}`));
+      renderSaga(await jsafe(`/horus/lifecycle/saga/${t}`));
       renderQueries(await jsafe(`/horus/lifecycle/queries/${t}`));
       renderErrors(await jsafe(`/horus/lifecycle/errors/${t}`));
     }
