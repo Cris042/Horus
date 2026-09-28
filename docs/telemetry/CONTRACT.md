@@ -84,10 +84,11 @@ Só para conceitos sem chave OTel padrão. Para SAGA (ADR-0013):
 
 | Atributo | Tipo | Exemplo |
 |---|---|---|
-| `horus.saga.id` | string | `<uuid da LRA>` |
+| `horus.saga.id` | string | id da SAGA no `saga_db` (ex.: `51`) |
 | `horus.saga.flow` | string | `pay-then-invoice` |
 | `horus.saga.step` | string | `reserve-payment` |
 | `horus.saga.compensation` | bool | `true` |
+| `horus.saga.recovery` | bool | `true` — compensação disparada pela recuperação automática (T-1010), em trace próprio |
 | `horus.saga.outcome` | enum | `completed` \| `compensated` \| `failed` |
 
 ### 3.5 Erros em spans

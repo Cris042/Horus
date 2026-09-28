@@ -79,7 +79,7 @@ echo "== Verificando o Horus sobre os backends reais"
 h() { curl -fsS "$HORUS_URL$1"; }
 
 check_saga_completed() { h "/horus/lifecycle/saga/$OK_TRACE" | jget 'd["outcome"]=="completed" and d["stepCount"]>=2' | grep -qx True; }
-check_saga_compensated() { h "/horus/lifecycle/saga/$KO_TRACE" | jget 'd["outcome"]=="compensated" and d["compensationCount"]>=1' | grep -qx True; }
+check_saga_compensated() { h "/horus/lifecycle/saga/$KO_TRACE" | jget 'd["outcome"]=="compensated" and d["compensationCount"]>=1 and d["failedStep"]=="issue-invoice"' | grep -qx True; }
 check_queries() { h "/horus/lifecycle/queries/$OK_TRACE" | jget 'd["queryCount"]>0' | grep -qx True; }
 check_services() { h "/horus/correlation/trace/$OK_TRACE" | jget '{s["serviceName"] for s in d["services"]} >= {"saga-orchestrator","payment-service","invoice-service"}' | grep -qx True; }
 check_worker() { h "/horus/correlation/trace/$OK_TRACE" | jget 'd["messagingInvolved"] and d["workerInvolved"]' | grep -qx True; }
@@ -89,7 +89,7 @@ check_search_errors() { h "/horus/traces?lookback=15m&error=true&limit=200" | jg
 check_state_summary() { h "/horus/ai/summary/state?lookback=15m" | jget '"window" in d["signals"] and len(d["summary"])>0' | grep -qx True; }
 
 eventually "SAGA feliz visualizada (passos, desfecho completed)" check_saga_completed
-eventually "SAGA compensada visualizada (compensação correlacionada)" check_saga_compensated
+eventually "SAGA compensada visualizada (compensação + passo que falhou)" check_saga_compensated
 eventually "queries SQL correlacionadas ao trace" check_queries
 eventually "serviços saga/payment/invoice no mesmo trace" check_services
 eventually "HTTP→RabbitMQ→worker no mesmo trace" check_worker

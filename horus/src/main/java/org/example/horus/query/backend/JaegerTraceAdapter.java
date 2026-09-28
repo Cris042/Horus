@@ -116,7 +116,8 @@ public class JaegerTraceAdapter implements TraceQueryPort {
                     tagValue(span, "db.operation.name"),
                     firstNonBlank(tagValue(span, "db.namespace"), tagValue(span, "db.name")),
                     firstNonBlank(tagValue(span, "db.system.name"), tagValue(span, "db.system")),
-                    tagValue(span, "db.query.text")));
+                    tagValue(span, "db.query.text"),
+                    isError(span)));
         }
         return new TraceResult(trace.path("traceID").asText(fallbackTraceId), spans.size(), spans);
     }
@@ -125,15 +126,10 @@ public class JaegerTraceAdapter implements TraceQueryPort {
      * Resume um trace do Jaeger: raiz (span sem pai, ou o mais antigo), duração de ponta a
      * ponta, serviços envolvidos, spans em erro e a query SQL mais lenta.
      */
-    private TraceSummary summarize(JsonNode trace) {
+    private static TraceSummary summarize(JsonNode trace) {
         TraceResult result = toTraceResult(trace, "");
-        int errors = 0;
-        for (JsonNode span : trace.path("spans")) {
-            if (isError(span)) {
-                errors++;
-            }
-        }
         List<SpanRef> spans = result.spans();
+        int errors = (int) spans.stream().filter(SpanRef::error).count();
         if (spans.isEmpty()) {
             return new TraceSummary(result.traceId(), null, null, 0, 0, 0, List.of(), errors, null);
         }

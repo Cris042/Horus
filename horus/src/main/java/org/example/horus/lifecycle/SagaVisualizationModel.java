@@ -23,7 +23,8 @@ public final class SagaVisualizationModel {
             String operation,
             String serviceName,
             long offsetMicros,
-            long durationMicros) {
+            long durationMicros,
+            boolean failed) {
     }
 
     /** Visão correlacionada de uma SAGA por {@code traceId}. */
@@ -34,6 +35,8 @@ public final class SagaVisualizationModel {
             int stepCount,
             int compensationCount,
             long totalDurationMicros,
+            String failedStep,
+            boolean recovered,
             List<SagaStep> steps) {
     }
 }
