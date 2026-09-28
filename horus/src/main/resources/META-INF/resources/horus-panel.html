@@ -188,11 +188,28 @@
       document.getElementById('searchOut').textContent = `[${e.modelId} · ${e.live ? 'live' : 'stub'}]\n${e.explanation}`;
     }
 
+    // RCA roda como job assíncrono (T-1006): enfileira, depois consulta até concluir.
     async function rca() {
       const t = document.getElementById('searchTrace').value;
-      document.getElementById('searchOut').textContent = 'analisando…';
-      const r = await j(`/horus/ai/rca/trace/${encodeURIComponent(t)}`);
-      document.getElementById('searchOut').textContent = `[${r.modelId} · ${r.live ? 'live' : 'stub'}]\n${r.analysis}`;
+      const out = document.getElementById('searchOut');
+      out.textContent = 'enfileirando análise…';
+      try {
+        let job = await j('/horus/ai/jobs/rca', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ traceId: t })
+        });
+        const started = Date.now();
+        while (job.status === 'PENDING' || job.status === 'RUNNING') {
+          out.textContent = `analisando… (${job.status.toLowerCase()}, ${Math.round((Date.now() - started) / 1000)}s)`;
+          await new Promise(r => setTimeout(r, 1500));
+          job = await j(`/horus/ai/jobs/${job.id}`);
+        }
+        if (job.status === 'FAILED') { out.textContent = 'RCA falhou: ' + job.error; return; }
+        const r = job.result;
+        out.textContent = `[${r.modelId} · ${r.live ? 'live' : 'stub'}]\n${r.analysis}`;
+      } catch (e) {
+        out.textContent = 'falha na RCA: ' + e.message;
+      }
     }
 
     loadOverview();
