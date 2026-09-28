@@ -24,10 +24,19 @@
     .ask button, .search button { background: #238636; color: #fff; border: 0; border-radius: 8px; padding: .55rem 1rem; cursor: pointer; }
     pre { white-space: pre-wrap; background: #0e1116; border-radius: 8px; padding: .75rem; font-size: .85rem; }
     .muted { color: #8b98a5; font-size: .85rem; }
+    .filters { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-bottom: .75rem; }
+    .filters select, .filters input[type=number] { background: #0e1116; border: 1px solid #232a33; color: #e6edf3; border-radius: 8px; padding: .45rem .6rem; }
+    .filters button { background: #238636; color: #fff; border: 0; border-radius: 8px; padding: .45rem .9rem; cursor: pointer; }
+    table.traces { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    table.traces th { text-align: left; color: #8b98a5; font-weight: 500; padding: .35rem .4rem; border-bottom: 1px solid #232a33; }
+    table.traces td { padding: .35rem .4rem; border-bottom: 1px solid #1c2129; vertical-align: top; }
+    table.traces a { color: #58a6ff; text-decoration: none; font-family: ui-monospace, monospace; }
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .err { color: #f85149; font-weight: 600; }
   </style>
 </head>
 <body>
-  <header><span class="eye">𓂀</span><h1>Horus</h1><span class="muted">observabilidade aumentada por IA</span><a href="/horus-waterfall.html" style="margin-left:auto;color:#58a6ff;font-size:.9rem;text-decoration:none">Waterfall →</a></header>
+  <header><span class="eye">𓂀</span><h1>Horus</h1><span class="muted">observabilidade aumentada por IA</span><span style="margin-left:auto;display:flex;gap:.4rem;align-items:center"><input id="token" type="password" placeholder="token (RBAC)" aria-label="token de acesso" style="background:#0e1116;border:1px solid #232a33;color:#e6edf3;border-radius:8px;padding:.3rem .5rem;width:10rem"/><button onclick="saveToken()" style="background:#30363d;color:#e6edf3;border:0;border-radius:8px;padding:.3rem .7rem;cursor:pointer">OK</button><span id="tokenState" class="muted"></span></span><a href="/horus-waterfall.html" style="color:#58a6ff;font-size:.9rem;text-decoration:none">Waterfall →</a></header>
   <main>
     <div class="card">
       <h2>Saúde</h2>
@@ -35,9 +44,29 @@
     </div>
 
     <div class="card">
+      <h2>Traces</h2>
+      <div class="filters">
+        <select id="lookback" aria-label="janela">
+          <option value="15m">últimos 15 min</option>
+          <option value="1h" selected>última 1 h</option>
+          <option value="6h">últimas 6 h</option>
+          <option value="24h">últimas 24 h</option>
+        </select>
+        <select id="service" aria-label="serviço"><option value="">todos os serviços</option></select>
+        <label class="muted"><input type="checkbox" id="onlyErrors"/> só com erro</label>
+        <label class="muted" title="esconde traces de 1 span (queries de boot, jobs internos)"><input type="checkbox" id="hideBg" checked/> ocultar ruído</label>
+        <label class="muted">≥ <input type="number" id="minMs" min="0" value="0" style="width:5rem"/> ms</label>
+        <button onclick="searchTraces()">Buscar</button>
+        <button onclick="summarizeState()">Resumir estado</button>
+      </div>
+      <pre id="stateOut" class="muted" hidden></pre>
+      <div id="traces" class="muted">carregando…</div>
+    </div>
+
+    <div class="card">
       <h2>Pergunte ao Horus</h2>
       <div class="ask">
-        <input id="q" placeholder="ex.: qual o serviço mais lento neste trace?"/>
+        <input id="q" placeholder="ex.: quais as queries mais lentas na última hora?"/>
         <input id="trace" placeholder="traceId (opcional)" style="max-width: 220px"/>
         <button onclick="ask()">Perguntar</button>
       </div>
@@ -61,7 +90,87 @@
   </main>
 
   <script>
-    async function j(url, opts) { const r = await fetch(url, opts); return r.json(); }
+
+    // RBAC com JWT (T-1007): o token do IdP fica só nesta aba (sessionStorage) e vai em toda chamada.
+    function authHeaders(extra) {
+      let t = null;
+      try { t = sessionStorage.getItem('horus.token'); } catch (e) { /* storage indisponível */ }
+      return Object.assign({}, extra || {}, t ? { Authorization: 'Bearer ' + t } : {});
+    }
+
+    function saveToken() {
+      const v = document.getElementById('token').value.trim();
+      try { v ? sessionStorage.setItem('horus.token', v) : sessionStorage.removeItem('horus.token'); } catch (e) { /* ignore */ }
+      document.getElementById('token').value = '';
+      document.getElementById('tokenState').textContent = v ? 'token definido' : 'sem token';
+      loadOverview(); loadServices(); searchTraces();
+    }
+
+    async function j(url, opts) {
+      opts = Object.assign({}, opts || {});
+      opts.headers = authHeaders(opts.headers);
+      const r = await fetch(url, opts);
+      if (r.status === 401) throw new Error('HTTP 401 — informe um token válido no topo da página');
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    }
+
+    function esc(v) {
+      return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function ms(micros) { return (micros / 1000).toFixed(1); }
+
+    async function loadServices() {
+      try {
+        const services = await j('/horus/traces/services');
+        const sel = document.getElementById('service');
+        services.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o); });
+      } catch (e) { /* filtro de serviço é opcional */ }
+    }
+
+    async function searchTraces() {
+      const out = document.getElementById('traces');
+      const p = new URLSearchParams({
+        lookback: document.getElementById('lookback').value,
+        error: document.getElementById('onlyErrors').checked,
+        minDurationMs: document.getElementById('minMs').value || 0,
+        minSpans: document.getElementById('hideBg').checked ? 2 : 1,
+        limit: 50
+      });
+      const service = document.getElementById('service').value;
+      if (service) p.set('service', service);
+      out.textContent = 'buscando…';
+      try {
+        const r = await j('/horus/traces?' + p);
+        if (!r.traces.length) { out.textContent = 'Nenhum trace na janela.'; return; }
+        out.innerHTML = '<table class="traces"><thead><tr><th>início</th><th>trace</th><th>raiz</th>' +
+          '<th class="num">ms</th><th class="num">spans</th><th class="num">erros</th><th>query mais lenta</th></tr></thead><tbody>' +
+          r.traces.map(t => `<tr>
+            <td>${esc(new Date(t.startTimeMicros / 1000).toLocaleTimeString())}</td>
+            <td><a href="/horus-waterfall.html?trace=${encodeURIComponent(t.traceId)}">${esc(t.traceId.slice(0, 12))}…</a></td>
+            <td>${esc(t.rootService)}<br><span class="muted">${esc(t.rootOperation)}</span></td>
+            <td class="num">${ms(t.durationMicros)}</td>
+            <td class="num">${t.spanCount}</td>
+            <td class="num ${t.errorSpanCount ? 'err' : ''}">${t.errorSpanCount}</td>
+            <td>${t.slowestQuery ? `${ms(t.slowestQuery.durationMicros)} ms · <span class="muted">${esc(t.slowestQuery.dbNamespace)} ${esc(t.slowestQuery.dbOperationName)}</span>` : '—'}</td>
+          </tr>`).join('') + '</tbody></table>';
+      } catch (e) {
+        out.textContent = 'falha na busca: ' + e.message;
+      }
+    }
+
+    async function summarizeState() {
+      const out = document.getElementById('stateOut');
+      out.hidden = false;
+      out.textContent = 'resumindo…';
+      try {
+        const s = await j('/horus/ai/summary/state?lookback=' + encodeURIComponent(document.getElementById('lookback').value));
+        out.textContent = `[${s.modelId} · ${s.live ? 'live' : 'stub'} · sinais: ${s.signals.join(', ') || 'nenhum'}]\n${s.summary}`;
+      } catch (e) {
+        out.textContent = 'falha no resumo: ' + e.message;
+      }
+    }
 
     async function loadOverview() {
       try {
@@ -88,7 +197,7 @@
       document.getElementById('answer').textContent = 'pensando…';
       const a = await j('/horus/ai/ask', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, traceId })
+        body: JSON.stringify({ question, traceId, lookback: document.getElementById('lookback').value })
       });
       document.getElementById('answer').textContent = `[${a.modelId} · ${a.live ? 'live' : 'stub'}]\n${a.answer}`;
     }
@@ -100,14 +209,33 @@
       document.getElementById('searchOut').textContent = `[${e.modelId} · ${e.live ? 'live' : 'stub'}]\n${e.explanation}`;
     }
 
+    // RCA roda como job assíncrono (T-1006): enfileira, depois consulta até concluir.
     async function rca() {
       const t = document.getElementById('searchTrace').value;
-      document.getElementById('searchOut').textContent = 'analisando…';
-      const r = await j(`/horus/ai/rca/trace/${encodeURIComponent(t)}`);
-      document.getElementById('searchOut').textContent = `[${r.modelId} · ${r.live ? 'live' : 'stub'}]\n${r.analysis}`;
+      const out = document.getElementById('searchOut');
+      out.textContent = 'enfileirando análise…';
+      try {
+        let job = await j('/horus/ai/jobs/rca', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ traceId: t })
+        });
+        const started = Date.now();
+        while (job.status === 'PENDING' || job.status === 'RUNNING') {
+          out.textContent = `analisando… (${job.status.toLowerCase()}, ${Math.round((Date.now() - started) / 1000)}s)`;
+          await new Promise(r => setTimeout(r, 1500));
+          job = await j(`/horus/ai/jobs/${job.id}`);
+        }
+        if (job.status === 'FAILED') { out.textContent = 'RCA falhou: ' + job.error; return; }
+        const r = job.result;
+        out.textContent = `[${r.modelId} · ${r.live ? 'live' : 'stub'}]\n${r.analysis}`;
+      } catch (e) {
+        out.textContent = 'falha na RCA: ' + e.message;
+      }
     }
 
     loadOverview();
+    loadServices();
+    searchTraces();
   </script>
 </body>
 </html>

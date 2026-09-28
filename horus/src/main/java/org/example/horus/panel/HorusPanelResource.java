@@ -45,13 +45,20 @@ public class HorusPanelResource {
         var ai = new AiStatus(engine.isLive() ? "live" : "stub", engine.isLive(), cache.stats());
         var backends = new Backends(jaegerUrl, lokiUrl, prometheusUrl);
         var endpoints = Map.ofEntries(
+                Map.entry("searchTraces", "GET /horus/traces?lookback=1h&service=&error="),
+                Map.entry("summaryState", "GET /horus/ai/summary/state?lookback=1h"),
                 Map.entry("summaryTrace", "GET /horus/ai/summary/trace/{traceId}"),
                 Map.entry("explainTrace", "GET /horus/ai/explain/trace/{traceId}"),
                 Map.entry("rcaTrace", "GET /horus/ai/rca/trace/{traceId}"),
                 Map.entry("ask", "POST /horus/ai/ask"),
+                Map.entry("aiAudit", "GET /horus/ai/audit"),
+                Map.entry("rcaJob", "POST /horus/ai/jobs/rca → GET /horus/ai/jobs/{id}"),
+                Map.entry("stateSummaryJob", "POST /horus/ai/jobs/state-summary"),
                 Map.entry("queryTrace", "GET /horus/query/traces/{traceId}"),
                 Map.entry("queryLogs", "GET /horus/query/logs?traceId="),
                 Map.entry("queryMetrics", "GET /horus/query/metrics?query="),
+                Map.entry("queryLogsRange", "GET /horus/query/logs/range?logql=&lookback="),
+                Map.entry("queryMetricsRange", "GET /horus/query/metrics/range?query=&lookback="),
                 Map.entry("lifecycleRequest", "GET /horus/lifecycle/requests/{traceId}"),
                 Map.entry("lifecycleQuery", "GET /horus/lifecycle/queries/{traceId}"),
                 Map.entry("lifecycleErrors", "GET /horus/lifecycle/errors/{traceId}"),

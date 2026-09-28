@@ -20,7 +20,7 @@ class RootCauseAnalystTest {
         public LlmResponse complete(LlmRequest request) {
             this.captured = request;
             return new LlmResponse("CAUSA PROVÁVEL: timeout no payment. PRÓXIMOS PASSOS: ...",
-                    "claude-opus-4-8", true);
+                    "claude-opus-5", true);
         }
 
         @Override
@@ -39,7 +39,7 @@ class RootCauseAnalystTest {
 
         assertEquals(ModelTier.DEEP, engine.captured.tier());
         assertTrue(engine.captured.prompt().contains("trace abc"));
-        assertEquals("claude-opus-4-8", rca.modelId());
+        assertEquals("claude-opus-5", rca.modelId());
         assertTrue(rca.signals().containsAll(List.of("trace", "logs", "metrics")));
         assertTrue(rca.live());
     }

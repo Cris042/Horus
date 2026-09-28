@@ -7,8 +7,6 @@ import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Scope;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
-import jakarta.ws.rs.NotFoundException;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.example.saga.client.InvoiceClient;
 import org.example.saga.client.NotaDto;
@@ -19,7 +17,6 @@ import org.example.saga.domain.StatusSaga;
 import org.jboss.logging.Logger;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
 import java.util.function.Supplier;
 
 /**
@@ -48,67 +45,76 @@ public class SagaService {
     @Inject
     Tracer tracer;
 
-    @Transactional
-    public Saga pagarEEmitir(Long carteiraId, BigDecimal valor, boolean simularFalhaNota) {
-        Saga saga = new Saga();
-        saga.carteiraId = carteiraId;
-        saga.valor = valor;
-        saga.persist();
+    @Inject
+    SagaStore store;
 
+    /**
+     * Executa a SAGA. Sem transação própria (T-1010): cada transição é gravada pelo
+     * {@link SagaStore} antes do próximo efeito remoto, para que um crash deixe estado recuperável.
+     */
+    public Saga pagarEEmitir(Long carteiraId, BigDecimal valor, boolean simularFalhaNota) {
+        Long id = store.iniciar(carteiraId, valor);
+        Long pagamentoId = null;
         try {
-            // Passo 1 — aprovar pagamento (compensável)
-            PagamentoDto pag = executarPasso(saga, "reserve-payment", () -> {
+            // Passo 1 — aprovar pagamento (compensável). O id do pagamento é gravado ANTES da
+            // aprovação: se o orquestrador cair entre os dois, a recuperação ainda sabe o que estornar.
+            PagamentoDto pag = executarPasso(id, "reserve-payment", () -> {
                 PagamentoDto p = payment.criarPagamento(carteiraId, new PaymentClient.CriarPagamento(valor));
+                store.registrarPagamento(id, p.id());
                 payment.aprovar(p.id());
                 return p;
             });
-            saga.pagamentoId = pag.id();
-            marcar(saga, StatusSaga.PAGAMENTO_APROVADO);
+            pagamentoId = pag.id();
+            store.marcar(id, StatusSaga.PAGAMENTO_APROVADO, null, null);
 
-            // Passo 2 — emitir NF (último passo)
-            NotaDto nota = executarPasso(saga, "issue-invoice", () -> invoice.emitir(
-                    new InvoiceClient.EmitirNota(valor, "saga-" + saga.id, simularFalhaNota)));
-            if (nota.status() != null && nota.status().equals("FALHA")) {
-                throw new PassoSagaException("emissão da NF retornou FALHA");
-            }
-            saga.notaId = nota.id();
-            marcar(saga, StatusSaga.CONCLUIDA);
-            LOG.infof("SAGA %d concluída (pagamento=%d, nota=%d)", saga.id, saga.pagamentoId, saga.notaId);
+            // Passo 2 — emitir NF (último passo). A checagem de FALHA fica DENTRO do passo: o span
+            // do passo precisa terminar em ERROR quando a NF falha (T-1002).
+            NotaDto nota = executarPasso(id, "issue-invoice", () -> {
+                NotaDto n = invoice.emitir(new InvoiceClient.EmitirNota(valor, "saga-" + id, simularFalhaNota));
+                if (n.status() != null && n.status().equals("FALHA")) {
+                    throw new PassoSagaException("emissão da NF retornou FALHA");
+                }
+                return n;
+            });
+            store.marcar(id, StatusSaga.CONCLUIDA, nota.id(), null);
+            LOG.infof("SAGA %d concluída (pagamento=%d, nota=%d)", id, pagamentoId, nota.id());
 
             // Passo final (best-effort, RF-021/T-302): solicita o relatório/e-mail da NF emitida.
             // Falha aqui NÃO compensa a SAGA (já concluída) — apenas é registrada.
             try {
-                invoice.solicitarRelatorio(saga.notaId);
+                invoice.solicitarRelatorio(nota.id());
             } catch (RuntimeException ex) {
-                LOG.warnf(ex, "SAGA %d: falha ao solicitar relatório da nota %d (não compensa)",
-                        saga.id, saga.notaId);
+                LOG.warnf(ex, "SAGA %d: falha ao solicitar relatório da nota %d (não compensa)", id, nota.id());
             }
         } catch (RuntimeException e) {
-            compensar(saga, e.getMessage());
+            Saga atual = store.buscar(id);
+            compensar(id, atual.pagamentoId, e.getMessage(), false);
         }
-        return saga;
+        return store.buscar(id);
     }
 
-    /** Compensa os passos já executados (idempotente: só estorna se houve aprovação). */
-    private void compensar(Saga saga, String motivo) {
-        if (saga.pagamentoId != null) {
+    /**
+     * Compensa os passos já executados e marca a SAGA {@code COMPENSADA}. Idempotente: só estorna
+     * se houve pagamento; usado pelo fluxo normal e pela recuperação automática ({@code recovery}).
+     */
+    void compensar(Long id, Long pagamentoId, String motivo, boolean recovery) {
+        if (pagamentoId != null) {
             try {
-                executarCompensacao(saga, "reserve-payment", () -> payment.estornar(saga.pagamentoId));
+                executarCompensacao(id, "reserve-payment", recovery, () -> payment.estornar(pagamentoId));
             } catch (RuntimeException ex) {
-                LOG.errorf(ex, "Falha ao compensar pagamento %d da SAGA %d", saga.pagamentoId, saga.id);
+                LOG.errorf(ex, "Falha ao compensar pagamento %d da SAGA %d", pagamentoId, id);
             }
         }
-        saga.motivoFalha = motivo;
-        marcar(saga, StatusSaga.COMPENSADA);
-        LOG.warnf("SAGA %d compensada: %s", saga.id, motivo);
+        store.marcar(id, StatusSaga.COMPENSADA, null, motivo);
+        LOG.warnf("SAGA %d compensada: %s", id, motivo);
     }
 
     /**
      * Executa um passo da SAGA dentro de um span {@code saga.{flow}.{step}} (RF-H-016,
      * contrato T-005 §3.2/3.4) — INTERNAL, com os atributos {@code horus.saga.*}.
      */
-    private <T> T executarPasso(Saga saga, String step, Supplier<T> acao) {
-        Span span = novoSpan(saga, step, false);
+    private <T> T executarPasso(Long sagaId, String step, Supplier<T> acao) {
+        Span span = novoSpan(sagaId, step, false, false);
         try (Scope scope = span.makeCurrent()) {
             T resultado = acao.get();
             span.setStatus(StatusCode.OK);
@@ -123,8 +129,8 @@ public class SagaService {
     }
 
     /** Mesmo contrato do passo, mas nomeado {@code saga.{flow}.{step}.compensate}. */
-    private void executarCompensacao(Saga saga, String step, Runnable acao) {
-        Span span = novoSpan(saga, step, true);
+    private void executarCompensacao(Long sagaId, String step, boolean recovery, Runnable acao) {
+        Span span = novoSpan(sagaId, step, true, recovery);
         try (Scope scope = span.makeCurrent()) {
             acao.run();
             span.setStatus(StatusCode.OK);
@@ -137,29 +143,23 @@ public class SagaService {
         }
     }
 
-    private Span novoSpan(Saga saga, String step, boolean compensation) {
+    private Span novoSpan(Long sagaId, String step, boolean compensation, boolean recovery) {
         String name = "saga." + FLOW + "." + step + (compensation ? ".compensate" : "");
         var builder = tracer.spanBuilder(name)
                 .setSpanKind(SpanKind.INTERNAL)
-                .setAttribute("horus.saga.id", String.valueOf(saga.id))
+                .setAttribute("horus.saga.id", String.valueOf(sagaId))
                 .setAttribute("horus.saga.flow", FLOW)
                 .setAttribute("horus.saga.step", step);
         if (compensation) {
             builder.setAttribute("horus.saga.compensation", true);
         }
+        if (recovery) {
+            builder.setAttribute("horus.saga.recovery", true);
+        }
         return builder.startSpan();
     }
 
-    private void marcar(Saga saga, StatusSaga status) {
-        saga.status = status;
-        saga.atualizadoEm = OffsetDateTime.now();
-    }
-
     public Saga buscar(Long id) {
-        Saga s = Saga.findById(id);
-        if (s == null) {
-            throw new NotFoundException("SAGA " + id + " não encontrada");
-        }
-        return s;
+        return store.buscar(id);
     }
 }

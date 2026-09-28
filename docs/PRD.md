@@ -228,7 +228,7 @@ Detalhamento completo, matriz de permissões e papéis de agentes de IA em [`ROL
                                                  └──────────────────────────┘
 ```
 
-> **SAGA (orquestração):** os fluxos entre serviços são coordenados por uma SAGA sobre HTTP (MicroProfile LRA + coordenador), não desenhada no diagrama acima; cada passo e compensação é um span correlacionado que o Horus visualiza (RF-H-016). O RabbitMQ permanece restrito a relatórios. Ver ADR-0013.
+> **SAGA (orquestração):** os fluxos entre serviços são coordenados por uma SAGA sobre HTTP (orquestrador próprio com estado persistido em `saga_db` e recuperação automática — ADR-0013, T-107/T-1010), não desenhada no diagrama acima; cada passo e compensação é um span correlacionado que o Horus visualiza (RF-H-016). O RabbitMQ permanece restrito a relatórios. Ver ADR-0013.
 
 Decisões detalhadas em [`adr/`](./adr/). Componentes e versões em [`../lib.md`](../lib.md). Plano de execução em [`ROADMAP.md`](./ROADMAP.md).
 
@@ -279,7 +279,7 @@ Decisões detalhadas em [`adr/`](./adr/). Componentes e versões em [`../lib.md`
 | Vazamento de PII para a IA/telemetria | Privacidade | Redação antes de persistir e de enviar (RNF-H-002/006) |
 | Overhead de instrumentação sob carga | Degrada o sistema observado | Amostragem e orçamento de overhead medido (RNF-H-001) |
 | Horus vira ponto único de falha | Cegueira de observabilidade | Observabilidade passiva e isolada; serviços não dependem do Horus (RNF-H-008) |
-| Complexidade de SAGA/compensações | Inconsistência entre serviços | Idempotência obrigatória, compensação por passo, coordenador LRA observável e visualização da SAGA no Horus (ADR-0013, RF-H-016) |
+| Complexidade de SAGA/compensações | Inconsistência entre serviços | Idempotência obrigatória, compensação por passo, orquestrador observável (spans `saga.*`, recuperação por timeout) e visualização da SAGA no Horus (ADR-0013, RF-H-016) |
 
 ## 12. Questões em aberto
 

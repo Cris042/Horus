@@ -1,5 +1,24 @@
 # deploy/k8s — Manifests Kubernetes (T-802, RF-033)
 
+> **Stack completo (T-1009):** `kubectl apply -k deploy/` sobe infraestrutura **e** aplicações
+> (Postgres ×4, RabbitMQ, OTel Collector, Jaeger, Loki, Prometheus — mesmas configs do compose —,
+> os 7 executáveis, o LB NGINX `load-balancer`, HPAs e Ingress). `kubectl apply -k deploy/k8s/`
+> continua aplicando só as aplicações, para infra gerenciada fora do cluster.
+>
+> **Cluster local (kind):**
+> ```bash
+> kind create cluster --name horus
+> make package && docker compose -f deploy/docker-compose.yml --profile apps build   # horus/*:dev
+> for i in prontuario payment invoice saga-orchestrator horus report-worker loadtest; do
+>   kind load docker-image horus/$i:dev --name horus; done
+> kubectl apply -k deploy/
+> kubectl -n horus set env deployment/horus HORUS_RBAC_ENABLED=false            # sem IdP local
+> kubectl -n horus set resources deployment,statefulset --all --requests=cpu=20m  # nó pequeno
+> kubectl -n horus port-forward svc/load-balancer 8088:80 &  # e svc/horus 8080:8080
+> scripts/e2e.sh
+> ```
+> O job `e2e-k8s` do CI faz exatamente isso.
+
 Workloads de **aplicação** do Horus para Kubernetes, organizados como base Kustomize.
 
 ## Conteúdo
@@ -121,3 +140,25 @@ cd deploy/k8s && kustomize edit set image horus/horus=horus/horus:0.1.0
 - Emissão/gestão automatizada de certificados (cert-manager como dependência de cluster) — o
   `Ingress` (T-901) só referencia o Secret TLS, não o provisiona.
 - NetworkPolicies, PodDisruptionBudgets, Helm chart empacotado.
+
+## Endurecimentos opcionais (T-1012)
+
+### Worker escalado pela fila (KEDA)
+
+`optional/keda/report-worker-scaledobject.yaml` escala o `report-worker` pela profundidade da fila
+`relatorios.worker` (~20 mensagens por réplica, 1→4) — mais fiel à carga do worker do que CPU.
+Requer o KEDA no cluster e a remoção do HPA de CPU do worker (instruções no arquivo).
+
+### TLS interno (serviço → Postgres / RabbitMQ)
+
+Dentro do namespace o tráfego é tratado como fronteira de confiança (T-901). Para cifrar também
+o tráfego interno, sem mudar código:
+
+| Conexão | Como ligar |
+|---|---|
+| Serviços → Postgres | Postgres com certificado (`ssl=on`) e, em cada serviço, `QUARKUS_DATASOURCE_JDBC_URL=jdbc:postgresql://postgres-<svc>:5432/<db>?sslmode=verify-full&sslrootcert=/certs/ca.crt` (CA montada de um Secret) |
+| invoice → RabbitMQ | listener `amqps` (5671) no RabbitMQ e `RABBITMQ_PORT=5671` + `RABBITMQ_SSL=true` no invoice-service (configuração `rabbitmq-*` da extensão) |
+| worker → RabbitMQ | `AMQP_URL=amqps://…:5671/%2f` (o `lapin` do worker negocia TLS pelo esquema) |
+| Apps → Collector | `QUARKUS_OTEL_EXPORTER_OTLP_ENDPOINT=https://otel-collector:4317` + TLS no receiver OTLP |
+
+Os certificados (ex.: cert-manager com uma CA interna) ficam fora deste repositório.

@@ -35,7 +35,7 @@ public class TraceExplainer {
     public TraceExplanation explain(String traceId, PromptContext context) {
         String prompt = "Trace " + traceId + (context.truncated() ? " (contexto truncado)" : "")
                 + ":\n" + context.text();
-        LlmResponse resp = engine.complete(new LlmRequest(SYSTEM, prompt, ModelTier.BALANCED));
+        LlmResponse resp = engine.complete(new LlmRequest(SYSTEM, prompt, ModelTier.BALANCED, "trace-explain"));
         return new TraceExplanation(traceId, resp.text(), resp.modelId(), resp.live(),
                 context.truncated());
     }

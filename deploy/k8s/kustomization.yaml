@@ -1,9 +1,9 @@
 # Kustomize base dos workloads de aplicação do Horus (T-802, RF-033).
 #
-# Aplica: namespace + config + secret (exemplo) + Deployments/Services dos 7 executáveis.
-# A infraestrutura (Postgres ×4, RabbitMQ, OTel Collector, Jaeger, Loki, Prometheus) é
-# pré-requisito no cluster — em dev use o compose (`make up`); um overlay de infra para
-# K8s pode ser adicionado depois. Em produção, troque `secrets.example.yaml` por um Secret
+# Aplica: namespace + config + secret (exemplo) + Deployments/Services dos 7 executáveis + LB.
+# A infraestrutura (Postgres ×4, RabbitMQ, OTel Collector, Jaeger, Loki, Prometheus) vem de
+# `deploy/kustomization.yaml` (T-1009): `kubectl apply -k deploy/` sobe o stack completo;
+# `kubectl apply -k deploy/k8s/` continua subindo só as aplicações (infra externa). Em produção, troque `secrets.example.yaml` por um Secret
 # gerenciado (sealed-secrets/external-secrets) e ajuste as tags via `images:` abaixo.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
@@ -21,6 +21,8 @@ resources:
   - apps/horus.yaml
   - apps/report-worker.yaml
   - apps/loadtest.yaml
+  # LB de entrada no cluster (T-1009) — alvo padrão da API de carga.
+  - apps/load-balancer.yaml
   # Ponto único de entrada externo, com TLS opcional (T-901, RNF-017).
   - apps/ingress.yaml
   # Escala horizontal por componente (T-803, RNF-005).
@@ -30,6 +32,12 @@ resources:
   - autoscaling/saga-orchestrator-hpa.yaml
   - autoscaling/horus-hpa.yaml
   - autoscaling/report-worker-hpa.yaml
+
+configMapGenerator:
+  - name: load-balancer-config
+    files:
+      - lb/nginx.conf
+      - lb/locations.conf
 
 # Sobrescreva a tag das imagens (default `dev`) sem editar cada manifesto:
 #   kustomize edit set image horus/horus=horus/horus:0.1.0

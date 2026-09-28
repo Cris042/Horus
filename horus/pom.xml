@@ -45,18 +45,36 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-rest-client-jackson</artifactId>
         </dependency>
-        <!-- Camada de IA: Quarkus LangChain4j (Anthropic/Claude) — ADR-0011, T-601.
-             Acesso ao LLM atrás da porta LlmEngine; ativo só com horus.ai.enabled=true. -->
+        <!-- Camada de IA: SDK oficial da Anthropic para Java — ADR-0011 (adendo T-1003).
+             Acesso ao LLM atrás da porta LlmEngine; modelo escolhido por request (ModelTier). -->
         <dependency>
-            <groupId>io.quarkiverse.langchain4j</groupId>
-            <artifactId>quarkus-langchain4j-anthropic</artifactId>
-            <version>${quarkus-langchain4j.version}</version>
+            <groupId>com.anthropic</groupId>
+            <artifactId>anthropic-java</artifactId>
+            <version>${anthropic-java.version}</version>
+        </dependency>
+
+        <!-- E-mail real dos alertas (T-1008, RF-H-013). Mock automático em dev/test. -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-mailer</artifactId>
+        </dependency>
+
+        <!-- RBAC com autenticação real (T-1007): verificação de JWT do IdP (OIDC) — papéis na claim `groups`. -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-jwt</artifactId>
         </dependency>
 
         <!-- Testes -->
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-junit5-mockito</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Emissão de JWT assinado nos testes do RBAC (T-1007). -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-jwt-build</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

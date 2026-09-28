@@ -42,8 +42,7 @@ Catálogo de dependências de **todos os componentes** do projeto **Horus** (pla
 | `quarkus-hibernate-orm-panache` | (via BOM) | Persistência de metadados/configuração do Horus |
 | `quarkus-jdbc-postgresql` | (via BOM) | Acesso ao Postgres do Horus |
 | `quarkus-flyway` | (via BOM) | Migrações do banco do Horus |
-| **`quarkus-langchain4j-anthropic`** | **0.25.x** | **Integração com Claude (camada de IA — ADR-0011)** |
-| LangChain4j (core) | **1.0.x** | Abstrações de IA (atrás de interface) |
+| **`com.anthropic:anthropic-java`** | **2.65.0** | **SDK oficial da Anthropic — camada de IA (ADR-0011, adendo T-1003)** |
 | `quarkus-rest-client` | (via BOM) | Consulta às APIs de Jaeger/Tempo, Loki, Prometheus |
 | `quarkus-container-image-jib` | (via BOM) | Build da imagem Docker |
 | `quarkus-smallrye-health` | (via BOM) | Health/readiness |
@@ -54,9 +53,9 @@ Catálogo de dependências de **todos os componentes** do projeto **Horus** (pla
 
 | Tarefa | Modelo | ID |
 |---|---|---|
-| Resumos de alto volume / clusterização | Claude Haiku 4.5 | `claude-haiku-4-5-20251001` |
-| Explicação de trace / consulta em linguagem natural | Claude Sonnet 4.6 | `claude-sonnet-4-6` |
-| RCA profunda de incidentes | Claude Opus 4.8 | `claude-opus-4-8` |
+| Resumos de alto volume / clusterização | Claude Haiku 4.5 | `claude-haiku-4-5` |
+| Explicação de trace / consulta em linguagem natural | Claude Sonnet 5 | `claude-sonnet-5` |
+| RCA profunda de incidentes | Claude Opus 5 | `claude-opus-5` |
 
 > Acesso via API Anthropic (chave `ANTHROPIC_API_KEY`). Preços, limites de tokens e parâmetros: **consultar a referência oficial da API Claude no momento da implementação** (não fixados aqui de propósito).
 
@@ -76,7 +75,7 @@ Mesma base para os quatro serviços.
 | `quarkus-hibernate-validator` | (via BOM) | Validação de entrada |
 | `quarkus-opentelemetry` | (via BOM) | Tracing + **instrumentação de JDBC/Hibernate (RF-H-002)** + métricas RED/JVM (`quarkus.otel.metrics.enabled=true`) |
 | `quarkus-messaging-rabbitmq` (SmallRye Reactive Messaging) | (via BOM) | Publicar solicitação de relatório (RF-021) |
-| `quarkus-narayana-lra` | (via BOM) | **SAGA por orquestração (MicroProfile LRA) — passos e compensações (ADR-0013)** |
+| `quarkus-scheduler` | (via BOM) | **SAGA por orquestração própria (ADR-0013): recuperação agendada de SAGAs interrompidas (T-1010)** — MicroProfile LRA foi avaliado e **não** adotado |
 | `quarkus-smallrye-health` | (via BOM) | Health/readiness |
 | `quarkus-container-image-jib` | (via BOM) | Imagem Docker |
 
@@ -134,7 +133,6 @@ Mesma base para os quatro serviços.
 | PostgreSQL | **17.x** | Banco por serviço (`prontuario_db`/`payment_db`/`invoice_db`/`saga_db`), isolado (RNF-003) |
 | `postgres_exporter` | **quay.io/prometheuscommunity/postgres-exporter:v0.15.x** | Métricas de cada banco p/ Prometheus (conexões/tx/tamanho) — dashboard `postgres.json` |
 | RabbitMQ | **4.0.x** (com management) | Mensageria restrita a relatórios (ADR-0004) |
-| LRA Coordinator (Narayana) | **quay.io/jbosstm/lra-coordinator** (compatível com Narayana 7.x) | Coordenador da SAGA por orquestração (ADR-0013) |
 | NGINX | **1.27.x** | Load Balancer (opção A) |
 | Traefik | **3.3.x** | Load Balancer (opção B) |
 | OpenTelemetry Collector (contrib) | **0.118.x** | Coleta/roteamento OTLP (ADR-0010) |

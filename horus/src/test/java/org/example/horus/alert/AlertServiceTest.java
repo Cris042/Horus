@@ -10,7 +10,7 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 
 /**
- * Testes do mecanismo de alerta (T-703, RF-H-013). O resumo usa o {@code StubLlmEngine}
+ * Testes do mecanismo de alerta (T-703, RF-H-013). O resumo usa o modo stub do {@code AnthropicLlmEngine}
  * default (sem chave → {@code live=false}); webhook/e-mail ficam desabilitados (config
  * vazia), de modo que apenas o canal {@code log} dispara.
  */

@@ -45,7 +45,7 @@ public class SagaVisualizationService {
                 .toList();
 
         if (sagaSpans.isEmpty()) {
-            return new SagaFlow(trace.traceId(), null, "none", 0, 0, 0L, List.of());
+            return new SagaFlow(trace.traceId(), null, "none", 0, 0, 0L, null, false, List.of());
         }
 
         long minStart = sagaSpans.stream()
@@ -63,6 +63,7 @@ public class SagaVisualizationService {
         String flow = null;
         int stepCount = 0;
         int compensationCount = 0;
+        String failedStep = null;
 
         for (SpanRef span : sagaSpans) {
             ParsedOperation parsed = parse(span.operation());
@@ -73,6 +74,9 @@ public class SagaVisualizationService {
                 compensationCount++;
             } else {
                 stepCount++;
+                if (span.error() && failedStep == null) {
+                    failedStep = parsed.step(); // T-1010: o passo que falhou vem do status do span
+                }
             }
             steps.add(new SagaStep(
                     parsed.flow(),
@@ -81,16 +85,22 @@ public class SagaVisualizationService {
                     span.operation(),
                     span.serviceName(),
                     minStart > 0 && span.startTimeMicros() > 0 ? span.startTimeMicros() - minStart : 0L,
-                    span.durationMicros()));
+                    span.durationMicros(),
+                    span.error()));
         }
 
         long totalDurationMicros = minStart > 0 && maxEnd >= minStart
                 ? maxEnd - minStart
                 : sagaSpans.stream().mapToLong(SpanRef::durationMicros).max().orElse(0L);
 
-        String outcome = compensationCount > 0 ? "compensated" : "completed";
+        // Desfecho (T-1010): compensada > falhou sem compensação (SAGA pendurada até a recuperação)
+        // > concluída. Uma compensação sem passo no trace é a recuperação automática do orquestrador
+        // (roda num trace próprio, sem os passos originais).
+        String outcome = compensationCount > 0 ? "compensated" : failedStep != null ? "failed" : "completed";
+        boolean recovered = compensationCount > 0 && stepCount == 0;
 
-        return new SagaFlow(trace.traceId(), flow, outcome, stepCount, compensationCount, totalDurationMicros, steps);
+        return new SagaFlow(trace.traceId(), flow, outcome, stepCount, compensationCount, totalDurationMicros,
+                failedStep, recovered, steps);
     }
 
     private static boolean isSagaOperation(String operation) {

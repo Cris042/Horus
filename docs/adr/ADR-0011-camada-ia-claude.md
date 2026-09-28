@@ -16,9 +16,9 @@ Adotar a família **Claude (Anthropic)** como motor de IA, integrada via **Quark
 ### Seleção de modelo por tarefa
 | Tarefa | Modelo sugerido | Racional |
 |---|---|---|
-| Resumo periódico de estado / clusterização (alto volume) | **Haiku** (`claude-haiku-4-5-20251001`) | Baixo custo e latência |
-| Explicação de trace / consulta em linguagem natural | **Sonnet** (`claude-sonnet-4-6`) | Equilíbrio qualidade/custo |
-| RCA profunda em incidentes | **Opus** (`claude-opus-4-8`) | Raciocínio mais forte |
+| Resumo periódico de estado / clusterização (alto volume) | **Haiku** (`claude-haiku-4-5`) | Baixo custo e latência |
+| Explicação de trace / consulta em linguagem natural | **Sonnet** (`claude-sonnet-5`) | Equilíbrio qualidade/custo |
+| RCA profunda em incidentes | **Opus** (`claude-opus-5`) | Raciocínio mais forte |
 
 ### Padrões de uso
 1. **Resumo de estado** (sob demanda + agendado) — RF-H-005.
@@ -44,3 +44,30 @@ Adotar a família **Claude (Anthropic)** como motor de IA, integrada via **Quark
 **Negativas**
 - Dependência de um serviço externo de IA (rede, custo, disponibilidade).
 - Necessidade de avaliar a qualidade dos resumos/RCA (risco de "alucinação"): tratar saídas como **assistência**, não verdade absoluta; sempre permitir ir ao trace cru.
+
+## Adendo (2026-09-28, T-1003) — SDK oficial em vez de Quarkus LangChain4j
+
+**Contexto.** A integração da T-601 usava `quarkus-langchain4j-anthropic` 1.1.0. Ao preparar a IA
+real (T-1003) constatou-se que ela **nunca teria funcionado** com os modelos atuais:
+
+- a extensão envia sempre `temperature` e `top_k` (o `topK` nem é opcional, padrão 40) — os modelos
+  atuais (Opus 4.7+/Opus 5/Sonnet 5) rejeitam parâmetros de amostragem com **400**;
+- `max_tokens` padrão de 1024 e um **único** modelo global: o `ModelTier` era só rótulo, a seleção
+  de modelo por tarefa (acima) não acontecia;
+- `system` e prompt eram concatenados numa única mensagem de usuário;
+- o motor real só era selecionável por flag de **build** (`@IfBuildProperty`): ligar
+  `horus.ai.enabled` no compose/K8s não tinha efeito sem recompilar.
+
+**Decisão.** O adapter passa a usar o **SDK oficial da Anthropic para Java** (`com.anthropic:anthropic-java`),
+continuando **atrás da mesma porta `LlmEngine`** (nenhum chamador mudou — a decisão de "provedor
+desacoplado" acima é o que tornou a troca barata). `AnthropicLlmEngine` é o único bean do motor e
+escolhe em runtime entre *live* (`horus.ai.enabled=true` + `ANTHROPIC_API_KEY`) e *stub*.
+
+| Camada | Modelo | `effort` | Observação |
+|---|---|---|---|
+| `FAST` | `claude-haiku-4-5` | — | Haiku 4.5 não aceita `effort` |
+| `BALANCED` | `claude-sonnet-5` | `medium` | |
+| `DEEP` | `claude-opus-5` | `high` | `fallbacks: "default"` (beta `server-side-fallback-2026-07-01`) contra recusas |
+
+Nenhum parâmetro de amostragem é enviado; `system` vai separado; falhas da API viram **503**
+(a IA é opcional — RNF-H-008). Smoke real por camada: `scripts/ai-smoke.sh` / job `ai-live` do CI.

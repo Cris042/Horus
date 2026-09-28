@@ -3,37 +3,35 @@ package org.example.horus.ai.agent;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.example.horus.ai.context.ContextAssembler;
 import org.example.horus.ai.context.PromptContext;
-import org.example.horus.query.MetricQueryPort;
+import org.example.horus.ai.context.WindowContextCollector;
+import org.example.horus.query.TimeWindow;
 import org.jboss.logging.Logger;
 
-import java.util.List;
+import java.time.Instant;
 
 /**
  * Resumo de estado <b>agendado</b> (T-603, RF-H-005).
  *
  * <p>Desligado por padrão ({@code horus.ai.summary.cron=off}); habilite com um cron
- * (ex.: {@code 0 0/15 * * * ?}). A cada disparo consulta uma métrica de saúde via
- * {@link MetricQueryPort}, monta o contexto (T-602) e gera um resumo (T-603), registrando-o
- * no log. Persistência/notificação do resumo é fatia seguinte (T-608/T-701).
+ * (ex.: {@code 0 0/15 * * * ?}). A cada disparo coleta os sinais da última janela
+ * ({@code horus.ai.summary.lookback}, padrão 15m — T-1001: traces, erros, queries lentas,
+ * logs de erro e a métrica de saúde), monta o contexto e gera um resumo (T-603), registrando-o
+ * no log. Persistência/notificação do resumo é fatia seguinte.
  */
 @ApplicationScoped
 public class ScheduledStateSummary {
 
     private static final Logger LOG = Logger.getLogger(ScheduledStateSummary.class);
 
-    private final MetricQueryPort metrics;
-    private final ContextAssembler assembler;
+    private final WindowContextCollector windows;
     private final StateSummarizer summarizer;
 
-    @ConfigProperty(name = "horus.ai.summary.promql", defaultValue = "up")
-    String promQl;
+    @ConfigProperty(name = "horus.ai.summary.lookback", defaultValue = "15m")
+    String lookback;
 
-    public ScheduledStateSummary(MetricQueryPort metrics, ContextAssembler assembler,
-                                 StateSummarizer summarizer) {
-        this.metrics = metrics;
-        this.assembler = assembler;
+    public ScheduledStateSummary(WindowContextCollector windows, StateSummarizer summarizer) {
+        this.windows = windows;
         this.summarizer = summarizer;
     }
 
@@ -41,7 +39,8 @@ public class ScheduledStateSummary {
     @Scheduled(cron = "{horus.ai.summary.cron:off}")
     void run() {
         try {
-            PromptContext context = assembler.assemble(null, List.of(), metrics.instantQuery(promQl));
+            TimeWindow window = TimeWindow.last(TimeWindow.parseLookback(lookback), Instant.now());
+            PromptContext context = windows.collect(window);
             var summary = summarizer.summarize(context);
             LOG.infof("Resumo de estado agendado (%s, live=%s): %s",
                     summary.modelId(), summary.live(), summary.summary());

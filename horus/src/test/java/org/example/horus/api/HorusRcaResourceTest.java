@@ -18,7 +18,7 @@ import static org.mockito.Mockito.when;
 
 /**
  * Verifica o endpoint de RCA (T-605) com o {@link ContextAssembler} mockado; o
- * {@code RootCauseAnalyst} real usa o {@code StubLlmEngine} default (sem chave).
+ * {@code RootCauseAnalyst} real usa o modo stub do {@code AnthropicLlmEngine} (sem chave).
  */
 @QuarkusTest
 class HorusRcaResourceTest {
@@ -36,6 +36,6 @@ class HorusRcaResourceTest {
                 .then().statusCode(200)
                 .body("traceId", equalTo("abc123"))
                 .body("live", is(false))                     // stub
-                .body("modelId", equalTo("claude-opus-4-8")); // camada DEEP
+                .body("modelId", equalTo("claude-opus-5")); // camada DEEP
     }
 }

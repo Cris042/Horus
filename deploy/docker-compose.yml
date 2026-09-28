@@ -6,8 +6,12 @@
 #   - OpenTelemetry Collector (contrib) — único ponto de ingestão OTLP (ADR-0010)
 #   - Jaeger 2 (traces), Loki 3 (logs), Prometheus 3 (métricas)
 #
-# Uso: `make up` / `make down` (na raiz do repo). As aplicações (Quarkus/Rust/Python)
-# ainda NÃO entram aqui — entram em T-801, quando houver imagens Docker.
+# Uso: `make up` / `make down` (na raiz do repo) sobem só a infraestrutura.
+#
+# Aplicações (T-1002): profile `apps` — 4 serviços de domínio/SAGA, worker Rust, Horus,
+# API de carga e o Load Balancer (NGINX, porta 8088). `make up-apps` empacota os módulos
+# Quarkus no host (`./mvnw package`) e sobe tudo; as imagens Quarkus copiam o
+# `target/quarkus-app` já construído (sem rebaixar dependências dentro do Docker).
 #
 # ⚠️ Versões fixadas para reprodutibilidade (ver lib.md). Confirme/ajuste ao evoluir.
 # ⚠️ Credenciais abaixo são de DEV (não-secretas, locais). Nunca usar em prod.
@@ -30,6 +34,26 @@ x-postgres-exporter-common: &postgres-exporter-common
   image: quay.io/prometheuscommunity/postgres-exporter:v0.15.0
   restart: unless-stopped
   networks: [horus]
+
+# Aplicações Quarkus (T-1002): imagem de runtime sobre o `target/quarkus-app` já empacotado
+# no host (mesmo layout do Dockerfile.jvm de T-801, sem o estágio de build Maven).
+x-quarkus-build: &quarkus-build
+  dockerfile_inline: |
+    FROM eclipse-temurin:25-jre
+    WORKDIR /app
+    COPY . /app/
+    ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "/app/quarkus-run.jar"]
+
+x-quarkus-app: &quarkus-app
+  profiles: ["apps"]
+  restart: unless-stopped
+  networks: [horus]
+
+x-quarkus-health: &quarkus-health
+  interval: 5s
+  timeout: 3s
+  retries: 30
+  start_period: 10s
 
 services:
   # ---------------------------------------------------------------- Bancos (1 por serviço)
@@ -122,17 +146,38 @@ services:
     networks: [horus]
 
   # ---------------------------------------------------------------- Telemetria: backends
+  # Traces em Badger (disco) com TTL = JAEGER_RETENTION (T-1005, RNF-H-005). O init ajusta o
+  # dono do volume (o Jaeger roda como uid 10001 e o volume nasce com dono root).
+  jaeger-volume-init:
+    image: jaegertracing/jaeger:2.2.0
+    user: "0"
+    entrypoint: ["sh", "-c", "chown -R 10001:0 /badger"]
+    volumes:
+      - jaeger-data:/badger
+    restart: "no"
+    networks: [horus]
+
   jaeger:
     image: jaegertracing/jaeger:2.2.0
     restart: unless-stopped
+    command: ["--config", "/etc/jaeger/config.yaml"]
+    environment:
+      JAEGER_RETENTION: ${JAEGER_RETENTION:-168h}
+    volumes:
+      - ./telemetry/jaeger-config.yaml:/etc/jaeger/config.yaml:ro
+      - jaeger-data:/badger
     ports:
       - "16686:16686"  # UI (RF-031)
+    depends_on:
+      jaeger-volume-init: { condition: service_completed_successfully }
     networks: [horus]
 
   loki:
     image: grafana/loki:3.4.1
     restart: unless-stopped
-    command: ["-config.file=/etc/loki/loki-config.yaml"]
+    command: ["-config.file=/etc/loki/loki-config.yaml", "-config.expand-env=true"]
+    environment:
+      LOKI_RETENTION: ${LOKI_RETENTION:-168h}   # T-1005, RNF-H-005
     volumes:
       - ./telemetry/loki-config.yaml:/etc/loki/loki-config.yaml:ro
     ports:
@@ -150,6 +195,7 @@ services:
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--web.enable-remote-write-receiver"   # recebe métricas do Collector via remote_write
+      - "--storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d}"   # T-1005, RNF-H-005
     volumes:
       - ./telemetry/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     # Ponte p/ um cluster kind local (dashboard `kubernetes.json`) via `kubectl port-forward`
@@ -232,7 +278,134 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks: [horus]
 
+  # ================================================================ Aplicações (profile `apps`, T-1002)
+  prontuario-service:
+    <<: *quarkus-app
+    build:
+      <<: *quarkus-build
+      context: ../services/prontuario/target/quarkus-app
+    image: horus/prontuario:dev   # mesmo nome dos manifests K8s (T-1009)
+    ports: ["8081:8081"]
+    healthcheck:
+      <<: *quarkus-health
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8081 && printf 'GET /q/health/ready HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
+    depends_on:
+      postgres-prontuario: { condition: service_healthy }
+      otel-collector: { condition: service_started }
+
+  payment-service:
+    <<: *quarkus-app
+    build:
+      <<: *quarkus-build
+      context: ../services/payment/target/quarkus-app
+    image: horus/payment:dev   # mesmo nome dos manifests K8s (T-1009)
+    ports: ["8082:8082"]
+    healthcheck:
+      <<: *quarkus-health
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8082 && printf 'GET /q/health/ready HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
+    depends_on:
+      postgres-payment: { condition: service_healthy }
+      otel-collector: { condition: service_started }
+
+  invoice-service:
+    <<: *quarkus-app
+    build:
+      <<: *quarkus-build
+      context: ../services/invoice/target/quarkus-app
+    image: horus/invoice:dev   # mesmo nome dos manifests K8s (T-1009)
+    ports: ["8083:8083"]
+    healthcheck:
+      <<: *quarkus-health
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8083 && printf 'GET /q/health/ready HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
+    depends_on:
+      postgres-invoice: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      otel-collector: { condition: service_started }
+
+  saga-orchestrator:
+    <<: *quarkus-app
+    build:
+      <<: *quarkus-build
+      context: ../services/saga-orchestrator/target/quarkus-app
+    image: horus/saga-orchestrator:dev   # mesmo nome dos manifests K8s (T-1009)
+    ports: ["8084:8084"]
+    healthcheck:
+      <<: *quarkus-health
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8084 && printf 'GET /q/health/ready HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
+    depends_on:
+      postgres-saga: { condition: service_healthy }
+      payment-service: { condition: service_healthy }
+      invoice-service: { condition: service_healthy }
+
+  horus:
+    <<: *quarkus-app
+    build:
+      <<: *quarkus-build
+      context: ../horus/target/quarkus-app
+    image: horus/horus:dev   # mesmo nome dos manifests K8s (T-1009)
+    ports: ["8080:8080"]
+    environment:
+      # IA real opcional (T-1003): exporte ANTHROPIC_API_KEY e HORUS_AI_ENABLED=true no shell.
+      # Sem chave, o Horus sobe em modo stub (placeholder, sem rede).
+      HORUS_AI_ENABLED: ${HORUS_AI_ENABLED:-false}
+      # RBAC (T-1007) vem ligado no perfil prod; o stack de DEV o desliga para o painel e o e2e
+      # funcionarem sem IdP. Para testar: HORUS_RBAC_ENABLED=true + MP_JWT_VERIFY_* no shell.
+      HORUS_RBAC_ENABLED: ${HORUS_RBAC_ENABLED:-false}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    healthcheck:
+      <<: *quarkus-health
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /q/health/ready HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
+    depends_on:
+      jaeger: { condition: service_started }
+      loki: { condition: service_healthy }
+      prometheus: { condition: service_healthy }
+
+  report-worker:
+    profiles: ["apps"]
+    build: ../worker
+    image: horus/report-worker:dev
+    restart: unless-stopped
+    environment:
+      AMQP_URL: amqp://horus:horus@rabbitmq:5672/%2f
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      RUST_LOG: info
+    depends_on:
+      rabbitmq: { condition: service_healthy }
+      otel-collector: { condition: service_started }
+    networks: [horus]
+
+  loadtest:
+    profiles: ["apps"]
+    build: ../loadtest
+    image: horus/loadtest:dev
+    restart: unless-stopped
+    environment:
+      HORUS_LOADTEST_RUNNER: locust
+      HORUS_OTEL_ENABLED: "true"
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+    ports: ["8000:8000"]
+    depends_on:
+      load-balancer: { condition: service_started }
+    networks: [horus]
+
+  # Load Balancer de entrada (T-201/ADR-0002) — a carga e o e2e entram por aqui.
+  load-balancer:
+    profiles: ["apps"]
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    volumes:
+      - ./lb/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./lb/locations.conf:/etc/nginx/locations.conf:ro
+    ports: ["8088:80"]
+    depends_on:
+      prontuario-service: { condition: service_healthy }
+      payment-service: { condition: service_healthy }
+      invoice-service: { condition: service_healthy }
+      saga-orchestrator: { condition: service_healthy }
+    networks: [horus]
+
 volumes:
+  jaeger-data:
   pg-prontuario:
   pg-payment:
   pg-invoice:

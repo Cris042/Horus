@@ -2,9 +2,8 @@ name: CI
 
 # Build + test + lint por componente do monorepo Horus (Fase 0 / T-004).
 #
-# Módulos com código real: Java `horus/` e o load test Python `loadtest/` (API de
-# controle, T-202). O worker (Rust, `worker/`) ainda é scaffolding (ver seu README);
-# seu job entra quando ganhar código real (T-303).
+# Jobs: Java (5 módulos Quarkus), Python (`loadtest/`), Rust (`worker/`) e, depois deles,
+# o e2e (T-1002) que sobe o stack real via docker compose e roda `scripts/e2e.sh`.
 #
 # Este pipeline NÃO depende de segredos (ao contrário do AI review): ele sempre
 # roda e gateia os PRs com build/test reais. Usa o Maven Wrapper (`./mvnw`,
@@ -105,3 +104,163 @@ jobs:
 
       - name: Build + testes
         run: cargo test
+
+  e2e:
+    name: E2E (stack real via docker compose)
+    # Sobe infra + aplicações + LB (profile `apps`, T-1002) e roda scripts/e2e.sh: SAGA feliz e
+    # compensada pelo Load Balancer, verificadas no Horus sobre Jaeger/Loki/Prometheus reais.
+    # Pega regressões que os testes com dados sintéticos não pegam (ex.: T-507/T-905, T-1002).
+    needs: [build-java, build-worker]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      COMPOSE: docker compose -f deploy/docker-compose.yml --profile apps
+      # Só o necessário para o e2e (sem Grafana/exporters/cAdvisor/loadtest).
+      E2E_SERVICES: >-
+        postgres-prontuario postgres-payment postgres-invoice postgres-saga rabbitmq
+        jaeger loki prometheus otel-collector
+        prontuario-service payment-service invoice-service saga-orchestrator
+        horus report-worker load-balancer
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 25 (Temurin) + cache Maven
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Empacotar módulos Quarkus (target/quarkus-app)
+        run: ./mvnw -B -ntp -DskipTests package
+
+      - name: Subir o stack
+        run: $COMPOSE up -d --build --wait --wait-timeout 600 $E2E_SERVICES
+
+      - name: Teste ponta a ponta
+        run: scripts/e2e.sh
+
+      - name: Estado e logs do stack (em falha)
+        if: failure()
+        run: |
+          $COMPOSE ps
+          $COMPOSE logs --no-color --tail 200
+
+      - name: Derrubar o stack
+        if: always()
+        run: $COMPOSE down -v
+
+  ai-live:
+    name: IA real por camada (opcional — requer a secret ANTHROPIC_API_KEY)
+    # T-1003: exercita Haiku/Sonnet/Opus de verdade pelo Horus em modo live. Sem a secret, o job
+    # é pulado com aviso (não bloqueia o CI). Não roda em PR (secrets não chegam a forks e evita
+    # custo por push de branch).
+    if: github.event_name != 'pull_request'
+    needs: [build-java]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Porteiro da secret
+        id: gate
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::ANTHROPIC_API_KEY ausente — smoke de IA real pulado"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.gate.outputs.enabled == 'true'
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 25 (Temurin) + cache Maven
+        if: steps.gate.outputs.enabled == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Empacotar e subir o Horus em modo live
+        if: steps.gate.outputs.enabled == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          HORUS_AI_ENABLED: "true"
+          HORUS_RBAC_ENABLED: "false"   # smoke da IA, não do RBAC (T-1007)
+        run: |
+          ./mvnw -B -ntp -pl horus -am -DskipTests package
+          nohup java -jar horus/target/quarkus-app/quarkus-run.jar > horus.log 2>&1 &
+          for i in $(seq 1 60); do curl -fsS localhost:8080/q/health/ready >/dev/null 2>&1 && break; sleep 2; done
+
+      - name: Smoke por camada (FAST/BALANCED/DEEP)
+        if: steps.gate.outputs.enabled == 'true'
+        run: scripts/ai-smoke.sh
+
+      - name: Log do Horus (em falha)
+        if: failure() && steps.gate.outputs.enabled == 'true'
+        run: cat horus.log
+
+  e2e-k8s:
+    name: E2E no Kubernetes (kind)
+    # T-1009: aplica o stack completo (kubectl apply -k deploy/ — infra + apps + LB) num cluster
+    # kind e roda o mesmo scripts/e2e.sh pelo LB do cluster. Não-bloqueante até a 1ª execução
+    # verde no GitHub (não foi possível rodar kind no ambiente onde foi escrito).
+    needs: [build-java, build-worker]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 25 (Temurin) + cache Maven
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Empacotar e construir as imagens horus/*:dev
+        run: |
+          ./mvnw -B -ntp -DskipTests package
+          docker compose -f deploy/docker-compose.yml --profile apps build \
+            prontuario-service payment-service invoice-service saga-orchestrator horus report-worker loadtest
+
+      - name: Criar cluster kind
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: horus
+
+      - name: Carregar imagens e aplicar o stack
+        run: |
+          for i in prontuario payment invoice saga-orchestrator horus report-worker loadtest; do
+            kind load docker-image "horus/$i:dev" --name horus
+          done
+          kubectl apply -k deploy/
+          # Ajustes de cluster local (ver deploy/k8s/README.md): sem IdP e com pouca CPU.
+          kubectl -n horus set env deployment/horus HORUS_RBAC_ENABLED=false
+          kubectl -n horus set resources deployment,statefulset --all --requests=cpu=20m
+          kubectl -n horus wait --for=jsonpath='{.status.readyReplicas}'=1 statefulset --all --timeout=600s
+          kubectl -n horus wait --for=condition=available deployment --all --timeout=600s
+
+      - name: Teste ponta a ponta pelo LB do cluster
+        run: |
+          kubectl -n horus port-forward svc/load-balancer 8088:80 >/dev/null 2>&1 &
+          kubectl -n horus port-forward svc/horus 8080:8080 >/dev/null 2>&1 &
+          sleep 3
+          scripts/e2e.sh
+
+      - name: Estado do cluster (em falha)
+        if: failure()
+        run: |
+          kubectl -n horus get pods -o wide
+          # Logs (atual e anterior) de cada pod que não está pronto.
+          for p in $(kubectl -n horus get pods -o jsonpath='{range .items[?(@.status.containerStatuses[0].ready==false)]}{.metadata.name}{"\n"}{end}'); do
+            echo "=== $p"; kubectl -n horus logs "$p" --tail=60 || true
+            kubectl -n horus logs "$p" --previous --tail=60 2>/dev/null || true
+          done
+          kubectl -n horus get events --sort-by=.lastTimestamp | tail -40

@@ -1,0 +1,36 @@
+# Stack COMPLETO no Kubernetes (T-1009): infraestrutura + aplicações.
+#
+#   kubectl apply -k deploy/          # infra (Postgres ×4, RabbitMQ, Collector, Jaeger, Loki,
+#                                     # Prometheus) + tudo de deploy/k8s/ (apps, LB, HPAs, Ingress)
+#   kubectl apply -k deploy/k8s/      # só as aplicações, com infra gerenciada fora do cluster
+#
+# Fica na raiz de deploy/ para reaproveitar as MESMAS configs de telemetria do compose
+# (deploy/telemetry/*) — o kustomize só lê arquivos dentro da árvore da kustomization.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: horus
+
+resources:
+  - k8s
+  - k8s/infra/postgres.yaml
+  - k8s/infra/rabbitmq.yaml
+  - k8s/infra/telemetry.yaml
+
+configMapGenerator:
+  - name: otel-collector-config
+    files:
+      - telemetry/otel-collector-config.yaml
+  - name: jaeger-config
+    files:
+      - telemetry/jaeger-config.yaml
+  - name: loki-config
+    files:
+      - telemetry/loki-config.yaml
+  - name: prometheus-config
+    files:
+      - k8s/infra/prometheus-k8s.yml
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: horus

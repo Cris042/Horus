@@ -23,12 +23,22 @@ public final class PromptSanitizer {
 
     /** Mascara e-mail (→ {@code ***@***}), CPF e cartão (→ {@code ***}) no texto. */
     public static String sanitize(String text) {
+        return sanitizeCounting(text).text();
+    }
+
+    /** Como {@link #sanitize}, mas informa quantos trechos foram mascarados (trilha — T-1004). */
+    public static Sanitized sanitizeCounting(String text) {
         if (text == null || text.isEmpty()) {
-            return text;
+            return new Sanitized(text, 0);
         }
-        String out = EMAIL.matcher(text).replaceAll("***@***");
-        out = CPF.matcher(out).replaceAll("***");
-        out = CARD.matcher(out).replaceAll("***");
-        return out;
+        int[] count = {0};
+        String out = EMAIL.matcher(text).replaceAll(m -> { count[0]++; return "***@***"; });
+        out = CPF.matcher(out).replaceAll(m -> { count[0]++; return "***"; });
+        out = CARD.matcher(out).replaceAll(m -> { count[0]++; return "***"; });
+        return new Sanitized(out, count[0]);
+    }
+
+    /** Texto sanitizado + número de redações aplicadas. */
+    public record Sanitized(String text, int redactions) {
     }
 }

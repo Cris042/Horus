@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| **Versão** | 1.0 |
+| **Versão** | 1.1 (Fase 10 adicionada em 2026-09-28) |
 | **Data** | 2026-06-26 |
 | **Relacionado** | [`PRD.md`](./PRD.md) · [`adr/`](./adr/) · [`../lib.md`](../lib.md) |
 
@@ -13,7 +13,12 @@ O plano sobe primeiro o **sistema observado** (o suficiente para gerar tráfego 
 **Legenda de prioridade:** 🔴 crítico · 🟠 importante · 🟢 incremental
 **Estimativas** em pontos relativos (P = pequeno, M = médio, G = grande); ajuste à sua capacidade.
 
-> 📍 **Progresso atual (2026-07-02):** **Roadmap completo** — Fases 0-9 entregues, `T-905`
+> 📍 **Progresso atual (2026-09-28):** Fases 0-10 entregues. A **Fase 10 — Produto utilizável**
+> (`T-1001`..`T-1012`), aberta pela análise de lacunas pós-aceite, foi concluída na branch
+> `claude/beautiful-cray-sfblsr` (um commit por task). Pendências fora do código: secret
+> `ANTHROPIC_API_KEY` (job `ai-live`) e 1ª execução verde do job `e2e-k8s` (kind).
+>
+> Histórico (2026-07-02): Fases 0-9 entregues, `T-905`
 > (aceite final) validou os 16 critérios do `PRD.md` §10 com o sistema real rodando (LB real,
 > cluster K8s real, SAGA real com compensação visualizada no Horus). `T-405` (Fase 4), pendente
 > desde a criação deste plano por falta de infra real, também foi validada e corrigida nesta
@@ -50,7 +55,7 @@ O plano sobe primeiro o **sistema observado** (o suficiente para gerar tráfego 
 | `T-104` | Invoice Service: receber emissão, gerar NF simulada, registrar resultado, listar, reprocessar | T-101 | G | RF-016..020, RF-027 |
 | `T-105` | Migrações Flyway independentes por banco (`prontuario_db`/`payment_db`/`invoice_db`) | T-101 | M | RF-028, RNF-015 |
 | `T-106` | Isolamento: credenciais/schema separados; proibição de acesso cruzado | T-105 | P | RNF-002, RNF-003 |
-| `T-107` | **SAGA (orquestração)**: coordenador MicroProfile LRA + 1º fluxo cross-service (ex.: pagar → emitir NF) com compensações idempotentes e spans correlacionados | T-102, T-103, T-104 | G | RNF-019, ADR-0013 |
+| `T-107` | **SAGA (orquestração)**: orquestrador próprio (estado em `saga_db`; LRA avaliado e preterido — ADR-0013) + 1º fluxo cross-service (ex.: pagar → emitir NF) com compensações idempotentes e spans correlacionados | T-102, T-103, T-104 | G | RNF-019, ADR-0013 |
 
 **Saída:** três serviços funcionais, isolados por dado, com schema versionado, e uma **SAGA com compensações** coordenando um fluxo entre serviços.
 
@@ -176,6 +181,34 @@ O plano sobe primeiro o **sistema observado** (o suficiente para gerar tráfego 
 
 ---
 
+## Fase 10 — Produto utilizável (lacunas pós-aceite) 🔴
+
+> Objetivo: fechar as lacunas identificadas após o aceite (T-905) — entregas que saíram como
+> "1ª fatia" e RNFs sem task no plano original. Análise de lacunas registrada em
+> [`../state.md`](../state.md) (2026-09-28). Prioridade: **P0** impede a proposta de produto;
+> **P1** RNF sem cobertura; **P2** endurecimento/completude.
+
+| Task | Descrição | Dep. | Tam. | Prio. | Requisitos |
+|---|---|---|---|---|---|
+| `T-1001` | **Busca e janela temporal**: portas `searchTraces(service, from, to, minDuration, hasError)` (Jaeger `/api/traces`), logs por range (Loki `query_range`), `rangeQuery` (Prometheus); `GET /horus/traces`; lista de traces recentes/com erro no painel; resumo agendado sobre janela real | T-501, T-701 | G | P0 | RF-H-005/010/012 |
+| `T-1002` | **Compose com as aplicações + e2e no CI**: serviços de domínio, SAGA, worker e LB (NGINX) no `docker-compose.yml` (profile `apps`); job `e2e` que sobe o stack, dispara SAGA com compensação e verifica `/horus/lifecycle/{saga,queries,errors}` | T-801, T-905 | G | P0 | RF-005, RF-032, PRD §10 |
+| `T-1003` | **Tiers de modelo reais + IA ao vivo**: modelos nomeados do quarkus-langchain4j por `ModelTier` (`@ModelName`), IDs de modelo revisados para a geração atual; job de CI opcional (gated pela secret) exercitando cada agente | T-601, T-608 | M | P0 | RNF-H-003, ADR-0011 |
+| `T-1004` | **Auditoria de prompts + sanitização obrigatória**: decorator `AuditingLlmEngine` (log estruturado: agente, tier, hash do prompt, tokens) que aplica o `PromptSanitizer` na fronteira — nenhum agente consegue pular a redação | T-602, T-904 | M | P1 | RNF-H-002/006 |
+| `T-1005` | **Retenção configurável** por tipo de sinal: Loki (`retention_period`), Prometheus (`--storage.tsdb.retention.time`), Jaeger (storage com TTL), via variáveis de ambiente | T-404 | P | P1 | RNF-H-005 |
+| `T-1006` | **Análises pesadas assíncronas**: RCA/DEEP como job (`POST` → `jobId`, `GET /horus/ai/jobs/{id}`), executor gerenciado | T-605 | M | P1 | RNF-H-004 |
+| `T-1007` | **RBAC com autenticação real**: `quarkus-oidc` (papéis via claims JWT) substituindo o cabeçalho `X-Horus-Role`; ligado por padrão fora do perfil dev; escopo por serviço do `DEVELOPER` | T-704 | M | P1 | RNF-H-010 |
+| `T-1008` | **Alertas automáticos**: `AnomalyDetector` agendado com regras por config → `AlertService`, deduplicação por fingerprint/janela; e-mail real via `quarkus-mailer` | T-606, T-703, T-1001 | M | P1 | RF-H-008/013 |
+| `T-1009` | **Overlay de infraestrutura K8s**: Postgres ×4, RabbitMQ, Collector e backends no cluster (overlay `dev-infra`) + Deployment/Service do LB; pods saem de `Pending` | T-802 | G | P2 | RF-033, RNF-005 |
+| `T-1010` | **Robustez da SAGA**: recuperação/timeout de SAGAs interrompidas; status do span exposto em `SpanRef` para detectar falha sem depender de compensação | T-107, T-507 | M | P2 | RNF-019, RF-H-016 |
+| `T-1011` | **UI de service-map e SAGA** no painel (endpoints T-506/T-507 já existem) | T-702 | M | P2 | RF-H-015/016 |
+| `T-1012` | **Endurecimentos menores**: TTL no cache de IA; HPA do worker por profundidade de fila (KEDA); TLS interno (`sslmode`, `amqps`); PRD/ADR-0013 alinhados ao orquestrador próprio (não LRA) | T-608, T-803, T-901 | M | P2 | RNF-H-003, RNF-005, RNF-017 |
+
+**Saída:** o Horus é navegável sem conhecer um `traceId` de antemão, usa a IA real com
+custo controlado por tier, tem trilha auditável do que vai ao LLM e um teste ponta a ponta
+automatizado que impede regressões como a do T-507.
+
+---
+
 ## Marcos (milestones)
 
 | Marco | Entrega | Fases |
@@ -185,9 +218,12 @@ O plano sobe primeiro o **sistema observado** (o suficiente para gerar tráfego 
 | **M3 — Horus enxerga tudo** | Ciclo de vida de request/query + logs de erro no Horus | 5 |
 | **M4 — Horus com IA** | Resumo, explicação, RCA, anomalias e NL query | 6 |
 | **M5 — Produto** | Painel, alertas, K8s, endurecimento e aceite | 7-9 |
+| **M6 — Produto utilizável** ✅ | Busca temporal, IA real por tier, e2e automatizado, RNFs pendentes | 10 |
 
 ## Caminho crítico
 
 `T-001 → T-002 → T-101 → (T-102..104) → T-401 → T-404 → T-405 → T-501 → T-502 → T-601 → T-602 → T-603/605 → T-701 → T-905`
+
+**Fase 10:** `T-1001 → T-1008` (alertas dependem da janela temporal) · `T-1002` e `T-1003` independentes e paralelizáveis.
 
 > O gargalo de valor é **T-405 (correlação ponta a ponta)** e **T-602 (montador de contexto da IA)**: tudo que o Horus promete depende desses dois.

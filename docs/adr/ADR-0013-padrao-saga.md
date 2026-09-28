@@ -43,3 +43,19 @@ O **foco principal da aplicação é observabilidade.** Uma SAGA — sequência 
 - Mais complexidade: exige idempotência, correção das compensações e tratamento de falhas parciais.
 - O **coordenador LRA** vira componente de infraestrutura (precisa de disponibilidade); mitigado por ser observável e reiniciável.
 - Aumenta o escopo de implementação face ao documento-fonte (assumido conscientemente, dado o foco em observabilidade).
+
+## Adendo (2026-09-28, T-1012) — implementação adotada: orquestrador próprio
+
+A T-107 implementou a **alternativa** citada acima — um **orquestrador próprio** (`services/saga-orchestrator`)
+com estado persistido em `saga_db` — e não o MicroProfile LRA: um fluxo de dois passos não
+justificava operar um coordenador extra. O que a decisão original pedia continua valendo e foi
+reforçado na Fase 10:
+
+- **Estado durável por transição** (T-1010): cada transição é gravada em transação própria antes do
+  próximo efeito remoto; o pagamento é registrado antes da aprovação.
+- **Recuperação:** `SagaRecovery` compensa SAGAs paradas em estado intermediário além de
+  `saga.recovery.timeout` (5m) — o papel que seria do timeout do coordenador LRA.
+- **Observabilidade:** spans `saga.{flow}.{step}` / `.compensate` com `horus.saga.*`
+  (inclui `horus.saga.recovery`), visualizados no Horus com o passo que falhou (T-507/T-1010/T-1011).
+
+As menções a "coordenador LRA" acima ficam como registro histórico da decisão.

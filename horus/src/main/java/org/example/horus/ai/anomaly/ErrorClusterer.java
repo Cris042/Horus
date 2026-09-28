@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
  * <p>Reutiliza a mesma fonte de logs da T-505 ({@link LogQueryPort#findByTraceId}), mas
  * clusteriza por assinatura — destacando o quanto cada falha se espalha pelos serviços.
  * A rotulagem usa a camada {@link ModelTier#FAST} (alto volume / baixo custo, ADR-0011)
- * e funciona com o {@code StubLlmEngine} (sem chave): nesse caso {@code live=false}.
+ * e funciona com o modo stub do {@code AnthropicLlmEngine} (sem chave): nesse caso {@code live=false}.
  */
 @ApplicationScoped
 public class ErrorClusterer {
@@ -104,7 +104,7 @@ public class ErrorClusterer {
         // ContextAssembler (T-602); achado em T-904: este agente monta o prompt direto de
         // `sample()` (log cru da telemetria) e não passava por ela.
         String prompt = PromptSanitizer.sanitize(sb.toString());
-        return engine.complete(new LlmRequest(SYSTEM, prompt, ModelTier.FAST));
+        return engine.complete(new LlmRequest(SYSTEM, prompt, ModelTier.FAST, "error-cluster"));
     }
 
     private static boolean isError(LogLine log) {

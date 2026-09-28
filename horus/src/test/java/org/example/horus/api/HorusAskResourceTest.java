@@ -4,6 +4,7 @@ import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import org.example.horus.ai.context.ContextAssembler;
 import org.example.horus.ai.context.PromptContext;
+import org.example.horus.ai.context.WindowContextCollector;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -18,13 +19,16 @@ import static org.mockito.Mockito.when;
 
 /**
  * Verifica o endpoint "pergunte ao Horus" (T-607). Assembler mockado; {@code NlQueryAgent}
- * real usa o {@code StubLlmEngine} default (sem chave).
+ * real usa o modo stub do {@code AnthropicLlmEngine} (sem chave).
  */
 @QuarkusTest
 class HorusAskResourceTest {
 
     @InjectMock
     ContextAssembler assembler;
+
+    @InjectMock
+    WindowContextCollector windows;
 
     @Test
     void ask_withTraceScope_answersGrounded() {
@@ -37,12 +41,32 @@ class HorusAskResourceTest {
                 .then().statusCode(200)
                 .body("question", equalTo("Qual o gargalo?"))
                 .body("live", is(false))                     // stub
-                .body("modelId", equalTo("claude-sonnet-4-6")); // camada BALANCED
+                .body("modelId", equalTo("claude-sonnet-5")); // camada BALANCED
     }
 
     @Test
     void ask_withoutQuestion_returns400() {
         given().contentType("application/json").body("{}")
+                .when().post("/horus/ai/ask")
+                .then().statusCode(400);
+    }
+
+    @Test
+    void ask_withoutTrace_usesTimeWindow() {
+        when(windows.collect(any()))
+                .thenReturn(new PromptContext("# Queries SQL mais lentas\n", 6, false, List.of("slowQueries")));
+
+        given().contentType("application/json")
+                .body("{\"question\":\"Quais as queries mais lentas na última hora?\",\"lookback\":\"1h\"}")
+                .when().post("/horus/ai/ask")
+                .then().statusCode(200)
+                .body("signals[0]", equalTo("slowQueries"));
+    }
+
+    @Test
+    void ask_withoutTrace_invalidWindow_returns400() {
+        given().contentType("application/json")
+                .body("{\"question\":\"?\",\"lookback\":\"ontem\"}")
                 .when().post("/horus/ai/ask")
                 .then().statusCode(400);
     }

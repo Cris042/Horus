@@ -2,6 +2,8 @@
 #
 # Single-binary, armazenamento em filesystem, sem auth — adequado só para dev local.
 # Recebe logs do OTel Collector via OTLP HTTP em /otlp.
+# Retenção (T-1005, RNF-H-005): compactor com retenção ligada; período por LOKI_RETENTION
+# (padrão 168h = 7 dias). Requer `-config.expand-env=true` (ver docker-compose.yml).
 
 auth_enabled: false
 
@@ -34,3 +36,11 @@ schema_config:
 limits_config:
   allow_structured_metadata: true
   volume_enabled: true
+  retention_period: ${LOKI_RETENTION:-168h}
+
+compactor:
+  working_directory: /tmp/loki/compactor
+  compaction_interval: 10m
+  retention_enabled: true
+  retention_delete_delay: 2h
+  delete_request_store: filesystem

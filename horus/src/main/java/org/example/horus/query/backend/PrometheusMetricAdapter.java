@@ -4,7 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.example.horus.query.MetricQueryPort;
+import org.example.horus.query.QueryModel.MetricPoint;
 import org.example.horus.query.QueryModel.MetricSample;
+import org.example.horus.query.QueryModel.MetricSeries;
+import org.example.horus.query.TimeWindow;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -35,6 +38,26 @@ public class PrometheusMetricAdapter implements MetricQueryPort {
                 double v = parseDouble(value.get(1).asText("0"));
                 out.add(new MetricSample(labels, v, ts));
             }
+        }
+        return out;
+    }
+
+    @Override
+    public List<MetricSeries> rangeQuery(String promQl, TimeWindow window, long stepSeconds) {
+        JsonNode root = client.rangeQuery(promQl, window.startSeconds(), window.endSeconds(),
+                Math.max(1, stepSeconds));
+        List<MetricSeries> out = new ArrayList<>();
+        for (JsonNode item : root.path("data").path("result")) {
+            Map<String, String> labels = new LinkedHashMap<>();
+            item.path("metric").fields()
+                    .forEachRemaining(e -> labels.put(e.getKey(), e.getValue().asText()));
+            List<MetricPoint> points = new ArrayList<>();
+            for (JsonNode value : item.path("values")) { // [[ <ts>, "<val>" ], ...]
+                if (value.isArray() && value.size() >= 2) {
+                    points.add(new MetricPoint(value.get(0).asDouble(0), parseDouble(value.get(1).asText("0"))));
+                }
+            }
+            out.add(new MetricSeries(labels, points));
         }
         return out;
     }

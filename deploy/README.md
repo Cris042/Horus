@@ -37,9 +37,30 @@ As aplicações instrumentadas emitem **só via OTLP** para o Collector (`localh
 traces → Jaeger, logs → Loki, métricas → Prometheus (remote_write). Configs em `deploy/telemetry/`.
 A redação/sanitização de borda (PII) é aprofundada em **T-404/T-406** — ver [`docs/telemetry/CONTRACT.md`](../docs/telemetry/CONTRACT.md).
 
-> As **aplicações** (Quarkus/Rust/Python) ainda **não** entram neste compose — suas imagens
-> Docker são entregues em `T-801` (abaixo); subi-las junto da infra entra em `T-802`.
-> Este compose entrega apenas a infra de base.
+### Aplicações + Load Balancer — profile `apps` (T-1002)
+
+O mesmo compose sobe o **sistema completo** com o profile `apps` (fora do `make up` padrão):
+
+```bash
+make up-apps   # ./mvnw package + compose --profile apps up --build --wait
+make e2e       # scripts/e2e.sh — SAGA feliz e compensada pelo LB, verificadas no Horus
+make down-apps
+```
+
+| Serviço | Porta host | Observação |
+|---|---|---|
+| `load-balancer` | `8088` | NGINX (`lb/nginx.conf`) — entrada da carga e do e2e (RF-005) |
+| `horus` | `8080` | Painel em `/horus-panel.html`; IA real se `ANTHROPIC_API_KEY` exportada |
+| `prontuario-service` / `payment-service` / `invoice-service` / `saga-orchestrator` | `8081`–`8084` | Profile `prod` do Quarkus (hosts do compose) |
+| `report-worker` | — | Consome `relatorios` no RabbitMQ; OTLP/HTTP no Collector |
+| `loadtest` | `8000` | FastAPI + Locust; alvo padrão `http://load-balancer` |
+
+As imagens Quarkus do profile copiam o `target/quarkus-app` já empacotado no host (sem
+refazer o download de dependências dentro do Docker); para imagens publicáveis e
+autocontidas use os Dockerfiles de T-801 (`make docker-images`).
+
+> IA real: `HORUS_AI_ENABLED=true ANTHROPIC_API_KEY=sk-ant-... make up-apps`. Sem chave (ou com
+> a variável vazia) o Horus sobe em modo stub.
 
 ## Imagens Docker dos executáveis (T-801, RF-032/RNF-004)
 

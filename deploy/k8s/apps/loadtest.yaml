@@ -20,6 +20,9 @@ spec:
         app.kubernetes.io/part-of: horus
         app.kubernetes.io/component: loadtest
     spec:
+      # T-1009: sem as env vars de "service links" (ex.: RABBITMQ_PORT=tcp://…) que o K8s
+      # injeta por Service do namespace — o Quarkus as lê como config e o invoice caía.
+      enableServiceLinks: false
       containers:
         - name: loadtest
           image: horus/loadtest:dev
@@ -30,6 +33,14 @@ spec:
           envFrom:
             - configMapRef:
                 name: horus-config
+          env:
+            # T-1009: gerar carga de verdade e instrumentar a borda (mesmo que o compose).
+            - name: HORUS_LOADTEST_RUNNER
+              value: "locust"
+            - name: HORUS_OTEL_ENABLED
+              value: "true"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-collector:4318"
           readinessProbe:
             httpGet: { path: /health, port: http }
             initialDelaySeconds: 5

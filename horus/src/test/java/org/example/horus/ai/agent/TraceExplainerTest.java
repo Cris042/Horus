@@ -20,7 +20,7 @@ class TraceExplainerTest {
         public LlmResponse complete(LlmRequest request) {
             this.captured = request;
             return new LlmResponse("Request passou por prontuario→payment; gargalo no payment.",
-                    "claude-sonnet-4-6", true);
+                    "claude-sonnet-5", true);
         }
 
         @Override
@@ -39,7 +39,7 @@ class TraceExplainerTest {
         assertEquals(ModelTier.BALANCED, engine.captured.tier());
         assertTrue(engine.captured.prompt().contains("Trace abc"));
         assertEquals("abc", exp.traceId());
-        assertEquals("claude-sonnet-4-6", exp.modelId());
+        assertEquals("claude-sonnet-5", exp.modelId());
         assertTrue(exp.live());
     }
 }

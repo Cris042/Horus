@@ -43,6 +43,24 @@ Origem do plumbing: `T-003` (Collector + backends). `T-404` endurece e valida:
 | `grafana/dashboards/docker.json` | dashboard de CPU/memória/rede por contêiner Docker do host |
 | `grafana/dashboards/kubernetes.json` | dashboard de cluster K8s (nós/pods/deployments) — requer cluster kind local, ver abaixo |
 
+## Retenção por tipo de sinal (T-1005, RNF-H-005)
+
+Cada backend tem retenção própria, configurável por variável de ambiente no `make up` /
+`make up-apps` (valores padrão entre parênteses):
+
+| Sinal | Backend | Variável | Mecanismo |
+|---|---|---|---|
+| Traces | Jaeger v2 (Badger em disco, volume `jaeger-data`) | `JAEGER_RETENTION` (`168h`) | TTL dos spans (`jaeger-config.yaml`) |
+| Logs | Loki | `LOKI_RETENTION` (`168h`) | `limits_config.retention_period` + compactor com `retention_enabled` |
+| Métricas | Prometheus | `PROMETHEUS_RETENTION` (`15d`) | `--storage.tsdb.retention.time` |
+
+Ex.: `JAEGER_RETENTION=24h LOKI_RETENTION=72h PROMETHEUS_RETENTION=30d make up`.
+Conferir: `curl -s localhost:3100/config | grep retention_period` (Loki) e
+`curl -s localhost:9090/api/v1/status/flags` (Prometheus).
+
+> Antes da T-1005 o Jaeger guardava traces **só em memória** (perdidos a cada restart, sem
+> retenção real) e Loki/Prometheus usavam os padrões embutidos.
+
 ## Verificação do pipeline
 
 > Os apps Quarkus ainda **não** sobem no compose (containerização é `T-801`); aqui

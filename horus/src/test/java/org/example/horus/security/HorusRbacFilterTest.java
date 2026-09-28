@@ -19,7 +19,7 @@ class HorusRbacFilterTest {
     public static class RbacOn implements QuarkusTestProfile {
         @Override
         public Map<String, String> getConfigOverrides() {
-            return Map.of("horus.rbac.enabled", "true");
+            return Map.of("horus.rbac.enabled", "true", "horus.rbac.mode", "header");
         }
     }
 

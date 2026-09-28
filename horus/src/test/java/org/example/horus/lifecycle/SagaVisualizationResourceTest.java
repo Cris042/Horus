@@ -51,6 +51,50 @@ class SagaVisualizationResourceTest {
                 .body("steps[2].compensation", is(true));
     }
 
+    private static SpanRef step(String id, String op, long start, String parent, boolean error) {
+        return new SpanRef(id, op, "saga-orchestrator", 500, start, parent, "internal", null, null, null, null, error);
+    }
+
+    @Test
+    void failedStep_isIdentifiedFromSpanStatus() {
+        when(traces.findTrace(TRACE_ID)).thenReturn(Optional.of(new TraceResult(TRACE_ID, 3, List.of(
+                step("s1", "saga.pay-then-invoice.reserve-payment", 100, null, false),
+                step("s2", "saga.pay-then-invoice.issue-invoice", 200, "s1", true),
+                step("s3", "saga.pay-then-invoice.reserve-payment.compensate", 300, "s1", false)))));
+
+        given().when().get("/horus/lifecycle/saga/" + TRACE_ID)
+                .then().statusCode(200)
+                .body("outcome", equalTo("compensated"))
+                .body("failedStep", equalTo("issue-invoice"))
+                .body("recovered", is(false))
+                .body("steps[1].failed", is(true))
+                .body("steps[0].failed", is(false));
+    }
+
+    @Test
+    void failedWithoutCompensation_isFailed_notCompleted() {
+        // Antes da T-1010 isto aparecia como "completed": a falha só era inferida pela compensação.
+        when(traces.findTrace(TRACE_ID)).thenReturn(Optional.of(new TraceResult(TRACE_ID, 2, List.of(
+                step("s1", "saga.pay-then-invoice.reserve-payment", 100, null, false),
+                step("s2", "saga.pay-then-invoice.issue-invoice", 200, "s1", true)))));
+
+        given().when().get("/horus/lifecycle/saga/" + TRACE_ID)
+                .then().statusCode(200)
+                .body("outcome", equalTo("failed"))
+                .body("failedStep", equalTo("issue-invoice"));
+    }
+
+    @Test
+    void recoveryTrace_onlyCompensation_isMarkedRecovered() {
+        when(traces.findTrace(TRACE_ID)).thenReturn(Optional.of(new TraceResult(TRACE_ID, 1, List.of(
+                step("s9", "saga.pay-then-invoice.reserve-payment.compensate", 100, null, false)))));
+
+        given().when().get("/horus/lifecycle/saga/" + TRACE_ID)
+                .then().statusCode(200)
+                .body("outcome", equalTo("compensated"))
+                .body("recovered", is(true));
+    }
+
     @Test
     void completedSagaWhenNoCompensation() {
         when(traces.findTrace(TRACE_ID)).thenReturn(Optional.of(new TraceResult(TRACE_ID, 2, List.of(

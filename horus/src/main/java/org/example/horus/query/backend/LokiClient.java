@@ -21,4 +21,13 @@ public interface LokiClient {
     JsonNode queryRange(@QueryParam("query") String logQl,
                         @QueryParam("limit") int limit,
                         @QueryParam("direction") String direction);
+
+    /** {@code query_range} restrito a {@code [start, end]} em nanossegundos (T-1001). */
+    @GET
+    @Path("/loki/api/v1/query_range")
+    JsonNode queryRange(@QueryParam("query") String logQl,
+                        @QueryParam("start") long startNanos,
+                        @QueryParam("end") long endNanos,
+                        @QueryParam("limit") int limit,
+                        @QueryParam("direction") String direction);
 }

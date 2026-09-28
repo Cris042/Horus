@@ -66,6 +66,11 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-arc</artifactId>
         </dependency>
+        <!-- Recuperação agendada de SAGAs interrompidas (T-1010). -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-scheduler</artifactId>
+        </dependency>
 
         <!-- Testes: mock dos clients REST (sem HTTP real) + Dev Services p/ saga_db -->
         <dependency>

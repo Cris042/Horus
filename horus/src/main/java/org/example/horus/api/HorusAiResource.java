@@ -38,7 +38,7 @@ public class HorusAiResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public LlmResponse complete(CompleteRequest body) {
         ModelTier tier = body.tier() == null ? ModelTier.BALANCED : body.tier();
-        return engine.complete(new LlmRequest(body.system(), body.prompt(), tier));
+        return engine.complete(new LlmRequest(body.system(), body.prompt(), tier, "complete"));
     }
 
     /** Corpo do POST /complete. */

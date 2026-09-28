@@ -19,7 +19,10 @@ public enum HorusRole {
     /** Operador principal (SRE/Observability): investiga e configura, não gerencia usuários. */
     SRE(EnumSet.of(Capability.VIEW_TELEMETRY, Capability.AI_INSIGHTS, Capability.CONFIGURE_PLATFORM)),
 
-    /** Desenvolvedor: vê telemetria e usa IA (escopo por serviço fica para fatia posterior). */
+    /**
+     * Desenvolvedor: vê telemetria e usa IA. Com token JWT que traga a claim
+     * {@code horus_services}, a busca de traces fica restrita a esses serviços (T-1007).
+     */
     DEVELOPER(EnumSet.of(Capability.VIEW_TELEMETRY, Capability.AI_INSIGHTS)),
 
     /** Auditor/Stakeholder: leitura de painéis, relatórios e resumos de IA. */
@@ -32,6 +35,11 @@ public enum HorusRole {
 
     HorusRole(Set<Capability> capabilities) {
         this.capabilities = capabilities;
+    }
+
+    /** Quantidade de capacidades — critério do papel efetivo quando o token traz vários (T-1007). */
+    int privilege() {
+        return capabilities.size();
     }
 
     /** {@code true} se este papel pode exercer a capacidade dada. */

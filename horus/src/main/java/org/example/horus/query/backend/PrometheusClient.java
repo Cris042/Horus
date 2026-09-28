@@ -19,4 +19,12 @@ public interface PrometheusClient {
     @GET
     @Path("/api/v1/query")
     JsonNode instantQuery(@QueryParam("query") String promQl);
+
+    /** {@code GET /api/v1/query_range} — PromQL sobre uma janela (T-1001); tempos em segundos. */
+    @GET
+    @Path("/api/v1/query_range")
+    JsonNode rangeQuery(@QueryParam("query") String promQl,
+                        @QueryParam("start") double startSeconds,
+                        @QueryParam("end") double endSeconds,
+                        @QueryParam("step") long stepSeconds);
 }

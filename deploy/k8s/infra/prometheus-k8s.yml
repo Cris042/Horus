@@ -1,0 +1,11 @@
+# Prometheus no cluster (T-1009). Métricas de app chegam por remote_write do Collector (igual ao
+# compose); só o próprio Prometheus é raspado — os alvos do compose (cAdvisor, postgres_exporter,
+# host.docker.internal) não existem aqui.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
