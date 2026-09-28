@@ -6,10 +6,10 @@
 
 | Campo | Valor |
 |---|---|
-| **Última atualização** | 2026-07-02 |
-| **Branch atual** | `main` |
-| **Fase do roadmap** | 🏁 **Roadmap completo — Fases 0-9 entregues** |
-| **Task ativa** | Nenhuma — todas as tasks do roadmap (`T-001`..`T-905`) entregues |
+| **Última atualização** | 2026-09-28 |
+| **Branch atual** | `claude/beautiful-cray-sfblsr` |
+| **Fase do roadmap** | Fases 0-9 entregues · **Fase 10 (Produto utilizável) planejada** |
+| **Task ativa** | Nenhuma — próxima: `T-1001` (busca e janela temporal) |
 
 ## 🟢 Última entrega (mergeada)
 
@@ -21,23 +21,32 @@
 
 Critérios #1/#3/#4/#5/#6/#8/#9/#10/#11/#12/#13/#14/#15 confirmados com evidência real. `./mvnw verify` (raiz) verde — 86 testes; `pytest` 21/21; worker 14/14. **CI verde.**
 
-## 🏁 Roadmap completo
+## 🏁 Roadmap original completo (Fases 0-9)
 
 **Todas as 9 fases e ~90 tasks do `docs/ROADMAP.md` foram entregues.** Os 16 critérios de
 aceite do `docs/PRD.md` §10 estão validados com evidência real (não só código/documentação) —
 ver `docs/tasks/T-905/PRD.md` para a tabela completa por critério.
 
-### Trabalho futuro (fora do roadmap original)
+### ➡️ Próxima ação — Fase 10 (análise de lacunas, 2026-09-28)
 
-- **Overlay de infraestrutura K8s "de produção"** (Postgres/RabbitMQ/Collector dentro do
-  cluster) — sempre foi documentado como fora de escopo (T-802 em diante); os manifestos de
-  aplicação já foram validados como corretos e prontos para quando essa infra existir (T-905).
-- **Ativar o LB (NGINX) permanentemente** no `docker-compose.yml`/K8s — hoje validado ad-hoc
-  (T-905), não é um serviço padrão do `make up`.
-- **`ANTHROPIC_API_KEY`** (pendência sua, ver abaixo) — para a IA real substituir o
-  `StubLlmEngine`.
-- Endurecimentos adicionais sugeridos pelas próprias tasks de auditoria (T-904: nenhum
-  mecanismo automático impede um novo agente de IA esquecer o `PromptSanitizer`).
+Revisão pós-aceite dos PRDs de todas as tasks (seções "Fora de escopo"/"Riscos") conferida
+contra o código mostrou que várias entregas foram "1ª fatia" e que alguns RNFs nunca tiveram
+task. As lacunas viraram a **Fase 10** em [`docs/ROADMAP.md`](./docs/ROADMAP.md):
+
+| Prio. | Task | Lacuna |
+|---|---|---|
+| P0 | `T-1001` | Horus só opera por `traceId` conhecido — sem busca/janela temporal (RF-H-005/010/012) |
+| P0 | `T-1002` | Apps e LB fora do compose; nenhum e2e automatizado (bug do T-507 passou por isso) |
+| P0 | `T-1003` | `ModelTier` cosmético (um único `model-name`); IA real nunca exercitada |
+| P1 | `T-1004` | Sem trilha do que vai ao LLM (RNF-H-006); `PromptSanitizer` não é obrigatório |
+| P1 | `T-1005` | Retenção configurável (RNF-H-005) nunca implementada |
+| P1 | `T-1006` | RCA/DEEP síncrona no request HTTP (RNF-H-004) |
+| P1 | `T-1007` | RBAC confia em cabeçalho forjável; off por padrão (RNF-H-010) |
+| P1 | `T-1008` | Alertas sem gatilho automático; e-mail é stub (RF-H-013) |
+| P2 | `T-1009`..`T-1012` | Overlay de infra K8s + LB; robustez da SAGA; UI de service-map/SAGA; TTL de cache, KEDA, TLS interno, docs LRA→orquestrador próprio |
+
+**Próxima task:** `T-1001` — criar `docs/tasks/T-1001/{PRD,PLAN}.md` a partir do template e
+abrir `task/T-1001-trace-search`. `T-1002` e `T-1003` podem correr em paralelo.
 
 ### Pendências operacionais (não bloqueiam)
 
@@ -53,6 +62,7 @@ ver `docs/tasks/T-905/PRD.md` para a tabela completa por critério.
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
+| 2026-09-28 | — | Análise de lacunas pós-aceite: **Fase 10** (`T-1001`..`T-1012`) adicionada ao `ROADMAP.md`; `state.md` corrigido (status de T-601..T-608/T-108/T-703 atualizados para ✅ conforme merges #21-#27/#36/#44; linha duplicada de T-504 removida) | `claude/beautiful-cray-sfblsr` | — | ✅ Entregue |
 | 2026-07-02 | `T-905` | **Aceite final do PRD — última task do roadmap** **mergeada** via PR #55; roadmap 100% completo; CI verde | `task/T-905-final-acceptance` | [#55](https://github.com/mclovin137/Horus/pull/55) | ✅ Entregue |
 | 2026-07-02 | `T-905` | **Aceite final do PRD** (16 critérios, §10) validados com o sistema real rodando; 3 achados corrigidos: LB nunca testado com tráfego real (agora testado), `kubectl apply -k` nunca rodado contra cluster real (agora aplicado, `commonLabels` deprecado corrigido), e o achado maior — visualização de SAGA (T-507) nunca funcionava com SAGA real, `SagaService` não emitia os spans `saga.{flow}.{step}` esperados (corrigido); `./mvnw verify` raiz verde (86 testes), `pytest` 21/21, worker 14/14 | `task/T-905-final-acceptance` | — | 🟡 Em progresso |
 | 2026-07-02 | `T-904` | Auditoria de privacidade (RNF-H-002/006) **mergeada** via PR #54; CI verde | `task/T-904-privacy-audit` | [#54](https://github.com/mclovin137/Horus/pull/54) | ✅ Entregue |
@@ -74,7 +84,7 @@ ver `docs/tasks/T-905/PRD.md` para a tabela completa por critério.
 | 2026-06-30 | `T-802` | Manifests Kubernetes (RF-033) **mergeado** via PR #46; CI verde | `task/T-802-k8s-manifests` | [#46](https://github.com/mclovin137/Horus/pull/46) | ✅ Entregue |
 | 2026-06-30 | `T-802` | Manifests Kubernetes (RF-033): base Kustomize `deploy/k8s/` — namespace, ConfigMap, Secret-exemplo, Deployment+Service dos 7 executáveis (probes/resources, Horus/worker separados — ADR-0012); YAML validado | `task/T-802-k8s-manifests` | — | 🟡 Em progresso |
 | 2026-06-30 | `T-801` | Imagens Docker de todos os executáveis (RF-032/RNF-004) **mergeado** via PR #45; CI verde; imagens validadas via `docker build` (horus 520MB, worker 141MB, loadtest 218MB) | `task/T-801-docker-images` | [#45](https://github.com/mclovin137/Horus/pull/45) | ✅ Entregue |
-| 2026-06-30 | `T-504` | API do ciclo de vida da query (RF-H-002) — branch atualizada com `main` (T-505/506/507) e levada a PR: `QueryLifecycleService` + `GET /horus/lifecycle/queries/{traceId}`; `./mvnw -pl horus test` verde | `task/T-504-query-lifecycle-api` | [#38](https://github.com/mclovin137/Horus/pull/38) | 🔄 Em revisão (PR) |
+| 2026-06-30 | `T-703` | Alertas (RF-H-013) **mergeados** via PR #44; CI verde | `task/T-703-alerts` | [#44](https://github.com/mclovin137/Horus/pull/44) | ✅ Entregue |
 | 2026-06-30 | `T-703` | Alertas (e-mail/webhook) com resumo de IA (RF-H-013): `AlertService` resume via IA (FAST) + fan-out a canais habilitados (log sempre on, webhook POST JSON, e-mail stub gated); `POST /horus/alerts` + `GET /horus/alerts/channels`; `./mvnw -pl horus test` verde (63, 4 novos) | `task/T-703-alerts` | — | 🟡 Em progresso |
 | 2026-06-30 | `T-606` | Anomaly Detector + Error Clusterer (RF-H-008/009) **mergeado** via PR #43; CI verde | `task/T-606-anomaly-error-clustering` | [#43](https://github.com/mclovin137/Horus/pull/43) | ✅ Entregue |
 | 2026-06-30 | `T-606` | Anomaly Detector + Error Clusterer (RF-H-008/009): `ErrorClusterer` (fingerprint cross-service + rótulo IA FAST, `GET /horus/ai/errors/clusters/{traceId}`) + `AnomalyDetector` (regras de limiar sobre métricas, `POST /horus/ai/anomalies`); `./mvnw -pl horus test` verde (59, 5 novos) | `task/T-606-anomaly-error-clustering` | — | 🟡 Em progresso |
@@ -91,20 +101,20 @@ ver `docs/tasks/T-905/PRD.md` para a tabela completa por critério.
 | 2026-06-28 | `T-503` | API do ciclo de vida da request (RF-H-001/011): `RequestLifecycleService` + `GET /horus/lifecycle/requests/{traceId}` projetam trace em waterfall/timeline com `offsetMicros`, `depth`, categorias e duração total por janela temporal; mergeada em `main` via PR #37 | `task/T-503-request-lifecycle-api` | [#37](https://github.com/mclovin137/Horus/pull/37) | ✅ Entregue |
 | 2026-06-28 | `T-403` | OTel no worker + propagação HTTP→AMQP (RF-029/RF-H-004): `telemetry.rs` (provider+recurso `report-worker`/`medrec`, OTLP/HTTP sem protoc, bridge tracing→OTel, propagador W3C); `extrair_contexto` lê `traceparent` dos headers AMQP e o span de processamento vira filho do publicador; verificado em container `rust:1-slim` (test 12, fmt, clippy) | `task/T-403-worker-otel-amqp` | [#34](https://github.com/mclovin137/Horus/pull/34) | ✅ Entregue |
 | 2026-06-28 | `T-502` | Modelo de correlação por `trace_id` (RF-H-001/002/004): `CorrelationModel`+`CorrelationService` costuram spans-por-serviço + logs + fronteira mensageria/worker + erros num `RequestCorrelation`; `GET /horus/correlation/trace/{id}`; sobre portas T-501, testes mockados; `mvn -pl horus test` verde (35/35, 3 novos) | `task/T-502-correlation-model` | [#35](https://github.com/mclovin137/Horus/pull/35) | ✅ Entregue |
-| 2026-06-28 | `T-108` | Concorrência no Payment (hardening T-103): saldo da carteira sob lock pessimista (`PESSIMISTIC_WRITE`/`aplicarPorId`); aprovar/estornar pela carteira bloqueada; sem lost update nem saldo negativo; teste de concorrência (20 threads, Testcontainers); `mvn -pl services/payment test` verde (7/7, 2 novos); CI + AI Code Review verdes | `task/T-108-payment-concurrency` | [#36](https://github.com/mclovin137/Horus/pull/36) | 🔄 Em revisão (PR) |
+| 2026-06-28 | `T-108` | Concorrência no Payment (hardening T-103): saldo da carteira sob lock pessimista (`PESSIMISTIC_WRITE`/`aplicarPorId`); aprovar/estornar pela carteira bloqueada; sem lost update nem saldo negativo; teste de concorrência (20 threads, Testcontainers); `mvn -pl services/payment test` verde (7/7, 2 novos); CI + AI Code Review verdes | `task/T-108-payment-concurrency` | [#36](https://github.com/mclovin137/Horus/pull/36) | ✅ Entregue |
 | 2026-06-28 | `T-303` | Worker Rust de relatórios (RF-022..024/RNF-012): crate `worker/` (tokio+lapin+lettre+serde+tracing) consome exchange `relatorios`/`nota-fiscal`, gera relatório e envia e-mail; `EmailSender` (SMTP + stub de log), idempotência por `id`, ack/nack; job de CI `build-worker` (fmt+clippy+test); validação via CI | `task/T-303-rust-worker` | [#33](https://github.com/mclovin137/Horus/pull/33) | ✅ Entregue |
 | 2026-06-28 | `T-402` | Instrumentação OTel da borda (RF-029): `telemetry.py` (provider+recurso canônico `loadtest-api`/`medrec`+OTLP), FastAPI instrumentada (gated `HORUS_OTEL_ENABLED`), Locust injeta W3C `traceparent` (`events.init`+`RequestsInstrumentor`), LB access log JSON com `traceparent`; testes offline (exporter em memória); `pytest` verde (21/21) | `task/T-402-otel-loadtest-edge` | [#32](https://github.com/mclovin137/Horus/pull/32) | ✅ Entregue |
 | 2026-06-28 | `T-203` | Cenários Locust (RF-004/RNF-016): `app/locustfile.py` (usuários por domínio + SAGA, fluxos encadeados, fração de falhas) + `LocustRunner` (`locust --headless`, start/stop) selecionável por `HORUS_LOADTEST_RUNNER`; +4 correções do review por IA; testes offline isolam import de `locust`/gevent em subprocesso; `pytest` verde (18/18) | `task/T-203-locust-scenarios` | [#31](https://github.com/mclovin137/Horus/pull/31) | ✅ Entregue |
 | 2026-06-28 | `T-202` | API FastAPI de controle de teste de carga (RF-001..003): `POST /load-tests`, `GET /load-tests/{id}`, `POST /load-tests/{id}/stop` (+`GET /load-tests`/`/health`); Pydantic + `LoadTestManager` (porta `LoadRunner` no-op→Locust em T-203); job de CI Python `build-loadtest` (uv+pytest); `pytest` verde (10/10) | `task/T-202-fastapi-control-api` | [#30](https://github.com/mclovin137/Horus/pull/30) | ✅ Entregue |
 | 2026-06-28 | `T-704` | RBAC do Horus (RNF-H-010, 1ª fatia): `HorusRole`×`Capability` (matriz de `ROLES.md`), `HorusRbacFilter` autoriza por papel via cabeçalho `X-Horus-Role`; públicos isentos; off por padrão (`horus.rbac.enabled=false`); OIDC/JWT em fatia seguinte; `mvn -pl horus test` verde (32/32, 6 novos) | `task/T-704-horus-rbac` | [#29](https://github.com/mclovin137/Horus/pull/29) | ✅ Entregue |
 | 2026-06-28 | `T-701` | Painel Horus (RF-H-012, 1ª fatia): API `GET /horus/panel/overview` (saúde IA+cache+backends+capacidades) + página estática `horus-panel.html` (saúde, ask, busca por trace explain/RCA, capacidades); waterfall (T-702) e busca avançada nas fatias seguintes; `mvn -pl horus test` verde (26/26, 2 novos) | `task/T-701-horus-panel` | [#28](https://github.com/mclovin137/Horus/pull/28) | ✅ Entregue |
-| 2026-06-28 | `T-608` | Salvaguardas de custo/latência (RNF-H-003/004): cache de respostas do LLM via CDI decorator `CachingLlmEngine` + `LlmResponseCache` (LRU, on/off), `GET /horus/ai/cache/stats`; consolida seleção de modelo (`ModelTier`) + orçamento (T-602); `mvn -pl horus test` verde (24/24, hit verificado) | `task/T-608-llm-cache` | [#27](https://github.com/mclovin137/Horus/pull/27) | 🔄 Em revisão (PR) |
-| 2026-06-28 | `T-607` | Agente NL Query "pergunte ao Horus" (RF-H-010, 1ª fatia): `NlQueryAgent` responde NL fundamentado na telemetria (camada BALANCED), `POST /horus/ai/ask`; planejamento autônomo (tool-calling) é fatia seguinte; `mvn -pl horus test` verde (20/20) | `task/T-607-nl-query-agent` | [#26](https://github.com/mclovin137/Horus/pull/26) | 🔄 Em revisão (PR) |
-| 2026-06-28 | `T-605` | Agente Root-Cause Analyst (RF-H-007): `RootCauseAnalyst` faz RCA dos 3 sinais (`assembleForIncident` trace+logs+métricas) com causa provável+passos, camada DEEP/Opus; `GET /horus/ai/rca/trace/{id}`; `mvn -pl horus test` verde (17/17) | `task/T-605-rca-agent` | [#25](https://github.com/mclovin137/Horus/pull/25) | 🔄 Em revisão (PR) |
-| 2026-06-28 | `T-604` | Agente Trace Explainer (RF-H-006): `TraceExplainer` narra o caminho da request (contexto T-602 + `LlmEngine` BALANCED/Sonnet); `GET /horus/ai/explain/trace/{id}`; `mvn -pl horus test` verde (15/15) | `task/T-604-trace-explainer` | [#24](https://github.com/mclovin137/Horus/pull/24) | 🔄 Em revisão (PR) |
-| 2026-06-28 | `T-603` | Agente Summarizer (RF-H-005, 1ª fatia): `StateSummarizer` (contexto T-602 + `LlmEngine` FAST) resume estado em NL; sob demanda `GET /horus/ai/summary/trace/{id}` + agendado `ScheduledStateSummary` (cron off default); `mvn -pl horus test` verde (13/13) | `task/T-603-summarizer-agent` | [#23](https://github.com/mclovin137/Horus/pull/23) | 🔄 Em revisão (PR) |
-| 2026-06-28 | `T-602` | Montador de contexto da IA (RNF-H-003/006, 1ª fatia): `ContextAssembler` (trace+logs+métricas→prompt) com `TokenBudget` (orçamento+truncamento) e `PromptSanitizer` (PII na fronteira); `assembleForTrace` + `assemble(sinais)`; `mvn -pl horus test` verde (11/11) | `task/T-602-context-assembler` | [#22](https://github.com/mclovin137/Horus/pull/22) | 🔄 Em revisão (PR) |
-| 2026-06-28 | `T-601` | Camada de IA (ADR-0011, 1ª fatia): porta desacoplada `LlmEngine` + `ModelTier` (Haiku/Sonnet/Opus), `StubLlmEngine` (default, sem chave) e `LangChain4jLlmEngine` (`quarkus-langchain4j-anthropic` 1.1.0, flag de build), API `/horus/ai/*`; extensão validada sob Quarkus 3.37 + JDK 25, `mvn -pl horus test` verde (8/8) | `task/T-601-llm-anthropic-integration` | [#21](https://github.com/mclovin137/Horus/pull/21) | 🔄 Em revisão (PR) |
+| 2026-06-28 | `T-608` | Salvaguardas de custo/latência (RNF-H-003/004): cache de respostas do LLM via CDI decorator `CachingLlmEngine` + `LlmResponseCache` (LRU, on/off), `GET /horus/ai/cache/stats`; consolida seleção de modelo (`ModelTier`) + orçamento (T-602); `mvn -pl horus test` verde (24/24, hit verificado) | `task/T-608-llm-cache` | [#27](https://github.com/mclovin137/Horus/pull/27) | ✅ Entregue |
+| 2026-06-28 | `T-607` | Agente NL Query "pergunte ao Horus" (RF-H-010, 1ª fatia): `NlQueryAgent` responde NL fundamentado na telemetria (camada BALANCED), `POST /horus/ai/ask`; planejamento autônomo (tool-calling) é fatia seguinte; `mvn -pl horus test` verde (20/20) | `task/T-607-nl-query-agent` | [#26](https://github.com/mclovin137/Horus/pull/26) | ✅ Entregue |
+| 2026-06-28 | `T-605` | Agente Root-Cause Analyst (RF-H-007): `RootCauseAnalyst` faz RCA dos 3 sinais (`assembleForIncident` trace+logs+métricas) com causa provável+passos, camada DEEP/Opus; `GET /horus/ai/rca/trace/{id}`; `mvn -pl horus test` verde (17/17) | `task/T-605-rca-agent` | [#25](https://github.com/mclovin137/Horus/pull/25) | ✅ Entregue |
+| 2026-06-28 | `T-604` | Agente Trace Explainer (RF-H-006): `TraceExplainer` narra o caminho da request (contexto T-602 + `LlmEngine` BALANCED/Sonnet); `GET /horus/ai/explain/trace/{id}`; `mvn -pl horus test` verde (15/15) | `task/T-604-trace-explainer` | [#24](https://github.com/mclovin137/Horus/pull/24) | ✅ Entregue |
+| 2026-06-28 | `T-603` | Agente Summarizer (RF-H-005, 1ª fatia): `StateSummarizer` (contexto T-602 + `LlmEngine` FAST) resume estado em NL; sob demanda `GET /horus/ai/summary/trace/{id}` + agendado `ScheduledStateSummary` (cron off default); `mvn -pl horus test` verde (13/13) | `task/T-603-summarizer-agent` | [#23](https://github.com/mclovin137/Horus/pull/23) | ✅ Entregue |
+| 2026-06-28 | `T-602` | Montador de contexto da IA (RNF-H-003/006, 1ª fatia): `ContextAssembler` (trace+logs+métricas→prompt) com `TokenBudget` (orçamento+truncamento) e `PromptSanitizer` (PII na fronteira); `assembleForTrace` + `assemble(sinais)`; `mvn -pl horus test` verde (11/11) | `task/T-602-context-assembler` | [#22](https://github.com/mclovin137/Horus/pull/22) | ✅ Entregue |
+| 2026-06-28 | `T-601` | Camada de IA (ADR-0011, 1ª fatia): porta desacoplada `LlmEngine` + `ModelTier` (Haiku/Sonnet/Opus), `StubLlmEngine` (default, sem chave) e `LangChain4jLlmEngine` (`quarkus-langchain4j-anthropic` 1.1.0, flag de build), API `/horus/ai/*`; extensão validada sob Quarkus 3.37 + JDK 25, `mvn -pl horus test` verde (8/8) | `task/T-601-llm-anthropic-integration` | [#21](https://github.com/mclovin137/Horus/pull/21) | ✅ Entregue |
 | 2026-06-27 | `T-501` | Serviço Horus (1ª fatia): camada de consulta aos backends — portas Trace/Log/Metric + adapters REST-client (Jaeger/Loki/Prometheus), API `GET /horus/query/*`, testes com portas mockadas; `mvn -pl horus test` verde (6/6) | `task/T-501-horus-query-adapters` | [#20](https://github.com/mclovin137/Horus/pull/20) | ✅ Entregue |
 | 2026-06-27 | `T-406` | Redação de PII na borda do Collector (RNF-010/RNF-H-002): processor `transform/pii` (OTTL) em traces+logs — remove chaves proibidas e mascara e-mail/CPF/cartão (2ª camada; origem = T-401), doc `PII-REDACTION.md`; `otelcol validate` ok | `task/T-406-pii-redaction` | [#19](https://github.com/mclovin137/Horus/pull/19) | ✅ Entregue |
 | 2026-06-27 | `T-404` | OTel Collector + backends (RF-031/RF-H-014): `health_check` no Collector, healthchecks/`depends_on` no compose, Grafana com datasources provisionados (Prometheus/Loki/Jaeger), doc `telemetry/README.md`; `compose config` + `otelcol validate` ok | `task/T-404-otel-collector-backends` | [#18](https://github.com/mclovin137/Horus/pull/18) | ✅ Entregue |
