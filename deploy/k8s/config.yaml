@@ -14,6 +14,10 @@ data:
   HORUS_ENV: "k8s"
   # IA real (T-1003): "true" + Secret horus-ai-secret com ANTHROPIC_API_KEY. Sem chave = modo stub.
   HORUS_AI_ENABLED: "false"
+  # RBAC (T-1007): ligado por padrão no perfil prod. Aponte para o IdP (OIDC) — sem isso toda
+  # rota protegida responde 401 (seguro por padrão). Papéis na claim `groups` (ver docs/ROLES.md).
+  # MP_JWT_VERIFY_PUBLICKEY_LOCATION: "https://idp.example.com/realms/horus/protocol/openid-connect/certs"
+  # MP_JWT_VERIFY_ISSUER: "https://idp.example.com/realms/horus"
   # Endpoint OTLP do Collector (mesmo valor do profile prod; explícito para clareza/override).
   QUARKUS_OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
   # Backends consultados pelo Horus (RF-H-014).

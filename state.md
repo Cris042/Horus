@@ -9,9 +9,11 @@
 | **Última atualização** | 2026-09-28 |
 | **Branch atual** | `claude/beautiful-cray-sfblsr` |
 | **Fase do roadmap** | Fases 0-9 entregues · **Fase 10 (Produto utilizável) em andamento** |
-| **Task ativa** | Nenhuma — próxima: `T-1007` (RBAC com autenticação real / OIDC) |
+| **Task ativa** | Nenhuma — próxima: `T-1008` (alertas automáticos + e-mail real) |
 
 ## 🔵 Entregas da Fase 10 (branch `claude/beautiful-cray-sfblsr`)
+
+**`T-1007` — RBAC com autenticação real (RNF-H-010).** O RBAC confiava no cabeçalho `X-Horus-Role` (qualquer cliente virava admin) e vinha desligado. Agora: JWT do IdP verificado pelo SmallRye JWT (JWKS/issuer), papéis na claim `groups` (maior privilégio vence), **ligado por padrão no perfil prod**; DEVELOPER com `horus_services` só busca seus serviços; painel/waterfall com campo de token. Modo `header` só para dev/testes; compose de dev desliga explicitamente. 118 testes (token forjado → 401, cabeçalho ignorado, escopo).
 
 **`T-1006` — Análises pesadas assíncronas (RNF-H-004).** `AiJobService` (workers e fila limitados — fila cheia → 429; jobs expiram em 1h) + `POST /horus/ai/jobs/{rca,state-summary}` → 202 + `Location`, `GET /horus/ai/jobs/{id}`; painel faz a RCA como job com polling. Endpoints síncronos mantidos. 110 testes verdes.
 
@@ -55,7 +57,7 @@ task. As lacunas viraram a **Fase 10** em [`docs/ROADMAP.md`](./docs/ROADMAP.md)
 | P1 | `T-1004` | ✅ Sem trilha do que vai ao LLM (RNF-H-006); `PromptSanitizer` não é obrigatório |
 | P1 | `T-1005` | ✅ Retenção configurável (RNF-H-005) nunca implementada |
 | P1 | `T-1006` | ✅ RCA/DEEP síncrona no request HTTP (RNF-H-004) |
-| P1 | `T-1007` | RBAC confia em cabeçalho forjável; off por padrão (RNF-H-010) |
+| P1 | `T-1007` | ✅ RBAC confia em cabeçalho forjável; off por padrão (RNF-H-010) |
 | P1 | `T-1008` | Alertas sem gatilho automático; e-mail é stub (RF-H-013) |
 | P2 | `T-1009`..`T-1012` | Overlay de infra K8s + LB; robustez da SAGA; UI de service-map/SAGA; TTL de cache, KEDA, TLS interno, docs LRA→orquestrador próprio |
 
@@ -76,6 +78,7 @@ abrir `task/T-1001-trace-search`. `T-1002` e `T-1003` podem correr em paralelo.
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
+| 2026-09-28 | `T-1007` | RBAC com autenticação real (RNF-H-010): O RBAC confiava no cabeçalho `X-Horus-Role` (qualquer cliente virava admin) e vinha desligado. Agora: JWT do IdP verificado pelo SmallRye JWT (JWKS/issuer), papéis na claim `groups` (maior privilégio vence), **ligado por padrão no perfil prod**; DEVELOPER com `horus_services` só busca seus serviços; painel/waterfall com campo de token. Modo `header` só para dev/testes; compose de dev desliga expli | `claude/beautiful-cray-sfblsr` | — | ✅ Entregue |
 | 2026-09-28 | `T-1006` | Análises pesadas assíncronas (RNF-H-004): `AiJobService` (workers e fila limitados — fila cheia → 429; jobs expiram em 1h) + `POST /horus/ai/jobs/{rca,state-summary}` → 202 + `Location`, `GET /horus/ai/jobs/{id}`; painel faz a RCA como job com polling. Endpoints síncronos mantidos. 110 testes verdes. | `claude/beautiful-cray-sfblsr` | — | ✅ Entregue |
 | 2026-09-28 | `T-1005` | Retenção configurável por tipo de sinal (RNF-H-005): Jaeger v2 passa de memória (traces perdidos a cada restart) para Badger em disco com TTL `JAEGER_RETENTION` (168h); Loki com compactor e `LOKI_RETENTION` (168h); Prometheus com `PROMETHEUS_RETENTION` (15d). Validado subindo os backends com valores customizados e confirmando pelas APIs de config/flags; trace sobrevive a restart do Jaeger. | `claude/beautiful-cray-sfblsr` | — | ✅ Entregue |
 | 2026-09-28 | `T-1004` | Auditoria de prompts + sanitização obrigatória (RNF-H-002/006): Decorator CDI `AuditingLlmEngine` (externo ao cache) sanitiza system+prompt de **todo** pedido ao LLM e registra a trilha (`LlmAuditTrail`: purpose, camada, modelo, SHA-256 do conteúdo, nº de redações, latência, desfecho — sem o texto), com log durável `horus.ai.audit` → Loki e `GET /horus/ai/audit`. Fecha o risco aceito na T-904 (agente novo esquecer o sanitizer). 103 testes verdes. | `claude/beautiful-cray-sfblsr` | — | ✅ Entregue |

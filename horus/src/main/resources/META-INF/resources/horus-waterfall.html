@@ -86,8 +86,16 @@
   </main>
 
   <script>
+
+    // RBAC com JWT (T-1007): o token do IdP fica só nesta aba (sessionStorage) e vai em toda chamada.
+    function authHeaders(extra) {
+      let t = null;
+      try { t = sessionStorage.getItem('horus.token'); } catch (e) { /* storage indisponível */ }
+      return Object.assign({}, extra || {}, t ? { Authorization: 'Bearer ' + t } : {});
+    }
+
     async function jsafe(url) {
-      const r = await fetch(url);
+      const r = await fetch(url, { headers: authHeaders() });
       if (!r.ok) return { __status: r.status };
       return r.json();
     }

@@ -190,6 +190,7 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           HORUS_AI_ENABLED: "true"
+          HORUS_RBAC_ENABLED: "false"   # smoke da IA, não do RBAC (T-1007)
         run: |
           ./mvnw -B -ntp -pl horus -am -DskipTests package
           nohup java -jar horus/target/quarkus-app/quarkus-run.jar > horus.log 2>&1 &

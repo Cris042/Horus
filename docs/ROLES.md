@@ -91,3 +91,16 @@ Além dos papéis de acesso, o sistema define **responsabilidades de processo** 
 - **Separação de deveres:** quem configura a plataforma (Admin) é distinto de quem só investiga (SRE) ou só lê (Auditor).
 - **Observabilidade passiva:** contas de serviço e agentes de IA são **somente leitura** sobre telemetria e **não** escrevem nos domínios (RNF-H-008).
 - **Privacidade por padrão:** agentes de IA recebem somente dados **sanitizados** (RNF-H-002/006).
+
+## 7. Como o Horus aplica os papéis (T-704 → T-1007)
+
+- **Identidade:** token JWT emitido pelo IdP da organização (OIDC), enviado como
+  `Authorization: Bearer <token>`. O Horus verifica assinatura e emissor
+  (`MP_JWT_VERIFY_PUBLICKEY_LOCATION` = JWKS do IdP, `MP_JWT_VERIFY_ISSUER`).
+- **Papéis:** nomes da §1 na claim `groups` (`PLATFORM_ADMIN`, `SRE`, `DEVELOPER`, `AUDITOR`,
+  `LOAD_TEST_OP`). Com vários, vale o de maior privilégio.
+- **Escopo do Desenvolvedor (🟡 "somente seus serviços"):** claim `horus_services` com a lista de
+  serviços; a busca de traces e a lista de serviços do Horus ficam restritas a ela. Sem a claim, não
+  há restrição. *Limitação:* as consultas por `traceId` conhecido não são filtradas por serviço.
+- **Padrão:** ligado no perfil `prod`; o stack de desenvolvimento (`docker-compose`) o desliga
+  explicitamente. O modo `header` (`X-Horus-Role`, sem prova de identidade) existe só para dev/testes.

@@ -36,7 +36,7 @@
   </style>
 </head>
 <body>
-  <header><span class="eye">𓂀</span><h1>Horus</h1><span class="muted">observabilidade aumentada por IA</span><a href="/horus-waterfall.html" style="margin-left:auto;color:#58a6ff;font-size:.9rem;text-decoration:none">Waterfall →</a></header>
+  <header><span class="eye">𓂀</span><h1>Horus</h1><span class="muted">observabilidade aumentada por IA</span><span style="margin-left:auto;display:flex;gap:.4rem;align-items:center"><input id="token" type="password" placeholder="token (RBAC)" aria-label="token de acesso" style="background:#0e1116;border:1px solid #232a33;color:#e6edf3;border-radius:8px;padding:.3rem .5rem;width:10rem"/><button onclick="saveToken()" style="background:#30363d;color:#e6edf3;border:0;border-radius:8px;padding:.3rem .7rem;cursor:pointer">OK</button><span id="tokenState" class="muted"></span></span><a href="/horus-waterfall.html" style="color:#58a6ff;font-size:.9rem;text-decoration:none">Waterfall →</a></header>
   <main>
     <div class="card">
       <h2>Saúde</h2>
@@ -89,8 +89,27 @@
   </main>
 
   <script>
+
+    // RBAC com JWT (T-1007): o token do IdP fica só nesta aba (sessionStorage) e vai em toda chamada.
+    function authHeaders(extra) {
+      let t = null;
+      try { t = sessionStorage.getItem('horus.token'); } catch (e) { /* storage indisponível */ }
+      return Object.assign({}, extra || {}, t ? { Authorization: 'Bearer ' + t } : {});
+    }
+
+    function saveToken() {
+      const v = document.getElementById('token').value.trim();
+      try { v ? sessionStorage.setItem('horus.token', v) : sessionStorage.removeItem('horus.token'); } catch (e) { /* ignore */ }
+      document.getElementById('token').value = '';
+      document.getElementById('tokenState').textContent = v ? 'token definido' : 'sem token';
+      loadOverview(); loadServices(); searchTraces();
+    }
+
     async function j(url, opts) {
+      opts = Object.assign({}, opts || {});
+      opts.headers = authHeaders(opts.headers);
       const r = await fetch(url, opts);
+      if (r.status === 401) throw new Error('HTTP 401 — informe um token válido no topo da página');
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return r.json();
     }

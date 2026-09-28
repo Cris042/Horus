@@ -344,6 +344,9 @@ services:
       # IA real opcional (T-1003): exporte ANTHROPIC_API_KEY e HORUS_AI_ENABLED=true no shell.
       # Sem chave, o Horus sobe em modo stub (placeholder, sem rede).
       HORUS_AI_ENABLED: ${HORUS_AI_ENABLED:-false}
+      # RBAC (T-1007) vem ligado no perfil prod; o stack de DEV o desliga para o painel e o e2e
+      # funcionarem sem IdP. Para testar: HORUS_RBAC_ENABLED=true + MP_JWT_VERIFY_* no shell.
+      HORUS_RBAC_ENABLED: ${HORUS_RBAC_ENABLED:-false}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     healthcheck:
       <<: *quarkus-health

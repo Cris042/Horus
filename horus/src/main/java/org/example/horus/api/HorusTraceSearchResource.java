@@ -6,11 +6,14 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import org.example.horus.query.QueryModel.TraceSearch;
 import org.example.horus.query.QueryModel.TraceSummary;
 import org.example.horus.query.TimeWindow;
 import org.example.horus.query.TraceQueryPort;
+import org.example.horus.security.CallerScope;
 
 import java.util.List;
 
@@ -37,7 +40,8 @@ public class HorusTraceSearchResource {
      * mais recente para o mais antigo.
      */
     @GET
-    public TraceSearchResult search(@QueryParam("service") String service,
+    public TraceSearchResult search(@Context ContainerRequestContext request,
+                                    @QueryParam("service") String service,
                                     @QueryParam("operation") String operation,
                                     @QueryParam("lookback") String lookback,
                                     @QueryParam("from") String from,
@@ -52,16 +56,17 @@ public class HorusTraceSearchResource {
             throw new BadRequestException("minDurationMs não pode ser negativo");
         }
         TimeWindow window = ApiWindows.resolve(lookback, from, to);
+        String scoped = CallerScope.scopedService(request, service); // DEVELOPER: só seus serviços (T-1007)
         List<TraceSummary> found = traces.searchTraces(
-                new TraceSearch(service, operation, window, minDurationMs * 1_000, onlyErrors, limit));
+                new TraceSearch(scoped, operation, window, minDurationMs * 1_000, onlyErrors, limit));
         return new TraceSearchResult(window.startMicros(), window.endMicros(), found.size(), found);
     }
 
     /** Serviços com traces no backend — para popular filtros. */
     @GET
     @Path("/services")
-    public List<String> services() {
-        return traces.listServices();
+    public List<String> services(@Context ContainerRequestContext request) {
+        return CallerScope.filterServices(request, traces.listServices());
     }
 
     /** Resultado da busca: janela efetiva + traces encontrados. */

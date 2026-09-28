@@ -53,10 +53,22 @@
             <version>${anthropic-java.version}</version>
         </dependency>
 
+        <!-- RBAC com autenticação real (T-1007): verificação de JWT do IdP (OIDC) — papéis na claim `groups`. -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-jwt</artifactId>
+        </dependency>
+
         <!-- Testes -->
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-junit5-mockito</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Emissão de JWT assinado nos testes do RBAC (T-1007). -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-jwt-build</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
