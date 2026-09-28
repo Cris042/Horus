@@ -42,7 +42,7 @@ public class AlertService {
 
     public AlertResult raise(AlertRequest request) {
         AlertSeverity severity = AlertSeverity.from(request.severity());
-        LlmResponse summary = engine.complete(new LlmRequest(SYSTEM, buildPrompt(request, severity), ModelTier.FAST));
+        LlmResponse summary = engine.complete(new LlmRequest(SYSTEM, buildPrompt(request, severity), ModelTier.FAST, "alert"));
 
         Alert alert = new Alert(
                 blankToDefault(request.title(), "Alerta sem título"),

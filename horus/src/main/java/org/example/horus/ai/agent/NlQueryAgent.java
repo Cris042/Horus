@@ -37,7 +37,7 @@ public class NlQueryAgent {
     public NlAnswer answer(String question, PromptContext context) {
         String prompt = "Pergunta: " + question + "\n\nContexto"
                 + (context.truncated() ? " (truncado)" : "") + ":\n" + context.text();
-        LlmResponse resp = engine.complete(new LlmRequest(SYSTEM, prompt, ModelTier.BALANCED));
+        LlmResponse resp = engine.complete(new LlmRequest(SYSTEM, prompt, ModelTier.BALANCED, "nl-query"));
         return new NlAnswer(question, resp.text(), resp.modelId(), resp.live(),
                 context.includedSignals());
     }

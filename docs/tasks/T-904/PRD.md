@@ -97,6 +97,7 @@ outros agentes.
 |---|---|
 | Regex de PII (camadas 2/3) não cobre todos os formatos (ex.: telefone, endereço, nome sem padrão) | Defesa primária continua sendo a origem (T-401: nunca emitir o valor cru); risco residual documentado, não é objetivo desta task expandir os padrões de regex |
 | Novo agente futuro repetir o mesmo erro (montar prompt sem `PromptSanitizer`) | `LlmEngine`'s Javadoc já documenta o contrato; nenhum mecanismo automático (ex. wrapper obrigatório) impede reincidência — risco aceito, fica para um hardening futuro se necessário |
+| ✅ **Fechado em `T-1004` (2026-09-28)** | `AuditingLlmEngine` (decorator CDI obrigatório da porta `LlmEngine`) sanitiza todo pedido e registra a trilha — não depende mais do chamador |
 
 ## Referências
 

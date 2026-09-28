@@ -9,9 +9,11 @@
 | **Última atualização** | 2026-09-28 |
 | **Branch atual** | `claude/beautiful-cray-sfblsr` |
 | **Fase do roadmap** | Fases 0-9 entregues · **Fase 10 (Produto utilizável) em andamento** |
-| **Task ativa** | Nenhuma — próxima: `T-1004` (auditoria de prompts + sanitização obrigatória) |
+| **Task ativa** | Nenhuma — próxima: `T-1005` (retenção configurável) |
 
 ## 🔵 Entregas da Fase 10 (branch `claude/beautiful-cray-sfblsr`)
+
+**`T-1004` — Auditoria de prompts + sanitização obrigatória (RNF-H-002/006).** Decorator CDI `AuditingLlmEngine` (externo ao cache) sanitiza system+prompt de **todo** pedido ao LLM e registra a trilha (`LlmAuditTrail`: purpose, camada, modelo, SHA-256 do conteúdo, nº de redações, latência, desfecho — sem o texto), com log durável `horus.ai.audit` → Loki e `GET /horus/ai/audit`. Fecha o risco aceito na T-904 (agente novo esquecer o sanitizer). 103 testes verdes.
 
 **`T-1003` — Tiers de modelo reais + IA ao vivo (RNF-H-003).** Achado: o adapter LangChain4j (T-601) enviava sempre `temperature`/`top_k` — rejeitados com 400 pelos modelos atuais —, usava um único modelo (o `ModelTier` era só rótulo) e só ligava por flag de build; a IA real nunca teria funcionado. Adapter trocado para o SDK oficial `anthropic-java` 2.65.0 atrás da mesma porta `LlmEngine`: `AnthropicLlmEngine` escolhe live/stub em runtime; FAST=`claude-haiku-4-5`, BALANCED=`claude-sonnet-5` (effort medium), DEEP=`claude-opus-5` (effort high + fallbacks do servidor); `system` separado; falha da API → 503. `scripts/ai-smoke.sh` + job `ai-live` no CI (só com a secret). Adendo na ADR-0011. 98 testes verdes; jar validado contra a API real (401 com chave inválida → 503).
 
@@ -46,7 +48,7 @@ task. As lacunas viraram a **Fase 10** em [`docs/ROADMAP.md`](./docs/ROADMAP.md)
 | P0 | `T-1001` | ✅ Horus só opera por `traceId` conhecido — sem busca/janela temporal (RF-H-005/010/012) |
 | P0 | `T-1002` | ✅ Apps e LB fora do compose; nenhum e2e automatizado (bug do T-507 passou por isso) |
 | P0 | `T-1003` | ✅ `ModelTier` cosmético (um único `model-name`); IA real nunca exercitada |
-| P1 | `T-1004` | Sem trilha do que vai ao LLM (RNF-H-006); `PromptSanitizer` não é obrigatório |
+| P1 | `T-1004` | ✅ Sem trilha do que vai ao LLM (RNF-H-006); `PromptSanitizer` não é obrigatório |
 | P1 | `T-1005` | Retenção configurável (RNF-H-005) nunca implementada |
 | P1 | `T-1006` | RCA/DEEP síncrona no request HTTP (RNF-H-004) |
 | P1 | `T-1007` | RBAC confia em cabeçalho forjável; off por padrão (RNF-H-010) |
@@ -70,6 +72,7 @@ abrir `task/T-1001-trace-search`. `T-1002` e `T-1003` podem correr em paralelo.
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
+| 2026-09-28 | `T-1004` | Auditoria de prompts + sanitização obrigatória (RNF-H-002/006): Decorator CDI `AuditingLlmEngine` (externo ao cache) sanitiza system+prompt de **todo** pedido ao LLM e registra a trilha (`LlmAuditTrail`: purpose, camada, modelo, SHA-256 do conteúdo, nº de redações, latência, desfecho — sem o texto), com log durável `horus.ai.audit` → Loki e `GET /horus/ai/audit`. Fecha o risco aceito na T-904 (agente novo esquecer o sanitizer). 103 testes verdes. | `claude/beautiful-cray-sfblsr` | — | ✅ Entregue |
 | 2026-09-28 | `T-1003` | Tiers de modelo reais + IA ao vivo (RNF-H-003): Achado: o adapter LangChain4j (T-601) enviava sempre `temperature`/`top_k` — rejeitados com 400 pelos modelos atuais —, usava um único modelo (o `ModelTier` era só rótulo) e só ligava por flag de build; a IA real nunca teria funcionado. Adapter trocado para o SDK oficial `anthropic-java` 2.65.0 atrás da mesma porta `LlmEngine`: `AnthropicLlmEngine` escolhe live/stub em runtime; FAST=`claude-haiku- | `claude/beautiful-cray-sfblsr` | — | ✅ Entregue |
 | 2026-09-28 | `T-1002` | Compose com as aplicações + e2e no CI: Profile `apps` no compose (4 serviços, SAGA, Horus, worker, loadtest e o LB NGINX em `:8088`), `make up-apps`/`make e2e`, `scripts/e2e.sh` (SAGA feliz e compensada pelo LB, verificadas no Horus sobre backends reais) e job `e2e` no CI. Rodar o stack real achou e corrigiu 2 defeitos: Horus não subia com `ANTHROPIC_API_KEY` vazia (inclusive no exemplo de Secret do K8s) e a SAGA compensada não tinha s | `claude/beautiful-cray-sfblsr` | — | ✅ Entregue |
 | 2026-09-28 | `T-1001` | Busca e janela temporal (RF-H-005/010/012): Portas/adapters ganharam busca por janela (Jaeger `/api/traces` multi-serviço com `TraceSummary`: raiz, duração, spans em erro, query SQL mais lenta; Loki e Prometheus `query_range`); novas APIs `GET /horus/traces`, `/horus/query/{logs,metrics}/range`, `GET /horus/ai/summary/state`; "pergunte ao Horus" sem `traceId` e o resumo agendado usam o contexto da janela (coleta best-effort, sanitizado, den | `claude/beautiful-cray-sfblsr` | — | ✅ Entregue |

@@ -51,6 +51,7 @@ public class HorusPanelResource {
                 Map.entry("explainTrace", "GET /horus/ai/explain/trace/{traceId}"),
                 Map.entry("rcaTrace", "GET /horus/ai/rca/trace/{traceId}"),
                 Map.entry("ask", "POST /horus/ai/ask"),
+                Map.entry("aiAudit", "GET /horus/ai/audit"),
                 Map.entry("queryTrace", "GET /horus/query/traces/{traceId}"),
                 Map.entry("queryLogs", "GET /horus/query/logs?traceId="),
                 Map.entry("queryMetrics", "GET /horus/query/metrics?query="),

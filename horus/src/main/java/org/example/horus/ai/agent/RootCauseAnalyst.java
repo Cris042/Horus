@@ -37,7 +37,7 @@ public class RootCauseAnalyst {
         String prompt = "Incidente (trace " + traceId + ")"
                 + (context.truncated() ? " — contexto truncado" : "")
                 + ", sinais: " + context.includedSignals() + "\n" + context.text();
-        LlmResponse resp = engine.complete(new LlmRequest(SYSTEM, prompt, ModelTier.DEEP));
+        LlmResponse resp = engine.complete(new LlmRequest(SYSTEM, prompt, ModelTier.DEEP, "rca"));
         return new RootCauseAnalysis(traceId, resp.text(), resp.modelId(), resp.live(),
                 context.includedSignals(), context.truncated());
     }

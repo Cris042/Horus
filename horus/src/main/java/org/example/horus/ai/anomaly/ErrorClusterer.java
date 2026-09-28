@@ -104,7 +104,7 @@ public class ErrorClusterer {
         // ContextAssembler (T-602); achado em T-904: este agente monta o prompt direto de
         // `sample()` (log cru da telemetria) e não passava por ela.
         String prompt = PromptSanitizer.sanitize(sb.toString());
-        return engine.complete(new LlmRequest(SYSTEM, prompt, ModelTier.FAST));
+        return engine.complete(new LlmRequest(SYSTEM, prompt, ModelTier.FAST, "error-cluster"));
     }
 
     private static boolean isError(LogLine log) {

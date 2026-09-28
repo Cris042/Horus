@@ -37,7 +37,7 @@ public class StateSummarizer {
     public StateSummary summarize(PromptContext context) {
         String prompt = "Telemetria (contexto" + (context.truncated() ? ", truncado" : "")
                 + ", ~" + context.estimatedTokens() + " tokens):\n" + context.text();
-        LlmResponse resp = engine.complete(new LlmRequest(SYSTEM, prompt, ModelTier.FAST));
+        LlmResponse resp = engine.complete(new LlmRequest(SYSTEM, prompt, ModelTier.FAST, "state-summary"));
         return new StateSummary(resp.text(), resp.modelId(), resp.live(),
                 context.includedSignals(), context.truncated());
     }
