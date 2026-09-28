@@ -39,9 +39,13 @@ spec:
             - configMapRef:
                 name: horus-config
           env:
-            # Conexão com a mensageria (mesmos defaults do compose de dev).
-            - name: RABBITMQ_ADDR
+            # Conexão com a mensageria (mesmos defaults do compose de dev). T-1009: o worker lê
+            # AMQP_URL (antes RABBITMQ_ADDR — ignorado, o worker tentava localhost:5672).
+            - name: AMQP_URL
               value: "amqp://horus:horus@rabbitmq:5672/%2f"
+            # O worker exporta OTLP/HTTP (4318), não o gRPC do ConfigMap dos serviços Quarkus.
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://otel-collector:4318"
           resources:
             requests: { cpu: "100m", memory: "64Mi" }
             limits: { cpu: "500m", memory: "128Mi" }

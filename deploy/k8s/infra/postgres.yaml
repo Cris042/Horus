@@ -1,0 +1,190 @@
+# Postgres ×4 no cluster (T-1009) — um StatefulSet por banco (RNF-002/003: banco e credencial
+# isolados por serviço, como no compose). Credenciais do Secret horus-db-secret (secrets.example.yaml).
+# Nomes de Service = hosts do profile prod dos serviços Quarkus (postgres-<dominio>).
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-prontuario
+  labels: { app.kubernetes.io/name: postgres-prontuario, app.kubernetes.io/component: database }
+spec:
+  serviceName: postgres-prontuario
+  replicas: 1
+  selector:
+    matchLabels: { app.kubernetes.io/name: postgres-prontuario }
+  template:
+    metadata:
+      labels: { app.kubernetes.io/name: postgres-prontuario, app.kubernetes.io/component: database }
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:17.2-alpine
+          ports: [{ name: pg, containerPort: 5432 }]
+          env:
+            - { name: POSTGRES_DB, value: prontuario_db }
+            - name: POSTGRES_USER
+              valueFrom: { secretKeyRef: { name: horus-db-secret, key: PRONTUARIO_DB_USERNAME } }
+            - name: POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: horus-db-secret, key: PRONTUARIO_DB_PASSWORD } }
+            - { name: PGDATA, value: /var/lib/postgresql/data/pgdata }
+          readinessProbe:
+            exec: { command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""] }
+            periodSeconds: 5
+          volumeMounts: [{ name: data, mountPath: /var/lib/postgresql/data }]
+          resources:
+            requests: { cpu: "100m", memory: "128Mi" }
+            limits: { cpu: "500m", memory: "512Mi" }
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources: { requests: { storage: 1Gi } }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-prontuario
+  labels: { app.kubernetes.io/name: postgres-prontuario }
+spec:
+  selector: { app.kubernetes.io/name: postgres-prontuario }
+  ports: [{ name: pg, port: 5432, targetPort: pg }]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-payment
+  labels: { app.kubernetes.io/name: postgres-payment, app.kubernetes.io/component: database }
+spec:
+  serviceName: postgres-payment
+  replicas: 1
+  selector:
+    matchLabels: { app.kubernetes.io/name: postgres-payment }
+  template:
+    metadata:
+      labels: { app.kubernetes.io/name: postgres-payment, app.kubernetes.io/component: database }
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:17.2-alpine
+          ports: [{ name: pg, containerPort: 5432 }]
+          env:
+            - { name: POSTGRES_DB, value: payment_db }
+            - name: POSTGRES_USER
+              valueFrom: { secretKeyRef: { name: horus-db-secret, key: PAYMENT_DB_USERNAME } }
+            - name: POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: horus-db-secret, key: PAYMENT_DB_PASSWORD } }
+            - { name: PGDATA, value: /var/lib/postgresql/data/pgdata }
+          readinessProbe:
+            exec: { command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""] }
+            periodSeconds: 5
+          volumeMounts: [{ name: data, mountPath: /var/lib/postgresql/data }]
+          resources:
+            requests: { cpu: "100m", memory: "128Mi" }
+            limits: { cpu: "500m", memory: "512Mi" }
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources: { requests: { storage: 1Gi } }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-payment
+  labels: { app.kubernetes.io/name: postgres-payment }
+spec:
+  selector: { app.kubernetes.io/name: postgres-payment }
+  ports: [{ name: pg, port: 5432, targetPort: pg }]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-invoice
+  labels: { app.kubernetes.io/name: postgres-invoice, app.kubernetes.io/component: database }
+spec:
+  serviceName: postgres-invoice
+  replicas: 1
+  selector:
+    matchLabels: { app.kubernetes.io/name: postgres-invoice }
+  template:
+    metadata:
+      labels: { app.kubernetes.io/name: postgres-invoice, app.kubernetes.io/component: database }
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:17.2-alpine
+          ports: [{ name: pg, containerPort: 5432 }]
+          env:
+            - { name: POSTGRES_DB, value: invoice_db }
+            - name: POSTGRES_USER
+              valueFrom: { secretKeyRef: { name: horus-db-secret, key: INVOICE_DB_USERNAME } }
+            - name: POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: horus-db-secret, key: INVOICE_DB_PASSWORD } }
+            - { name: PGDATA, value: /var/lib/postgresql/data/pgdata }
+          readinessProbe:
+            exec: { command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""] }
+            periodSeconds: 5
+          volumeMounts: [{ name: data, mountPath: /var/lib/postgresql/data }]
+          resources:
+            requests: { cpu: "100m", memory: "128Mi" }
+            limits: { cpu: "500m", memory: "512Mi" }
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources: { requests: { storage: 1Gi } }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-invoice
+  labels: { app.kubernetes.io/name: postgres-invoice }
+spec:
+  selector: { app.kubernetes.io/name: postgres-invoice }
+  ports: [{ name: pg, port: 5432, targetPort: pg }]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-saga
+  labels: { app.kubernetes.io/name: postgres-saga, app.kubernetes.io/component: database }
+spec:
+  serviceName: postgres-saga
+  replicas: 1
+  selector:
+    matchLabels: { app.kubernetes.io/name: postgres-saga }
+  template:
+    metadata:
+      labels: { app.kubernetes.io/name: postgres-saga, app.kubernetes.io/component: database }
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:17.2-alpine
+          ports: [{ name: pg, containerPort: 5432 }]
+          env:
+            - { name: POSTGRES_DB, value: saga_db }
+            - name: POSTGRES_USER
+              valueFrom: { secretKeyRef: { name: horus-db-secret, key: SAGA_DB_USERNAME } }
+            - name: POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: horus-db-secret, key: SAGA_DB_PASSWORD } }
+            - { name: PGDATA, value: /var/lib/postgresql/data/pgdata }
+          readinessProbe:
+            exec: { command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""] }
+            periodSeconds: 5
+          volumeMounts: [{ name: data, mountPath: /var/lib/postgresql/data }]
+          resources:
+            requests: { cpu: "100m", memory: "128Mi" }
+            limits: { cpu: "500m", memory: "512Mi" }
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources: { requests: { storage: 1Gi } }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-saga
+  labels: { app.kubernetes.io/name: postgres-saga }
+spec:
+  selector: { app.kubernetes.io/name: postgres-saga }
+  ports: [{ name: pg, port: 5432, targetPort: pg }]

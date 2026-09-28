@@ -9,9 +9,11 @@
 | **Última atualização** | 2026-09-28 |
 | **Branch atual** | `claude/beautiful-cray-sfblsr` |
 | **Fase do roadmap** | Fases 0-9 entregues · **Fase 10 (Produto utilizável) em andamento** |
-| **Task ativa** | Nenhuma — próxima: `T-1009` (overlay de infraestrutura K8s + LB) |
+| **Task ativa** | Nenhuma — próxima: `T-1010` (robustez da SAGA) |
 
 ## 🔵 Entregas da Fase 10 (branch `claude/beautiful-cray-sfblsr`)
+
+**`T-1009` — Overlay de infraestrutura no K8s + LB (RF-033).** `kubectl apply -k deploy/` sobe o stack completo: Postgres ×4, RabbitMQ, Collector, Jaeger (Badger), Loki e Prometheus (mesmas configs do compose), as apps e o LB NGINX `load-balancer` (antes inexistente no K8s). Corrigidos 2 bugs nos manifests: worker lia `AMQP_URL` mas recebia `RABBITMQ_ADDR` (nunca consumiria) e não exportava traces; loadtest rodava no-op sem OTel. 52 objetos válidos no `kubeconform -strict` (K8s 1.33). Cluster real não executável no sandbox (runc aninhado) → job `e2e-k8s` (kind) no CI, não-bloqueante até o 1º verde.
 
 **`T-1008` — Alertas automáticos + e-mail real (RF-H-008/013).** `AlertWatcher` agendado (`horus.alert.watch.interval`, off por padrão) avalia regras PromQL da config e o volume de traces com erro na janela (busca da T-1001 → alerta com o `traceId` mais recente para RCA), com deduplicação por janela e falhas contidas; `EmailAlertChannel` passa a enviar de verdade via `quarkus-mailer` (vários destinatários, link do waterfall; mock em dev/test). 123 testes verdes.
 
@@ -80,6 +82,7 @@ abrir `task/T-1001-trace-search`. `T-1002` e `T-1003` podem correr em paralelo.
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
+| 2026-09-28 | `T-1009` | Overlay de infraestrutura no K8s + LB (RF-033): `kubectl apply -k deploy/` sobe o stack completo: Postgres ×4, RabbitMQ, Collector, Jaeger (Badger), Loki e Prometheus (mesmas configs do compose), as apps e o LB NGINX `load-balancer` (antes inexistente no K8s). Corrigidos 2 bugs nos manifests: worker lia `AMQP_URL` mas recebia `RABBITMQ_ADDR` (nunca consumiria) e não exportava traces; loadtest rodava no-op sem OTel. 52 objetos válidos no `kubeco | `claude/beautiful-cray-sfblsr` | — | ✅ Entregue |
 | 2026-09-28 | `T-1008` | Alertas automáticos + e-mail real (RF-H-008/013): `AlertWatcher` agendado (`horus.alert.watch.interval`, off por padrão) avalia regras PromQL da config e o volume de traces com erro na janela (busca da T-1001 → alerta com o `traceId` mais recente para RCA), com deduplicação por janela e falhas contidas; `EmailAlertChannel` passa a enviar de verdade via `quarkus-mailer` (vários destinatários, link do waterfall; mock em dev/test). 123 testes verdes | `claude/beautiful-cray-sfblsr` | — | ✅ Entregue |
 | 2026-09-28 | `T-1007` | RBAC com autenticação real (RNF-H-010): O RBAC confiava no cabeçalho `X-Horus-Role` (qualquer cliente virava admin) e vinha desligado. Agora: JWT do IdP verificado pelo SmallRye JWT (JWKS/issuer), papéis na claim `groups` (maior privilégio vence), **ligado por padrão no perfil prod**; DEVELOPER com `horus_services` só busca seus serviços; painel/waterfall com campo de token. Modo `header` só para dev/testes; compose de dev desliga expli | `claude/beautiful-cray-sfblsr` | — | ✅ Entregue |
 | 2026-09-28 | `T-1006` | Análises pesadas assíncronas (RNF-H-004): `AiJobService` (workers e fila limitados — fila cheia → 429; jobs expiram em 1h) + `POST /horus/ai/jobs/{rca,state-summary}` → 202 + `Location`, `GET /horus/ai/jobs/{id}`; painel faz a RCA como job com polling. Endpoints síncronos mantidos. 110 testes verdes. | `claude/beautiful-cray-sfblsr` | — | ✅ Entregue |

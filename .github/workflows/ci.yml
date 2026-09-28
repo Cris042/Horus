@@ -203,3 +203,60 @@ jobs:
       - name: Log do Horus (em falha)
         if: failure() && steps.gate.outputs.enabled == 'true'
         run: cat horus.log
+
+  e2e-k8s:
+    name: E2E no Kubernetes (kind)
+    # T-1009: aplica o stack completo (kubectl apply -k deploy/ — infra + apps + LB) num cluster
+    # kind e roda o mesmo scripts/e2e.sh pelo LB do cluster. Não-bloqueante até a 1ª execução
+    # verde no GitHub (não foi possível rodar kind no ambiente onde foi escrito).
+    needs: [build-java, build-worker]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 25 (Temurin) + cache Maven
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Empacotar e construir as imagens horus/*:dev
+        run: |
+          ./mvnw -B -ntp -DskipTests package
+          docker compose -f deploy/docker-compose.yml --profile apps build \
+            prontuario-service payment-service invoice-service saga-orchestrator horus report-worker loadtest
+
+      - name: Criar cluster kind
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: horus
+
+      - name: Carregar imagens e aplicar o stack
+        run: |
+          for i in prontuario payment invoice saga-orchestrator horus report-worker loadtest; do
+            kind load docker-image "horus/$i:dev" --name horus
+          done
+          kubectl apply -k deploy/
+          # Ajustes de cluster local (ver deploy/k8s/README.md): sem IdP e com pouca CPU.
+          kubectl -n horus set env deployment/horus HORUS_RBAC_ENABLED=false
+          kubectl -n horus set resources deployment,statefulset --all --requests=cpu=20m
+          kubectl -n horus wait --for=jsonpath='{.status.readyReplicas}'=1 statefulset --all --timeout=600s
+          kubectl -n horus wait --for=condition=available deployment --all --timeout=600s
+
+      - name: Teste ponta a ponta pelo LB do cluster
+        run: |
+          kubectl -n horus port-forward svc/load-balancer 8088:80 >/dev/null 2>&1 &
+          kubectl -n horus port-forward svc/horus 8080:8080 >/dev/null 2>&1 &
+          sleep 3
+          scripts/e2e.sh
+
+      - name: Estado do cluster (em falha)
+        if: failure()
+        run: |
+          kubectl -n horus get pods -o wide
+          kubectl -n horus describe pods | tail -200
+          kubectl -n horus logs deployment/horus --tail=100 || true

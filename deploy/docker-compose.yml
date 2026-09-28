@@ -285,6 +285,7 @@ services:
     build:
       <<: *quarkus-build
       context: ../services/prontuario/target/quarkus-app
+    image: horus/prontuario:dev   # mesmo nome dos manifests K8s (T-1009)
     ports: ["8081:8081"]
     healthcheck:
       <<: *quarkus-health
@@ -298,6 +299,7 @@ services:
     build:
       <<: *quarkus-build
       context: ../services/payment/target/quarkus-app
+    image: horus/payment:dev   # mesmo nome dos manifests K8s (T-1009)
     ports: ["8082:8082"]
     healthcheck:
       <<: *quarkus-health
@@ -311,6 +313,7 @@ services:
     build:
       <<: *quarkus-build
       context: ../services/invoice/target/quarkus-app
+    image: horus/invoice:dev   # mesmo nome dos manifests K8s (T-1009)
     ports: ["8083:8083"]
     healthcheck:
       <<: *quarkus-health
@@ -325,6 +328,7 @@ services:
     build:
       <<: *quarkus-build
       context: ../services/saga-orchestrator/target/quarkus-app
+    image: horus/saga-orchestrator:dev   # mesmo nome dos manifests K8s (T-1009)
     ports: ["8084:8084"]
     healthcheck:
       <<: *quarkus-health
@@ -339,6 +343,7 @@ services:
     build:
       <<: *quarkus-build
       context: ../horus/target/quarkus-app
+    image: horus/horus:dev   # mesmo nome dos manifests K8s (T-1009)
     ports: ["8080:8080"]
     environment:
       # IA real opcional (T-1003): exporte ANTHROPIC_API_KEY e HORUS_AI_ENABLED=true no shell.
