@@ -8,10 +8,22 @@
 |---|---|
 | **Última atualização** | 2026-09-28 |
 | **Branch atual** | `claude/beautiful-cray-sfblsr` |
-| **Fase do roadmap** | Fases 0-9 entregues · **Fase 10 (Produto utilizável) em andamento** |
-| **Task ativa** | Nenhuma — próxima: `T-1012` (endurecimentos menores) |
+| **Fase do roadmap** | 🏁 **Fases 0-10 entregues** (Fase 10 — Produto utilizável — concluída em 2026-09-28) |
+| **Task ativa** | Nenhuma — próximo passo: abrir PR da branch `claude/beautiful-cray-sfblsr` para `main` |
 
 ## 🔵 Entregas da Fase 10 (branch `claude/beautiful-cray-sfblsr`)
+
+> **Fechamento (2026-09-28):** as 12 tasks da Fase 10 estão na branch (um commit por task — a sessão
+> exigia a branch designada, no lugar de uma branch/PR por task). Validação final: `./mvnw verify`
+> com JDK 25 real, e2e completo contra o stack real do compose (9/9) e UI conferida no navegador.
+> **Achados reais corrigidos no caminho:** Horus não subia com chave de IA vazia; SAGA compensada sem
+> span de erro; IA real incompatível com os modelos atuais (LangChain4j enviava `temperature`/`top_k`);
+> SAGA numa transação única (pagamento órfão em crash); worker no K8s com variável errada
+> (`RABBITMQ_ADDR` ≠ `AMQP_URL`); lista de traces afogada em ruído de boot.
+> **Pendências externas:** secret `ANTHROPIC_API_KEY` (job `ai-live`); 1ª execução do job `e2e-k8s`
+> (kind não roda neste sandbox); abrir o PR para `main`.
+
+**`T-1012` — Endurecimentos menores (RNF-H-003/005/017).** TTL no cache de IA (10m — antes servia a mesma resposta para sempre); ScaledObject KEDA opcional para o worker (fila `relatorios.worker`); TLS interno documentado por conexão; PRD/ROADMAP/`lib.md` alinhados ao orquestrador próprio (LRA nunca foi usado) + adendo na ADR-0013; `CLAUDE.md` com o status real do código. 128 testes.
 
 **`T-1011` — UI de service-map e SAGA (RF-H-015/016).** Waterfall ganha o mapa de serviços (SVG em camadas, arestas com contagem) e a SAGA (desfecho, passos, compensações, passo que falhou). Validado no navegador com uma SAGA compensada real (screenshot em `docs/tasks/T-1011/`). Ao usar o painel com dados reais, a lista vinha dominada por traces de 1 span (boot/Flyway): novo filtro `minSpans` / “ocultar ruído”. e2e completo verde de novo com T-1010/T-1011 ao vivo; 127 testes.
 
@@ -86,6 +98,7 @@ abrir `task/T-1001-trace-search`. `T-1002` e `T-1003` podem correr em paralelo.
 
 | Data | Task | Entrega | Branch | PR | Status |
 |---|---|---|---|---|---|
+| 2026-09-28 | `T-1012` | Endurecimentos menores (RNF-H-003/005/017): TTL no cache de IA (10m — antes servia a mesma resposta para sempre); ScaledObject KEDA opcional para o worker (fila `relatorios.worker`); TLS interno documentado por conexão; PRD/ROADMAP/`lib.md` alinhados ao orquestrador próprio (LRA nunca foi usado) + adendo na ADR-0013; `CLAUDE.md` com o status real do código. 128 testes. | `claude/beautiful-cray-sfblsr` | — | ✅ Entregue |
 | 2026-09-28 | `T-1011` | UI de service-map e SAGA (RF-H-015/016): Waterfall ganha o mapa de serviços (SVG em camadas, arestas com contagem) e a SAGA (desfecho, passos, compensações, passo que falhou). Validado no navegador com uma SAGA compensada real (screenshot em `docs/tasks/T-1011/`). Ao usar o painel com dados reais, a lista vinha dominada por traces de 1 span (boot/Flyway): novo filtro `minSpans` / “ocultar ruído”. e2e completo verde de novo com T-1010/T-1 | `claude/beautiful-cray-sfblsr` | — | ✅ Entregue |
 | 2026-09-28 | `T-1010` | Robustez da SAGA (RNF-019, RF-H-016): Achado: a SAGA rodava numa única transação atravessando as chamadas HTTP — um crash desfazia o registro local e deixava o pagamento aprovado órfão, sem estado para recuperar. Agora cada transição é gravada em transação própria (`SagaStore`), o pagamento é registrado antes da aprovação e `SagaRecovery` compensa SAGAs paradas há mais de 5m (span com `horus.saga.recovery=true`). No Horus, `SpanRef.er | `claude/beautiful-cray-sfblsr` | — | ✅ Entregue |
 | 2026-09-28 | `T-1009` | Overlay de infraestrutura no K8s + LB (RF-033): `kubectl apply -k deploy/` sobe o stack completo: Postgres ×4, RabbitMQ, Collector, Jaeger (Badger), Loki e Prometheus (mesmas configs do compose), as apps e o LB NGINX `load-balancer` (antes inexistente no K8s). Corrigidos 2 bugs nos manifests: worker lia `AMQP_URL` mas recebia `RABBITMQ_ADDR` (nunca consumiria) e não exportava traces; loadtest rodava no-op sem OTel. 52 objetos válidos no `kubeco | `claude/beautiful-cray-sfblsr` | — | ✅ Entregue |

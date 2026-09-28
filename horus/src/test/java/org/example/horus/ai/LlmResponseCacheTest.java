@@ -17,7 +17,7 @@ class LlmResponseCacheTest {
 
     @Test
     void hitOnSameRequest_missOnNew() {
-        var cache = new LlmResponseCache(true, 10);
+        var cache = new LlmResponseCache(true, 10, java.time.Duration.ofMinutes(10));
         var req = new LlmRequest("sys", "pergunta", ModelTier.FAST);
         String key = cache.keyFor(req);
 
@@ -33,7 +33,7 @@ class LlmResponseCacheTest {
 
     @Test
     void evictsLeastRecentlyUsed_overCapacity() {
-        var cache = new LlmResponseCache(true, 2);
+        var cache = new LlmResponseCache(true, 2, java.time.Duration.ofMinutes(10));
         cache.put("a", resp("a"));
         cache.put("b", resp("b"));
         cache.get("a");                 // 'a' vira o mais recente
@@ -46,9 +46,20 @@ class LlmResponseCacheTest {
 
     @Test
     void disabled_neverCaches() {
-        var cache = new LlmResponseCache(false, 10);
+        var cache = new LlmResponseCache(false, 10, java.time.Duration.ofMinutes(10));
         cache.put("k", resp("x"));
         assertTrue(cache.get("k").isEmpty());
         assertFalse(cache.enabled());
+    }
+
+    @Test
+    void expiredEntries_areNotServed() throws InterruptedException {
+        var cache = new LlmResponseCache(true, 10, java.time.Duration.ofMillis(20));
+        var req = new LlmEngine.LlmRequest(null, "estado?", ModelTier.FAST);
+        cache.put(cache.keyFor(req), new LlmEngine.LlmResponse("antigo", "m", true));
+        org.junit.jupiter.api.Assertions.assertTrue(cache.get(cache.keyFor(req)).isPresent());
+        Thread.sleep(40);
+        org.junit.jupiter.api.Assertions.assertTrue(cache.get(cache.keyFor(req)).isEmpty(), "TTL expirado");
+        org.junit.jupiter.api.Assertions.assertEquals(0, cache.stats().size());
     }
 }

@@ -140,3 +140,25 @@ cd deploy/k8s && kustomize edit set image horus/horus=horus/horus:0.1.0
 - Emissão/gestão automatizada de certificados (cert-manager como dependência de cluster) — o
   `Ingress` (T-901) só referencia o Secret TLS, não o provisiona.
 - NetworkPolicies, PodDisruptionBudgets, Helm chart empacotado.
+
+## Endurecimentos opcionais (T-1012)
+
+### Worker escalado pela fila (KEDA)
+
+`optional/keda/report-worker-scaledobject.yaml` escala o `report-worker` pela profundidade da fila
+`relatorios.worker` (~20 mensagens por réplica, 1→4) — mais fiel à carga do worker do que CPU.
+Requer o KEDA no cluster e a remoção do HPA de CPU do worker (instruções no arquivo).
+
+### TLS interno (serviço → Postgres / RabbitMQ)
+
+Dentro do namespace o tráfego é tratado como fronteira de confiança (T-901). Para cifrar também
+o tráfego interno, sem mudar código:
+
+| Conexão | Como ligar |
+|---|---|
+| Serviços → Postgres | Postgres com certificado (`ssl=on`) e, em cada serviço, `QUARKUS_DATASOURCE_JDBC_URL=jdbc:postgresql://postgres-<svc>:5432/<db>?sslmode=verify-full&sslrootcert=/certs/ca.crt` (CA montada de um Secret) |
+| invoice → RabbitMQ | listener `amqps` (5671) no RabbitMQ e `RABBITMQ_PORT=5671` + `RABBITMQ_SSL=true` no invoice-service (configuração `rabbitmq-*` da extensão) |
+| worker → RabbitMQ | `AMQP_URL=amqps://…:5671/%2f` (o `lapin` do worker negocia TLS pelo esquema) |
+| Apps → Collector | `QUARKUS_OTEL_EXPORTER_OTLP_ENDPOINT=https://otel-collector:4317` + TLS no receiver OTLP |
+
+Os certificados (ex.: cert-manager com uma CA interna) ficam fora deste repositório.

@@ -75,7 +75,7 @@ Mesma base para os quatro serviços.
 | `quarkus-hibernate-validator` | (via BOM) | Validação de entrada |
 | `quarkus-opentelemetry` | (via BOM) | Tracing + **instrumentação de JDBC/Hibernate (RF-H-002)** + métricas RED/JVM (`quarkus.otel.metrics.enabled=true`) |
 | `quarkus-messaging-rabbitmq` (SmallRye Reactive Messaging) | (via BOM) | Publicar solicitação de relatório (RF-021) |
-| `quarkus-narayana-lra` | (via BOM) | **SAGA por orquestração (MicroProfile LRA) — passos e compensações (ADR-0013)** |
+| `quarkus-scheduler` | (via BOM) | **SAGA por orquestração própria (ADR-0013): recuperação agendada de SAGAs interrompidas (T-1010)** — MicroProfile LRA foi avaliado e **não** adotado |
 | `quarkus-smallrye-health` | (via BOM) | Health/readiness |
 | `quarkus-container-image-jib` | (via BOM) | Imagem Docker |
 
@@ -133,7 +133,6 @@ Mesma base para os quatro serviços.
 | PostgreSQL | **17.x** | Banco por serviço (`prontuario_db`/`payment_db`/`invoice_db`/`saga_db`), isolado (RNF-003) |
 | `postgres_exporter` | **quay.io/prometheuscommunity/postgres-exporter:v0.15.x** | Métricas de cada banco p/ Prometheus (conexões/tx/tamanho) — dashboard `postgres.json` |
 | RabbitMQ | **4.0.x** (com management) | Mensageria restrita a relatórios (ADR-0004) |
-| LRA Coordinator (Narayana) | **quay.io/jbosstm/lra-coordinator** (compatível com Narayana 7.x) | Coordenador da SAGA por orquestração (ADR-0013) |
 | NGINX | **1.27.x** | Load Balancer (opção A) |
 | Traefik | **3.3.x** | Load Balancer (opção B) |
 | OpenTelemetry Collector (contrib) | **0.118.x** | Coleta/roteamento OTLP (ADR-0010) |

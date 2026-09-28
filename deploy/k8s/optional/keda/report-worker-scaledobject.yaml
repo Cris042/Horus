@@ -1,0 +1,48 @@
+# OPCIONAL (T-1012, RNF-005): escala o report-worker pela PROFUNDIDADE DA FILA do RabbitMQ em vez de
+# CPU. Requer o KEDA instalado no cluster (CRDs keda.sh). Fora da kustomization base de propósito:
+# sem o KEDA, `kubectl apply -k` falharia pelo tipo desconhecido.
+#
+# Uso: remova o HPA de CPU do worker (o KEDA cria o seu próprio HPA; dois HPAs no mesmo Deployment
+# brigam) e aplique este arquivo:
+#   kubectl -n horus delete hpa report-worker
+#   kubectl apply -f deploy/k8s/optional/keda/report-worker-scaledobject.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rabbitmq-keda
+  namespace: horus
+type: Opaque
+stringData:
+  # Mesmo AMQP_URL do worker (credenciais de dev; troque por um Secret gerenciado em produção).
+  host: "amqp://horus:horus@rabbitmq.horus.svc:5672/%2f"
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: rabbitmq-keda
+  namespace: horus
+spec:
+  secretTargetRef:
+    - parameter: host
+      name: rabbitmq-keda
+      key: host
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: report-worker
+  namespace: horus
+spec:
+  scaleTargetRef:
+    name: report-worker
+  minReplicaCount: 1
+  maxReplicaCount: 4
+  cooldownPeriod: 120
+  triggers:
+    - type: rabbitmq
+      authenticationRef:
+        name: rabbitmq-keda
+      metadata:
+        queueName: relatorios.worker   # RELATORIOS_QUEUE do worker
+        mode: QueueLength
+        value: "20"                    # ~20 mensagens pendentes por réplica

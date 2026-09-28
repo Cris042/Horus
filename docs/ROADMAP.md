@@ -13,9 +13,10 @@ O plano sobe primeiro o **sistema observado** (o suficiente para gerar tráfego 
 **Legenda de prioridade:** 🔴 crítico · 🟠 importante · 🟢 incremental
 **Estimativas** em pontos relativos (P = pequeno, M = médio, G = grande); ajuste à sua capacidade.
 
-> 📍 **Progresso atual (2026-09-28):** Fases 0-9 entregues (aceite `T-905` em 2026-07-02).
-> Análise pós-aceite abriu a **Fase 10 — Produto utilizável** (`T-1001`..`T-1012`) com as
-> lacunas remanescentes; próxima task: `T-1001`.
+> 📍 **Progresso atual (2026-09-28):** Fases 0-10 entregues. A **Fase 10 — Produto utilizável**
+> (`T-1001`..`T-1012`), aberta pela análise de lacunas pós-aceite, foi concluída na branch
+> `claude/beautiful-cray-sfblsr` (um commit por task). Pendências fora do código: secret
+> `ANTHROPIC_API_KEY` (job `ai-live`) e 1ª execução verde do job `e2e-k8s` (kind).
 >
 > Histórico (2026-07-02): Fases 0-9 entregues, `T-905`
 > (aceite final) validou os 16 critérios do `PRD.md` §10 com o sistema real rodando (LB real,
@@ -54,7 +55,7 @@ O plano sobe primeiro o **sistema observado** (o suficiente para gerar tráfego 
 | `T-104` | Invoice Service: receber emissão, gerar NF simulada, registrar resultado, listar, reprocessar | T-101 | G | RF-016..020, RF-027 |
 | `T-105` | Migrações Flyway independentes por banco (`prontuario_db`/`payment_db`/`invoice_db`) | T-101 | M | RF-028, RNF-015 |
 | `T-106` | Isolamento: credenciais/schema separados; proibição de acesso cruzado | T-105 | P | RNF-002, RNF-003 |
-| `T-107` | **SAGA (orquestração)**: coordenador MicroProfile LRA + 1º fluxo cross-service (ex.: pagar → emitir NF) com compensações idempotentes e spans correlacionados | T-102, T-103, T-104 | G | RNF-019, ADR-0013 |
+| `T-107` | **SAGA (orquestração)**: orquestrador próprio (estado em `saga_db`; LRA avaliado e preterido — ADR-0013) + 1º fluxo cross-service (ex.: pagar → emitir NF) com compensações idempotentes e spans correlacionados | T-102, T-103, T-104 | G | RNF-019, ADR-0013 |
 
 **Saída:** três serviços funcionais, isolados por dado, com schema versionado, e uma **SAGA com compensações** coordenando um fluxo entre serviços.
 
@@ -217,7 +218,7 @@ automatizado que impede regressões como a do T-507.
 | **M3 — Horus enxerga tudo** | Ciclo de vida de request/query + logs de erro no Horus | 5 |
 | **M4 — Horus com IA** | Resumo, explicação, RCA, anomalias e NL query | 6 |
 | **M5 — Produto** | Painel, alertas, K8s, endurecimento e aceite | 7-9 |
-| **M6 — Produto utilizável** | Busca temporal, IA real por tier, e2e automatizado, RNFs pendentes | 10 |
+| **M6 — Produto utilizável** ✅ | Busca temporal, IA real por tier, e2e automatizado, RNFs pendentes | 10 |
 
 ## Caminho crítico
 

@@ -36,7 +36,9 @@ Two mandatory upkeep rules (see WORKFLOW.md / `docs/ROLES.md` §5):
 
 The Maven build is a parent/aggregator at the repo root (`pom.xml`, `packaging=pom`) with five Java modules: **`horus/`**, **`services/prontuario/`**, **`services/payment/`**, **`services/invoice/`**, and **`services/saga-orchestrator/`**. The domain services implement the medical-records, payment, invoice and SAGA flows with Flyway migrations, isolated PostgreSQL credentials and OpenTelemetry instrumentation. `loadtest/` contains the FastAPI controller + Locust scenarios, and `worker/` contains the Rust RabbitMQ report/email worker with OTel context extraction.
 
-Horus already has the first product slices: query adapters for Jaeger/Loki/Prometheus, `trace_id` correlation model, AI engine abstraction with Anthropic/stub modes, summary/explain/RCA/NL-query agents, LLM cache, an initial static panel and RBAC. The remaining product work is tracked in `state.md`: lifecycle APIs (`T-503`/`T-504`/`T-505`), service/SAGA visualizations, anomaly/error clustering, waterfall UI, alerting, containerization/K8s and final acceptance.
+Horus implements the full product: query adapters for Jaeger/Loki/Prometheus with **time-window search** (`/horus/traces`), `trace_id` correlation, request/query/error/service-map/SAGA lifecycle APIs, the AI layer on the **official Anthropic Java SDK** (per-tier models Haiku/Sonnet/Opus, runtime live/stub selection, mandatory prompt sanitization + audit trail, async jobs), anomaly detection + automatic alerts (webhook/e-mail), a static panel + waterfall UI, and JWT-based RBAC (on by default in `prod`). Roadmap phases 0–10 are delivered — see `state.md`.
+
+Full stack locally: `make up-apps` (compose profile `apps`, LB on :8088, Horus on :8080) then `make e2e`. Kubernetes: `kubectl apply -k deploy/` (infra + apps).
 
 ## Build & Run
 
