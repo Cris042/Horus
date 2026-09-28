@@ -58,4 +58,36 @@ public final class QueryModel {
     /** Amostra de métrica instantânea (vector) do Prometheus. */
     public record MetricSample(Map<String, String> labels, double value, double timestampSeconds) {
     }
+
+    /**
+     * Critérios de busca de traces numa janela (T-1001). {@code service} nulo = todos os
+     * serviços; {@code minDurationMicros} 0 = sem piso; {@code onlyErrors} filtra traces com
+     * ao menos um span em erro.
+     */
+    public record TraceSearch(String service, String operation, TimeWindow window,
+                              long minDurationMicros, boolean onlyErrors, int limit) {
+    }
+
+    /**
+     * Resumo de um trace encontrado numa busca (T-1001) — o suficiente para listar e
+     * priorizar sem baixar o trace inteiro de novo. {@code slowestQuery} é nulo quando o
+     * trace não tem spans de banco.
+     */
+    public record TraceSummary(String traceId, String rootService, String rootOperation,
+                               long startTimeMicros, long durationMicros, int spanCount,
+                               List<String> services, int errorSpanCount, SlowQuery slowestQuery) {
+    }
+
+    /** Span de banco mais lento de um trace (statement já parametrizado pela origem, T-401). */
+    public record SlowQuery(String serviceName, String dbNamespace, String dbOperationName,
+                            String dbQueryText, long durationMicros) {
+    }
+
+    /** Série de uma consulta PromQL de intervalo ({@code query_range}, matrix). */
+    public record MetricSeries(Map<String, String> labels, List<MetricPoint> points) {
+    }
+
+    /** Ponto de uma série temporal. */
+    public record MetricPoint(double timestampSeconds, double value) {
+    }
 }

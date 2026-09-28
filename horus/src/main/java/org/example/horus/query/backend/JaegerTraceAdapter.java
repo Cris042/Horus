@@ -3,23 +3,40 @@ package org.example.horus.query.backend;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.WebApplicationException;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.example.horus.query.QueryModel.SlowQuery;
 import org.example.horus.query.QueryModel.SpanRef;
 import org.example.horus.query.QueryModel.TraceResult;
+import org.example.horus.query.QueryModel.TraceSearch;
+import org.example.horus.query.QueryModel.TraceSummary;
 import org.example.horus.query.TraceQueryPort;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
-/** Adapter {@link TraceQueryPort} sobre o Jaeger (T-501). */
+/** Adapter {@link TraceQueryPort} sobre o Jaeger (T-501; busca por janela em T-1001). */
 @ApplicationScoped
 public class JaegerTraceAdapter implements TraceQueryPort {
 
-    private final JaegerClient client;
+    /** Filtro de tags do Jaeger para spans em erro (OTel exporta status ERROR como {@code error=true}). */
+    static final String ERROR_TAGS = "{\"error\":\"true\"}";
 
-    public JaegerTraceAdapter(@RestClient JaegerClient client) {
+    private final JaegerClient client;
+    private final Set<String> excludedServices;
+
+    public JaegerTraceAdapter(@RestClient JaegerClient client,
+                              @ConfigProperty(name = "horus.query.jaeger.excluded-services",
+                                      defaultValue = "jaeger,jaeger-all-in-one,jaeger-query")
+                              List<String> excludedServices) {
         this.client = client;
+        this.excludedServices = Set.copyOf(excludedServices);
     }
 
     @Override
@@ -38,8 +55,50 @@ public class JaegerTraceAdapter implements TraceQueryPort {
         if (!data.isArray() || data.isEmpty()) {
             return Optional.empty();
         }
-        JsonNode trace = data.get(0);
+        return Optional.of(toTraceResult(data.get(0), traceId));
+    }
 
+    @Override
+    public List<TraceSummary> searchTraces(TraceSearch search) {
+        int limit = Math.max(1, search.limit());
+        List<String> services = isBlank(search.service()) ? listServices() : List.of(search.service());
+        String minDuration = search.minDurationMicros() > 0 ? search.minDurationMicros() + "us" : null;
+        String tags = search.onlyErrors() ? ERROR_TAGS : null;
+        String operation = isBlank(search.operation()) ? null : search.operation();
+
+        // O Jaeger exige um serviço por busca: sem filtro, varre todos e mescla por traceId.
+        Map<String, TraceSummary> byId = new LinkedHashMap<>();
+        for (String service : services) {
+            JsonNode root = client.searchTraces(service, operation, search.window().startMicros(),
+                    search.window().endMicros(), minDuration, limit, tags);
+            for (JsonNode trace : root.path("data")) {
+                TraceSummary summary = summarize(trace);
+                if (summary.spanCount() == 0 || (search.onlyErrors() && summary.errorSpanCount() == 0)) {
+                    continue;
+                }
+                byId.putIfAbsent(summary.traceId(), summary);
+            }
+        }
+        return byId.values().stream()
+                .sorted(Comparator.comparingLong(TraceSummary::startTimeMicros).reversed())
+                .limit(limit)
+                .toList();
+    }
+
+    @Override
+    public List<String> listServices() {
+        List<String> out = new ArrayList<>();
+        for (JsonNode s : client.services().path("data")) {
+            String name = s.asText("");
+            if (!name.isBlank() && !excludedServices.contains(name)) {
+                out.add(name);
+            }
+        }
+        out.sort(Comparator.naturalOrder());
+        return out;
+    }
+
+    private static TraceResult toTraceResult(JsonNode trace, String fallbackTraceId) {
         // processID -> serviceName
         JsonNode processes = trace.path("processes");
         List<SpanRef> spans = new ArrayList<>();
@@ -59,7 +118,48 @@ public class JaegerTraceAdapter implements TraceQueryPort {
                     firstNonBlank(tagValue(span, "db.system.name"), tagValue(span, "db.system")),
                     tagValue(span, "db.query.text")));
         }
-        return Optional.of(new TraceResult(trace.path("traceID").asText(traceId), spans.size(), spans));
+        return new TraceResult(trace.path("traceID").asText(fallbackTraceId), spans.size(), spans);
+    }
+
+    /**
+     * Resume um trace do Jaeger: raiz (span sem pai, ou o mais antigo), duração de ponta a
+     * ponta, serviços envolvidos, spans em erro e a query SQL mais lenta.
+     */
+    private TraceSummary summarize(JsonNode trace) {
+        TraceResult result = toTraceResult(trace, "");
+        int errors = 0;
+        for (JsonNode span : trace.path("spans")) {
+            if (isError(span)) {
+                errors++;
+            }
+        }
+        List<SpanRef> spans = result.spans();
+        if (spans.isEmpty()) {
+            return new TraceSummary(result.traceId(), null, null, 0, 0, 0, List.of(), errors, null);
+        }
+        Set<String> ids = new LinkedHashSet<>();
+        spans.forEach(sp -> ids.add(sp.spanId()));
+        SpanRef root = spans.stream()
+                .filter(sp -> sp.parentSpanId() == null || !ids.contains(sp.parentSpanId()))
+                .min(Comparator.comparingLong(SpanRef::startTimeMicros))
+                .orElse(spans.get(0));
+        long start = spans.stream().mapToLong(SpanRef::startTimeMicros).min().orElse(0);
+        long end = spans.stream().mapToLong(sp -> sp.startTimeMicros() + sp.durationMicros()).max().orElse(start);
+        Set<String> services = new LinkedHashSet<>();
+        spans.forEach(sp -> services.add(sp.serviceName()));
+        SlowQuery slowest = spans.stream()
+                .filter(sp -> sp.dbSystemName() != null || sp.dbQueryText() != null)
+                .max(Comparator.comparingLong(SpanRef::durationMicros))
+                .map(sp -> new SlowQuery(sp.serviceName(), sp.dbNamespace(), sp.dbOperationName(),
+                        sp.dbQueryText(), sp.durationMicros()))
+                .orElse(null);
+        return new TraceSummary(result.traceId(), root.serviceName(), root.operation(), start,
+                end - start, spans.size(), List.copyOf(services), errors, slowest);
+    }
+
+    /** Span em erro: {@code error=true} (convenção OpenTracing/Jaeger) ou {@code otel.status_code=ERROR}. */
+    private static boolean isError(JsonNode span) {
+        return "true".equals(tagValue(span, "error")) || "error".equals(tagValue(span, "otel.status_code"));
     }
 
     private static String parentSpanId(JsonNode span) {
@@ -93,6 +193,10 @@ public class JaegerTraceAdapter implements TraceQueryPort {
             return kind.isBlank() ? null : kind.toLowerCase();
         }
         return null;
+    }
+
+    private static boolean isBlank(String s) {
+        return s == null || s.isBlank();
     }
 
     private static String firstNonBlank(String left, String right) {

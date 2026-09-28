@@ -6,6 +6,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.example.horus.query.LogQueryPort;
 import org.example.horus.query.QueryModel.LogLine;
+import org.example.horus.query.TimeWindow;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -34,8 +35,15 @@ public class LokiLogAdapter implements LogQueryPort {
     @Override
     public List<LogLine> findByTraceId(String traceId, int limit) {
         String logQl = String.format(logQlTemplate, traceId);
-        JsonNode root = client.queryRange(logQl, limit, "backward");
+        return toLines(client.queryRange(logQl, limit, "backward"));
+    }
 
+    @Override
+    public List<LogLine> findInWindow(String logQl, TimeWindow window, int limit) {
+        return toLines(client.queryRange(logQl, window.startNanos(), window.endNanos(), limit, "backward"));
+    }
+
+    private static List<LogLine> toLines(JsonNode root) {
         List<LogLine> out = new ArrayList<>();
         for (JsonNode stream : root.path("data").path("result")) {
             Map<String, String> labels = new LinkedHashMap<>();

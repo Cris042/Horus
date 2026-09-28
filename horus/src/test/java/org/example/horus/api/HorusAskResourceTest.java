@@ -4,6 +4,7 @@ import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import org.example.horus.ai.context.ContextAssembler;
 import org.example.horus.ai.context.PromptContext;
+import org.example.horus.ai.context.WindowContextCollector;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -26,6 +27,9 @@ class HorusAskResourceTest {
     @InjectMock
     ContextAssembler assembler;
 
+    @InjectMock
+    WindowContextCollector windows;
+
     @Test
     void ask_withTraceScope_answersGrounded() {
         when(assembler.assembleForIncident(eq("abc123"), any(), anyInt()))
@@ -43,6 +47,26 @@ class HorusAskResourceTest {
     @Test
     void ask_withoutQuestion_returns400() {
         given().contentType("application/json").body("{}")
+                .when().post("/horus/ai/ask")
+                .then().statusCode(400);
+    }
+
+    @Test
+    void ask_withoutTrace_usesTimeWindow() {
+        when(windows.collect(any()))
+                .thenReturn(new PromptContext("# Queries SQL mais lentas\n", 6, false, List.of("slowQueries")));
+
+        given().contentType("application/json")
+                .body("{\"question\":\"Quais as queries mais lentas na última hora?\",\"lookback\":\"1h\"}")
+                .when().post("/horus/ai/ask")
+                .then().statusCode(200)
+                .body("signals[0]", equalTo("slowQueries"));
+    }
+
+    @Test
+    void ask_withoutTrace_invalidWindow_returns400() {
+        given().contentType("application/json")
+                .body("{\"question\":\"?\",\"lookback\":\"ontem\"}")
                 .when().post("/horus/ai/ask")
                 .then().statusCode(400);
     }

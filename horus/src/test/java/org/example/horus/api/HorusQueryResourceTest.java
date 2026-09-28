@@ -5,7 +5,9 @@ import io.quarkus.test.junit.QuarkusTest;
 import org.example.horus.query.LogQueryPort;
 import org.example.horus.query.MetricQueryPort;
 import org.example.horus.query.QueryModel.LogLine;
+import org.example.horus.query.QueryModel.MetricPoint;
 import org.example.horus.query.QueryModel.MetricSample;
+import org.example.horus.query.QueryModel.MetricSeries;
 import org.example.horus.query.QueryModel.SpanRef;
 import org.example.horus.query.QueryModel.TraceResult;
 import org.example.horus.query.TraceQueryPort;
@@ -18,7 +20,9 @@ import java.util.Optional;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -79,5 +83,39 @@ class HorusQueryResourceTest {
                 .then().statusCode(200)
                 .body("[0].value", is(1.0f))
                 .body("[0].labels.job", equalTo("prometheus"));
+    }
+
+    @Test
+    void logsRange_queriesWindow() {
+        when(logs.findInWindow(eq("{service_name=\"payment-service\"}"), any(), eq(50))).thenReturn(
+                List.of(new LogLine("1700000000000000000", "saldo insuficiente", Map.of())));
+
+        given().queryParam("logql", "{service_name=\"payment-service\"}")
+                .queryParam("lookback", "30m").queryParam("limit", 50)
+                .when().get("/horus/query/logs/range")
+                .then().statusCode(200)
+                .body("[0].line", equalTo("saldo insuficiente"));
+    }
+
+    @Test
+    void logsRange_withoutLogql_returns400() {
+        given().when().get("/horus/query/logs/range?lookback=1h").then().statusCode(400);
+    }
+
+    @Test
+    void metricsRange_defaultStep_isSixtyPointsPerWindow() {
+        when(metrics.rangeQuery(eq("up"), any(), eq(60L))).thenReturn(
+                List.of(new MetricSeries(Map.of("job", "payment"), List.of(new MetricPoint(1700000000.0, 1.0)))));
+
+        given().when().get("/horus/query/metrics/range?query=up&lookback=1h")
+                .then().statusCode(200)
+                .body("[0].labels.job", equalTo("payment"))
+                .body("[0].points[0].value", is(1.0f));
+    }
+
+    @Test
+    void metricsRange_invalidWindow_returns400() {
+        when(metrics.rangeQuery(any(), any(), anyLong())).thenReturn(List.of());
+        given().when().get("/horus/query/metrics/range?query=up&lookback=abc").then().statusCode(400);
     }
 }

@@ -1,5 +1,6 @@
 package org.example.horus.api;
 
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
@@ -12,6 +13,8 @@ import org.example.horus.query.LogQueryPort;
 import org.example.horus.query.MetricQueryPort;
 import org.example.horus.query.QueryModel.LogLine;
 import org.example.horus.query.QueryModel.MetricSample;
+import org.example.horus.query.QueryModel.MetricSeries;
+import org.example.horus.query.TimeWindow;
 import org.example.horus.query.QueryModel.TraceResult;
 import org.example.horus.query.TraceQueryPort;
 
@@ -59,5 +62,37 @@ public class HorusQueryResource {
     @Path("/metrics")
     public List<MetricSample> metrics(@QueryParam("query") String promQl) {
         return metrics.instantQuery(promQl);
+    }
+
+    /** Logs de uma query LogQL numa janela temporal (T-1001). */
+    @GET
+    @Path("/logs/range")
+    public List<LogLine> logsInWindow(@QueryParam("logql") String logQl,
+                                      @QueryParam("lookback") String lookback,
+                                      @QueryParam("from") String from,
+                                      @QueryParam("to") String to,
+                                      @QueryParam("limit") @DefaultValue("100") int limit) {
+        if (logQl == null || logQl.isBlank()) {
+            throw new BadRequestException("logql obrigatório");
+        }
+        TimeWindow window = ApiWindows.resolve(lookback, from, to);
+        return logs.findInWindow(logQl, window, Math.max(1, Math.min(limit, 5_000)));
+    }
+
+    /** Avaliação PromQL sobre uma janela (T-1001); {@code step} em segundos, padrão ~60 pontos. */
+    @GET
+    @Path("/metrics/range")
+    public List<MetricSeries> metricsInWindow(@QueryParam("query") String promQl,
+                                              @QueryParam("lookback") String lookback,
+                                              @QueryParam("from") String from,
+                                              @QueryParam("to") String to,
+                                              @QueryParam("step") Long stepSeconds) {
+        if (promQl == null || promQl.isBlank()) {
+            throw new BadRequestException("query obrigatória");
+        }
+        TimeWindow window = ApiWindows.resolve(lookback, from, to);
+        long step = stepSeconds != null && stepSeconds > 0 ? stepSeconds
+                : Math.max(1, window.span().toSeconds() / 60);
+        return metrics.rangeQuery(promQl, window, step);
     }
 }
