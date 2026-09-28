@@ -32,7 +32,7 @@ import static org.mockito.Mockito.when;
 
 /**
  * Testes do Error Clusterer (T-606, RF-H-009). {@code TraceQueryPort}/{@code LogQueryPort}
- * mockados; o rótulo usa o {@code StubLlmEngine} default (sem chave → {@code live=false}).
+ * mockados; o rótulo usa o modo stub do {@code AnthropicLlmEngine} (sem chave → {@code live=false}).
  */
 @QuarkusTest
 class ErrorClustererTest {

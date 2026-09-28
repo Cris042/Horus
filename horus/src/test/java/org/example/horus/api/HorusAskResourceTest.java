@@ -19,7 +19,7 @@ import static org.mockito.Mockito.when;
 
 /**
  * Verifica o endpoint "pergunte ao Horus" (T-607). Assembler mockado; {@code NlQueryAgent}
- * real usa o {@code StubLlmEngine} default (sem chave).
+ * real usa o modo stub do {@code AnthropicLlmEngine} (sem chave).
  */
 @QuarkusTest
 class HorusAskResourceTest {
@@ -41,7 +41,7 @@ class HorusAskResourceTest {
                 .then().statusCode(200)
                 .body("question", equalTo("Qual o gargalo?"))
                 .body("live", is(false))                     // stub
-                .body("modelId", equalTo("claude-sonnet-4-6")); // camada BALANCED
+                .body("modelId", equalTo("claude-sonnet-5")); // camada BALANCED
     }
 
     @Test

@@ -19,7 +19,7 @@ class NlQueryAgentTest {
         @Override
         public LlmResponse complete(LlmRequest request) {
             this.captured = request;
-            return new LlmResponse("A request mais lenta passou pelo payment.", "claude-sonnet-4-6", true);
+            return new LlmResponse("A request mais lenta passou pelo payment.", "claude-sonnet-5", true);
         }
 
         @Override
@@ -38,7 +38,7 @@ class NlQueryAgentTest {
         assertEquals(ModelTier.BALANCED, engine.captured.tier());
         assertTrue(engine.captured.prompt().contains("Qual o serviço mais lento?"));
         assertTrue(engine.captured.prompt().contains("payment POST"));
-        assertEquals("claude-sonnet-4-6", ans.modelId());
+        assertEquals("claude-sonnet-5", ans.modelId());
         assertTrue(ans.live());
     }
 }

@@ -17,7 +17,7 @@ import static org.mockito.Mockito.when;
 
 /**
  * Verifica o endpoint "explique este trace" (T-604) com o {@link ContextAssembler} mockado;
- * o {@code TraceExplainer} real usa o {@code StubLlmEngine} default (sem chave).
+ * o {@code TraceExplainer} real usa o modo stub do {@code AnthropicLlmEngine} (sem chave).
  */
 @QuarkusTest
 class HorusExplainResourceTest {
@@ -34,6 +34,6 @@ class HorusExplainResourceTest {
                 .then().statusCode(200)
                 .body("traceId", equalTo("abc123"))
                 .body("live", is(false))                       // stub
-                .body("modelId", equalTo("claude-sonnet-4-6")); // camada BALANCED
+                .body("modelId", equalTo("claude-sonnet-5")); // camada BALANCED
     }
 }

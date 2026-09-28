@@ -20,7 +20,7 @@ import java.util.List;
  * <b>fan-out</b> a todos os {@link AlertChannel} habilitados.
  *
  * <p>O resumo usa a camada {@link ModelTier#FAST} (alto volume / baixo custo, ADR-0011)
- * e funciona com o {@code StubLlmEngine} (sem chave → {@code live=false}). O fan-out é
+ * e funciona com o modo stub do {@code AnthropicLlmEngine} (sem chave → {@code live=false}). O fan-out é
  * best-effort: cada canal reporta sucesso/falha sem interromper os demais.
  */
 @ApplicationScoped

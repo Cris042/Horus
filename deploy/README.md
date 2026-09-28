@@ -59,8 +59,8 @@ As imagens Quarkus do profile copiam o `target/quarkus-app` já empacotado no ho
 refazer o download de dependências dentro do Docker); para imagens publicáveis e
 autocontidas use os Dockerfiles de T-801 (`make docker-images`).
 
-> ⚠️ Não exporte `ANTHROPIC_API_KEY` vazia: o Quarkus trata `""` como valor definido e o Horus
-> não sobe. Sem chave, o compose passa o placeholder e a IA roda em modo stub.
+> IA real: `HORUS_AI_ENABLED=true ANTHROPIC_API_KEY=sk-ant-... make up-apps`. Sem chave (ou com
+> a variável vazia) o Horus sobe em modo stub.
 
 ## Imagens Docker dos executáveis (T-801, RF-032/RNF-004)
 

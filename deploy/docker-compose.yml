@@ -319,9 +319,10 @@ services:
       context: ../horus/target/quarkus-app
     ports: ["8080:8080"]
     environment:
-      # IA real opcional: exporte ANTHROPIC_API_KEY no shell. Nunca passar vazio — "" é valor
-      # definido para o Quarkus e derruba o boot; sem chave cai no placeholder (StubLlmEngine).
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-dummy-key}
+      # IA real opcional (T-1003): exporte ANTHROPIC_API_KEY e HORUS_AI_ENABLED=true no shell.
+      # Sem chave, o Horus sobe em modo stub (placeholder, sem rede).
+      HORUS_AI_ENABLED: ${HORUS_AI_ENABLED:-false}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     healthcheck:
       <<: *quarkus-health
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /q/health/ready HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q UP <&3"]

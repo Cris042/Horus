@@ -29,6 +29,6 @@ class HorusAiResourceTest {
                 .when().post("/horus/ai/complete")
                 .then().statusCode(200)
                 .body("live", is(false))
-                .body("modelId", equalTo("claude-opus-4-8"));
+                .body("modelId", equalTo("claude-opus-5"));
     }
 }

@@ -150,3 +150,55 @@ jobs:
       - name: Derrubar o stack
         if: always()
         run: $COMPOSE down -v
+
+  ai-live:
+    name: IA real por camada (opcional — requer a secret ANTHROPIC_API_KEY)
+    # T-1003: exercita Haiku/Sonnet/Opus de verdade pelo Horus em modo live. Sem a secret, o job
+    # é pulado com aviso (não bloqueia o CI). Não roda em PR (secrets não chegam a forks e evita
+    # custo por push de branch).
+    if: github.event_name != 'pull_request'
+    needs: [build-java]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Porteiro da secret
+        id: gate
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::ANTHROPIC_API_KEY ausente — smoke de IA real pulado"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.gate.outputs.enabled == 'true'
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 25 (Temurin) + cache Maven
+        if: steps.gate.outputs.enabled == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Empacotar e subir o Horus em modo live
+        if: steps.gate.outputs.enabled == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          HORUS_AI_ENABLED: "true"
+        run: |
+          ./mvnw -B -ntp -pl horus -am -DskipTests package
+          nohup java -jar horus/target/quarkus-app/quarkus-run.jar > horus.log 2>&1 &
+          for i in $(seq 1 60); do curl -fsS localhost:8080/q/health/ready >/dev/null 2>&1 && break; sleep 2; done
+
+      - name: Smoke por camada (FAST/BALANCED/DEEP)
+        if: steps.gate.outputs.enabled == 'true'
+        run: scripts/ai-smoke.sh
+
+      - name: Log do Horus (em falha)
+        if: failure() && steps.gate.outputs.enabled == 'true'
+        run: cat horus.log

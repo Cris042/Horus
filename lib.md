@@ -42,8 +42,7 @@ Catálogo de dependências de **todos os componentes** do projeto **Horus** (pla
 | `quarkus-hibernate-orm-panache` | (via BOM) | Persistência de metadados/configuração do Horus |
 | `quarkus-jdbc-postgresql` | (via BOM) | Acesso ao Postgres do Horus |
 | `quarkus-flyway` | (via BOM) | Migrações do banco do Horus |
-| **`quarkus-langchain4j-anthropic`** | **0.25.x** | **Integração com Claude (camada de IA — ADR-0011)** |
-| LangChain4j (core) | **1.0.x** | Abstrações de IA (atrás de interface) |
+| **`com.anthropic:anthropic-java`** | **2.65.0** | **SDK oficial da Anthropic — camada de IA (ADR-0011, adendo T-1003)** |
 | `quarkus-rest-client` | (via BOM) | Consulta às APIs de Jaeger/Tempo, Loki, Prometheus |
 | `quarkus-container-image-jib` | (via BOM) | Build da imagem Docker |
 | `quarkus-smallrye-health` | (via BOM) | Health/readiness |
@@ -54,9 +53,9 @@ Catálogo de dependências de **todos os componentes** do projeto **Horus** (pla
 
 | Tarefa | Modelo | ID |
 |---|---|---|
-| Resumos de alto volume / clusterização | Claude Haiku 4.5 | `claude-haiku-4-5-20251001` |
-| Explicação de trace / consulta em linguagem natural | Claude Sonnet 4.6 | `claude-sonnet-4-6` |
-| RCA profunda de incidentes | Claude Opus 4.8 | `claude-opus-4-8` |
+| Resumos de alto volume / clusterização | Claude Haiku 4.5 | `claude-haiku-4-5` |
+| Explicação de trace / consulta em linguagem natural | Claude Sonnet 5 | `claude-sonnet-5` |
+| RCA profunda de incidentes | Claude Opus 5 | `claude-opus-5` |
 
 > Acesso via API Anthropic (chave `ANTHROPIC_API_KEY`). Preços, limites de tokens e parâmetros: **consultar a referência oficial da API Claude no momento da implementação** (não fixados aqui de propósito).
 

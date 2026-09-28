@@ -25,7 +25,7 @@ import static org.mockito.Mockito.when;
 
 /**
  * Verifica o endpoint de resumo sob demanda (T-603). O {@link ContextAssembler} é mockado
- * (sem backends); o {@code StateSummarizer} real usa o {@code StubLlmEngine} default (sem
+ * (sem backends); o {@code StateSummarizer} real usa o modo stub do {@code AnthropicLlmEngine} (sem
  * chave) — confirma o wiring assembler→summarizer→resposta.
  */
 @QuarkusTest

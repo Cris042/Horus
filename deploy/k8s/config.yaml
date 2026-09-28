@@ -12,6 +12,8 @@ metadata:
     app.kubernetes.io/part-of: horus
 data:
   HORUS_ENV: "k8s"
+  # IA real (T-1003): "true" + Secret horus-ai-secret com ANTHROPIC_API_KEY. Sem chave = modo stub.
+  HORUS_AI_ENABLED: "false"
   # Endpoint OTLP do Collector (mesmo valor do profile prod; explícito para clareza/override).
   QUARKUS_OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
   # Backends consultados pelo Horus (RF-H-014).

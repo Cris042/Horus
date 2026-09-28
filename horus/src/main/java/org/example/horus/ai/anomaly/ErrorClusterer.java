@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
  * <p>Reutiliza a mesma fonte de logs da T-505 ({@link LogQueryPort#findByTraceId}), mas
  * clusteriza por assinatura — destacando o quanto cada falha se espalha pelos serviços.
  * A rotulagem usa a camada {@link ModelTier#FAST} (alto volume / baixo custo, ADR-0011)
- * e funciona com o {@code StubLlmEngine} (sem chave): nesse caso {@code live=false}.
+ * e funciona com o modo stub do {@code AnthropicLlmEngine} (sem chave): nesse caso {@code live=false}.
  */
 @ApplicationScoped
 public class ErrorClusterer {
