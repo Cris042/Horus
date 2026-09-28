@@ -9,7 +9,7 @@ COMPOSE := docker compose -f deploy/docker-compose.yml
 IMAGE_TAG ?= dev
 
 .DEFAULT_GOAL := help
-.PHONY: help up down ps logs restart clean build docker-images docker-quarkus docker-worker docker-loadtest
+.PHONY: help up down ps logs restart clean build docker-images docker-quarkus docker-worker docker-loadtest package up-apps down-apps e2e
 
 help: ## Lista os alvos disponíveis
 	@echo "Horus — alvos disponíveis:"
@@ -20,6 +20,8 @@ help: ## Lista os alvos disponíveis
 	@echo "  make restart — reinicia a infraestrutura"
 	@echo "  make clean   — derruba e REMOVE volumes (apaga os dados dos bancos)"
 	@echo "  make build   — compila os componentes (placeholder até as Fases 1+)"
+	@echo "  make up-apps — empacota e sobe infra + aplicações + LB (profile apps, T-1002)"
+	@echo "  make e2e     — teste ponta a ponta contra o stack no ar (scripts/e2e.sh)"
 	@echo ""
 	@echo "UIs: Jaeger http://localhost:16686 · RabbitMQ http://localhost:15672 · Prometheus http://localhost:9090"
 
@@ -38,8 +40,20 @@ logs: ## Segue os logs de todos os serviços
 restart: ## Reinicia a infraestrutura
 	$(COMPOSE) restart
 
+package: ## Empacota os 5 módulos Quarkus (target/quarkus-app) para as imagens do profile apps
+	./mvnw -B -q -DskipTests package
+
+up-apps: package ## Sobe infra + aplicações + Load Balancer (http://localhost:8088) e Horus (:8080)
+	$(COMPOSE) --profile apps up -d --build --wait
+
+down-apps: ## Derruba infra + aplicações
+	$(COMPOSE) --profile apps down
+
+e2e: ## Teste ponta a ponta contra o stack no ar (make up-apps antes)
+	scripts/e2e.sh
+
 clean: ## Derruba e REMOVE volumes (apaga dados dos bancos)
-	$(COMPOSE) down -v
+	$(COMPOSE) --profile apps down -v
 
 build: ## Compila os componentes (no-op por enquanto)
 	@echo "[build] placeholder — nenhum componente compilável ainda; ver ROADMAP Fases 1+."

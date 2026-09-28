@@ -54,9 +54,8 @@ usa no resumo de estado, no "pergunte ao Horus" e no painel.
 
 - A sessão exige desenvolvimento na branch designada `claude/beautiful-cray-sfblsr`; a regra
   "uma task = uma branch" do `WORKFLOW.md` foi substituída por **um commit por task** nessa branch.
-- Não há JDK 25 no ambiente da sessão (download bloqueado pelo proxy); a validação local usou
-  a escape hatch documentada `-Dmaven.compiler.release=21` sem alterar o `pom.xml`. O CI
-  (JDK 25) continua sendo a validação de referência.
+- A validação local usou JDK 25 (Temurin, extraído da imagem `eclipse-temurin:25-jdk`) e o
+  stack real do compose (e2e de `T-1002`).
 - Logs de erro no Loki identificados por `severity_text` (configurável em
   `horus.query.loki.error-logql`).
 

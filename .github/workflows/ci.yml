@@ -2,9 +2,8 @@ name: CI
 
 # Build + test + lint por componente do monorepo Horus (Fase 0 / T-004).
 #
-# Módulos com código real: Java `horus/` e o load test Python `loadtest/` (API de
-# controle, T-202). O worker (Rust, `worker/`) ainda é scaffolding (ver seu README);
-# seu job entra quando ganhar código real (T-303).
+# Jobs: Java (5 módulos Quarkus), Python (`loadtest/`), Rust (`worker/`) e, depois deles,
+# o e2e (T-1002) que sobe o stack real via docker compose e roda `scripts/e2e.sh`.
 #
 # Este pipeline NÃO depende de segredos (ao contrário do AI review): ele sempre
 # roda e gateia os PRs com build/test reais. Usa o Maven Wrapper (`./mvnw`,
@@ -105,3 +104,49 @@ jobs:
 
       - name: Build + testes
         run: cargo test
+
+  e2e:
+    name: E2E (stack real via docker compose)
+    # Sobe infra + aplicações + LB (profile `apps`, T-1002) e roda scripts/e2e.sh: SAGA feliz e
+    # compensada pelo Load Balancer, verificadas no Horus sobre Jaeger/Loki/Prometheus reais.
+    # Pega regressões que os testes com dados sintéticos não pegam (ex.: T-507/T-905, T-1002).
+    needs: [build-java, build-worker]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      COMPOSE: docker compose -f deploy/docker-compose.yml --profile apps
+      # Só o necessário para o e2e (sem Grafana/exporters/cAdvisor/loadtest).
+      E2E_SERVICES: >-
+        postgres-prontuario postgres-payment postgres-invoice postgres-saga rabbitmq
+        jaeger loki prometheus otel-collector
+        prontuario-service payment-service invoice-service saga-orchestrator
+        horus report-worker load-balancer
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 25 (Temurin) + cache Maven
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Empacotar módulos Quarkus (target/quarkus-app)
+        run: ./mvnw -B -ntp -DskipTests package
+
+      - name: Subir o stack
+        run: $COMPOSE up -d --build --wait --wait-timeout 600 $E2E_SERVICES
+
+      - name: Teste ponta a ponta
+        run: scripts/e2e.sh
+
+      - name: Estado e logs do stack (em falha)
+        if: failure()
+        run: |
+          $COMPOSE ps
+          $COMPOSE logs --no-color --tail 200
+
+      - name: Derrubar o stack
+        if: always()
+        run: $COMPOSE down -v

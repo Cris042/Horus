@@ -6,8 +6,12 @@
 #   - OpenTelemetry Collector (contrib) — único ponto de ingestão OTLP (ADR-0010)
 #   - Jaeger 2 (traces), Loki 3 (logs), Prometheus 3 (métricas)
 #
-# Uso: `make up` / `make down` (na raiz do repo). As aplicações (Quarkus/Rust/Python)
-# ainda NÃO entram aqui — entram em T-801, quando houver imagens Docker.
+# Uso: `make up` / `make down` (na raiz do repo) sobem só a infraestrutura.
+#
+# Aplicações (T-1002): profile `apps` — 4 serviços de domínio/SAGA, worker Rust, Horus,
+# API de carga e o Load Balancer (NGINX, porta 8088). `make up-apps` empacota os módulos
+# Quarkus no host (`./mvnw package`) e sobe tudo; as imagens Quarkus copiam o
+# `target/quarkus-app` já construído (sem rebaixar dependências dentro do Docker).
 #
 # ⚠️ Versões fixadas para reprodutibilidade (ver lib.md). Confirme/ajuste ao evoluir.
 # ⚠️ Credenciais abaixo são de DEV (não-secretas, locais). Nunca usar em prod.
@@ -30,6 +34,27 @@ x-postgres-exporter-common: &postgres-exporter-common
   image: quay.io/prometheuscommunity/postgres-exporter:v0.15.0
   restart: unless-stopped
   networks: [horus]
+
+# Aplicações Quarkus (T-1002): imagem de runtime sobre o `target/quarkus-app` já empacotado
+# no host (mesmo layout do Dockerfile.jvm de T-801, sem o estágio de build Maven).
+x-quarkus-build: &quarkus-build
+  dockerfile_inline: |
+    FROM eclipse-temurin:25-jre
+    WORKDIR /app
+    COPY . /app/
+    ENV JAVA_OPTS="-XX:MaxRAMPercentage=75.0"
+    ENTRYPOINT ["sh", "-c", "exec java $$JAVA_OPTS -jar /app/quarkus-run.jar"]
+
+x-quarkus-app: &quarkus-app
+  profiles: ["apps"]
+  restart: unless-stopped
+  networks: [horus]
+
+x-quarkus-health: &quarkus-health
+  interval: 5s
+  timeout: 3s
+  retries: 30
+  start_period: 10s
 
 services:
   # ---------------------------------------------------------------- Bancos (1 por serviço)
@@ -230,6 +255,123 @@ services:
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks: [horus]
+
+  # ================================================================ Aplicações (profile `apps`, T-1002)
+  prontuario-service:
+    <<: *quarkus-app
+    build:
+      <<: *quarkus-build
+      context: ../services/prontuario/target/quarkus-app
+    ports: ["8081:8081"]
+    healthcheck:
+      <<: *quarkus-health
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8081 && printf 'GET /q/health/ready HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
+    depends_on:
+      postgres-prontuario: { condition: service_healthy }
+      otel-collector: { condition: service_started }
+
+  payment-service:
+    <<: *quarkus-app
+    build:
+      <<: *quarkus-build
+      context: ../services/payment/target/quarkus-app
+    ports: ["8082:8082"]
+    healthcheck:
+      <<: *quarkus-health
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8082 && printf 'GET /q/health/ready HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
+    depends_on:
+      postgres-payment: { condition: service_healthy }
+      otel-collector: { condition: service_started }
+
+  invoice-service:
+    <<: *quarkus-app
+    build:
+      <<: *quarkus-build
+      context: ../services/invoice/target/quarkus-app
+    ports: ["8083:8083"]
+    healthcheck:
+      <<: *quarkus-health
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8083 && printf 'GET /q/health/ready HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
+    depends_on:
+      postgres-invoice: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      otel-collector: { condition: service_started }
+
+  saga-orchestrator:
+    <<: *quarkus-app
+    build:
+      <<: *quarkus-build
+      context: ../services/saga-orchestrator/target/quarkus-app
+    ports: ["8084:8084"]
+    healthcheck:
+      <<: *quarkus-health
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8084 && printf 'GET /q/health/ready HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
+    depends_on:
+      postgres-saga: { condition: service_healthy }
+      payment-service: { condition: service_healthy }
+      invoice-service: { condition: service_healthy }
+
+  horus:
+    <<: *quarkus-app
+    build:
+      <<: *quarkus-build
+      context: ../horus/target/quarkus-app
+    ports: ["8080:8080"]
+    environment:
+      # IA real opcional: exporte ANTHROPIC_API_KEY no shell. Nunca passar vazio — "" é valor
+      # definido para o Quarkus e derruba o boot; sem chave cai no placeholder (StubLlmEngine).
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-dummy-key}
+    healthcheck:
+      <<: *quarkus-health
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /q/health/ready HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
+    depends_on:
+      jaeger: { condition: service_started }
+      loki: { condition: service_healthy }
+      prometheus: { condition: service_healthy }
+
+  report-worker:
+    profiles: ["apps"]
+    build: ../worker
+    image: horus/report-worker:dev
+    restart: unless-stopped
+    environment:
+      AMQP_URL: amqp://horus:horus@rabbitmq:5672/%2f
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      RUST_LOG: info
+    depends_on:
+      rabbitmq: { condition: service_healthy }
+      otel-collector: { condition: service_started }
+    networks: [horus]
+
+  loadtest:
+    profiles: ["apps"]
+    build: ../loadtest
+    image: horus/loadtest:dev
+    restart: unless-stopped
+    environment:
+      HORUS_LOADTEST_RUNNER: locust
+      HORUS_OTEL_ENABLED: "true"
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+    ports: ["8000:8000"]
+    depends_on:
+      load-balancer: { condition: service_started }
+    networks: [horus]
+
+  # Load Balancer de entrada (T-201/ADR-0002) — a carga e o e2e entram por aqui.
+  load-balancer:
+    profiles: ["apps"]
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    volumes:
+      - ./lb/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./lb/locations.conf:/etc/nginx/locations.conf:ro
+    ports: ["8088:80"]
+    depends_on:
+      prontuario-service: { condition: service_healthy }
+      payment-service: { condition: service_healthy }
+      invoice-service: { condition: service_healthy }
+      saga-orchestrator: { condition: service_healthy }
     networks: [horus]
 
 volumes:

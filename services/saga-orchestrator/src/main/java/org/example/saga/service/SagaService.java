@@ -66,11 +66,16 @@ public class SagaService {
             marcar(saga, StatusSaga.PAGAMENTO_APROVADO);
 
             // Passo 2 — emitir NF (último passo)
-            NotaDto nota = executarPasso(saga, "issue-invoice", () -> invoice.emitir(
-                    new InvoiceClient.EmitirNota(valor, "saga-" + saga.id, simularFalhaNota)));
-            if (nota.status() != null && nota.status().equals("FALHA")) {
-                throw new PassoSagaException("emissão da NF retornou FALHA");
-            }
+            // A checagem de FALHA fica DENTRO do passo: o span do passo precisa terminar em
+            // ERROR quando a NF falha, senão o Horus não enxerga a falha (T-1002: a SAGA
+            // compensada não tinha nenhum span em erro — a busca por erro não a encontrava).
+            NotaDto nota = executarPasso(saga, "issue-invoice", () -> {
+                NotaDto n = invoice.emitir(new InvoiceClient.EmitirNota(valor, "saga-" + saga.id, simularFalhaNota));
+                if (n.status() != null && n.status().equals("FALHA")) {
+                    throw new PassoSagaException("emissão da NF retornou FALHA");
+                }
+                return n;
+            });
             saga.notaId = nota.id();
             marcar(saga, StatusSaga.CONCLUIDA);
             LOG.infof("SAGA %d concluída (pagamento=%d, nota=%d)", saga.id, saga.pagamentoId, saga.notaId);

@@ -62,11 +62,15 @@
 ## Verificação / testes
 
 - [x] `./mvnw -B -o -pl horus -Dmaven.compiler.release=21 test` → **91 testes, 0 falhas** (eram 64).
-  JDK 25 indisponível no ambiente da sessão; CI (JDK 25) é a validação de referência.
-- [ ] Validação contra Jaeger/Loki/Prometheus reais — coberta pelo e2e automatizado de `T-1002`.
+- [x] Revalidado com **JDK 25** real (Temurin 25.0.4, extraído da imagem `eclipse-temurin:25-jdk`):
+  `./mvnw -B verify` na raiz → BUILD SUCCESS nos 5 módulos.
+- [x] Validação contra Jaeger/Loki/Prometheus **reais** via e2e de `T-1002`: a busca por janela
+  encontra os traces da SAGA, a busca `error=true` encontra a SAGA compensada e o resumo de
+  estado da janela responde.
 
 ## Registro de alterações
 
 | Data | Arquivo | Mudança |
 |---|---|---|
 | `2026-09-28` | (todos acima) | Busca e janela temporal (T-1001) |
+| `2026-09-28` | `PLAN.md` | Verificação atualizada: JDK 25 + validação ao vivo (e2e T-1002) |
