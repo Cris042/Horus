@@ -53,6 +53,12 @@
             <version>${anthropic-java.version}</version>
         </dependency>
 
+        <!-- E-mail real dos alertas (T-1008, RF-H-013). Mock automático em dev/test. -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-mailer</artifactId>
+        </dependency>
+
         <!-- RBAC com autenticação real (T-1007): verificação de JWT do IdP (OIDC) — papéis na claim `groups`. -->
         <dependency>
             <groupId>io.quarkus</groupId>
