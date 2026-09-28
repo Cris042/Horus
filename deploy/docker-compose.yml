@@ -42,8 +42,7 @@ x-quarkus-build: &quarkus-build
     FROM eclipse-temurin:25-jre
     WORKDIR /app
     COPY . /app/
-    ENV JAVA_OPTS="-XX:MaxRAMPercentage=75.0"
-    ENTRYPOINT ["sh", "-c", "exec java $$JAVA_OPTS -jar /app/quarkus-run.jar"]
+    ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "/app/quarkus-run.jar"]
 
 x-quarkus-app: &quarkus-app
   profiles: ["apps"]
