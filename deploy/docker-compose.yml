@@ -147,17 +147,38 @@ services:
     networks: [horus]
 
   # ---------------------------------------------------------------- Telemetria: backends
+  # Traces em Badger (disco) com TTL = JAEGER_RETENTION (T-1005, RNF-H-005). O init ajusta o
+  # dono do volume (o Jaeger roda como uid 10001 e o volume nasce com dono root).
+  jaeger-volume-init:
+    image: jaegertracing/jaeger:2.2.0
+    user: "0"
+    entrypoint: ["sh", "-c", "chown -R 10001:0 /badger"]
+    volumes:
+      - jaeger-data:/badger
+    restart: "no"
+    networks: [horus]
+
   jaeger:
     image: jaegertracing/jaeger:2.2.0
     restart: unless-stopped
+    command: ["--config", "/etc/jaeger/config.yaml"]
+    environment:
+      JAEGER_RETENTION: ${JAEGER_RETENTION:-168h}
+    volumes:
+      - ./telemetry/jaeger-config.yaml:/etc/jaeger/config.yaml:ro
+      - jaeger-data:/badger
     ports:
       - "16686:16686"  # UI (RF-031)
+    depends_on:
+      jaeger-volume-init: { condition: service_completed_successfully }
     networks: [horus]
 
   loki:
     image: grafana/loki:3.4.1
     restart: unless-stopped
-    command: ["-config.file=/etc/loki/loki-config.yaml"]
+    command: ["-config.file=/etc/loki/loki-config.yaml", "-config.expand-env=true"]
+    environment:
+      LOKI_RETENTION: ${LOKI_RETENTION:-168h}   # T-1005, RNF-H-005
     volumes:
       - ./telemetry/loki-config.yaml:/etc/loki/loki-config.yaml:ro
     ports:
@@ -175,6 +196,7 @@ services:
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--web.enable-remote-write-receiver"   # recebe métricas do Collector via remote_write
+      - "--storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d}"   # T-1005, RNF-H-005
     volumes:
       - ./telemetry/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     # Ponte p/ um cluster kind local (dashboard `kubernetes.json`) via `kubectl port-forward`
@@ -376,6 +398,7 @@ services:
     networks: [horus]
 
 volumes:
+  jaeger-data:
   pg-prontuario:
   pg-payment:
   pg-invoice:

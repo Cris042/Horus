@@ -1,0 +1,51 @@
+# Jaeger v2 — config de DEV (T-1005, RNF-H-005: retenção configurável).
+#
+# O all-in-one padrão guarda traces só em memória (sem retenção real e perdidos a cada restart).
+# Aqui os traces vão para o Badger (embarcado, em disco) com TTL configurável por
+# JAEGER_RETENTION (padrão 168h = 7 dias). O Collector continua exportando OTLP para jaeger:4317.
+
+service:
+  extensions: [jaeger_storage, jaeger_query, healthcheckv2]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [jaeger_storage_exporter]
+
+extensions:
+  healthcheckv2:
+    use_v2: true
+    http:
+      endpoint: 0.0.0.0:13133
+
+  jaeger_query:
+    storage:
+      traces: badger_store
+    ui:
+      config_file: ""
+
+  jaeger_storage:
+    backends:
+      badger_store:
+        badger:
+          directories:
+            keys: /badger/keys
+            values: /badger/values
+          ephemeral: false
+          ttl:
+            spans: ${env:JAEGER_RETENTION:-168h}
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+
+exporters:
+  jaeger_storage_exporter:
+    trace_storage: badger_store
