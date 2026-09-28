@@ -258,5 +258,9 @@ jobs:
         if: failure()
         run: |
           kubectl -n horus get pods -o wide
-          kubectl -n horus describe pods | tail -200
-          kubectl -n horus logs deployment/horus --tail=100 || true
+          # Logs (atual e anterior) de cada pod que não está pronto.
+          for p in $(kubectl -n horus get pods -o jsonpath='{range .items[?(@.status.containerStatuses[0].ready==false)]}{.metadata.name}{"\n"}{end}'); do
+            echo "=== $p"; kubectl -n horus logs "$p" --tail=60 || true
+            kubectl -n horus logs "$p" --previous --tail=60 2>/dev/null || true
+          done
+          kubectl -n horus get events --sort-by=.lastTimestamp | tail -40

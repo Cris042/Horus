@@ -22,6 +22,9 @@ spec:
         app.kubernetes.io/part-of: horus
         app.kubernetes.io/component: edge
     spec:
+      # T-1009: sem as env vars de "service links" (ex.: RABBITMQ_PORT=tcp://…) que o K8s
+      # injeta por Service do namespace — o Quarkus as lê como config e o invoice caía.
+      enableServiceLinks: false
       containers:
         - name: nginx
           image: nginx:1.27-alpine
